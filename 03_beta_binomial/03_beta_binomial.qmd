@@ -1,0 +1,12 @@
+---
+title: "2: Bayes Rule (Part 1)"
+author: "Derek Sollberger"
+date: "2023-02-01"
+format: 
+  html:
+    toc: true
+---
+
+objectives
+
+goals
