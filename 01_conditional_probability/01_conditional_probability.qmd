@@ -288,3 +288,265 @@ If you are finding yourself taking way too long hitting your head against a wall
 ## Inclusion Statement
 
 I value all students regardless of their background, country of origin, race, religion, ethnicity, gender, sexual orientation, disability status, etc. and am committed to providing a climate of excellence and inclusiveness within all aspects of the course. If there are aspects of your culture or identity that you would like to share with me as they relate to your success in this class, I am happy to meet to discuss. Likewise, if you have any concerns in this area or facing any special issues or challenges, you are encouraged to discuss the matter with me (set up a meeting by e-mail) with an assurance of full confidentiality (only exception being mandatory reporting of academic integrity code violations or sexual harassment).
+
+
+# Conditional Probability
+
+## Setting
+
+:::: {.columns}
+
+::: {.column width="60%"}
+Let us visit the lands of Faer&ucirc;n.  To grossly simplify and introduce notions from Dungeons and Dragons, let us define the following random variables:
+
+* $H$: human
+* $E$: evil
+
+so that $H^{c}$ is "non-human" and $E^c$ is "not evil".
+:::
+
+::: {.column width="40%"}
+![Baldur's Gate 3](bg3.png)
+:::
+
+::::
+
+::: {.callout-tip collapse="true"}
+
+## Unicode Characters
+
+Derek wanted to make a note to himself here that the way to make accented letters in a markdown environment is to use [unicode characters](https://en.wikipedia.org/wiki/List_of_Unicode_characters).
+
+:::
+
+## Example
+
+::: {.panel-tabset}
+
+## Contingency Table
+
+```{r}
+#| echo: false
+#| eval: true
+
+alignment <- c("evil", "not evil")
+human <- c("24", "30")
+non_human <- c("88", "178")
+
+bg3_df <- data.frame(alignment, human, non_human)
+
+bg3_gt_table <- bg3_df |>
+  gt(rowname_col = "alignment") |>
+  cols_align(align = "right", columns = alignment) |>
+  cols_align(align = "center",  columns = c(human, non_human)) |>
+  tab_style(locations = cells_body(columns = c(human, non_human)),
+            style = list(cell_fill(color = "yellow")))
+
+bg3_gt_table #display table
+```
+
+Compute $P(E^{c}|H)$ and $P(H^{c}|E)$
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+alignment <- c("evil", "not evil")
+human <- c("24", "30")
+non_human <- c("88", "178")
+
+bg3_df <- data.frame(alignment, human, non_human)
+
+bg3_gt_table <- bg3_df |>
+  gt(rowname_col = "alignment") |>
+  cols_align(align = "right", columns = alignment) |>
+  cols_align(align = "center",  columns = c(human, non_human)) |>
+  tab_style(locations = cells_body(columns = c(human, non_human)),
+            style = list(cell_fill(color = "yellow")))
+
+bg3_gt_table #display table
+```
+
+:::
+
+## Practice
+
+```{r}
+#| echo: false
+#| eval: true
+
+bg3_gt_table #display table
+```
+
+Compute $P(H|E)$ and $P(E|H)$.  What do you observe about the results?
+
+
+# Metrics
+
+## Setting
+
+:::: {.columns}
+
+::: {.column width="60%"}
+During the Winter of 2024, Kaggle had a [competition](https://www.kaggle.com/competitions/predict-energy-behavior-of-prosumers/overview) where programmers were asked to "create an energy prediction model of prosumers to reduce energy imbalance costs" based on data that included property information, historical weather, and forecasted weather.
+
+For now, let us pretend to classify the results into "high energy" and "low energy" usage, where "positive" results correspond to the "high energy" prosumers.
+:::
+
+::: {.column width="40%"}
+![](Enefit.png)
+
+This Kaggle competition was called "Enefit", and it was created by Eesti Energia to model Estonian energy customers.
+:::
+
+::::
+
+## Example
+
+::: {.panel-tabset}
+
+## Confusion Matrix
+
+Suppose that a team of contestants built a machine learning model for this Kaggle competition and achieved the results seen in the confusion matrix below.
+
+```{r}
+#| echo: false
+#| eval: true
+
+energy_levels <- c("high", "low")
+high <- c(59, 14)
+low <- c(28, 97)
+
+enefit_df <- data.frame(energy_levels, high, low)
+
+enefit_gt <- enefit_df |>
+  gt(rowname_col = "energy_levels") |>
+  cols_align(align = "right", columns = energy_levels) |>
+  cols_align(align = "center",  columns = c(high, low)) |>
+  tab_spanner(columns = c(high, low),
+              label = "model predictions") |>
+  tab_style(locations = cells_body(columns = high, rows = 1),
+            style = list(cell_fill(color = "lightgreen"))) |>
+  tab_style(locations = cells_body(columns = low, rows = 2),
+            style = list(cell_fill(color = "lightgreen"))) |>
+  tab_style(locations = cells_body(columns = high, rows = 2),
+            style = list(cell_fill(color = "#FFB3B2"))) |>
+  tab_style(locations = cells_body(columns = low, rows = 1),
+            style = list(cell_fill(color = "#FFB3B2")))
+
+enefit_gt #display table
+```
+
+* true positives: 59
+* true negatives: 97
+* false positives: 14
+* false negatives: 28
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+energy_levels <- c("high", "low")
+high <- c(59, 14)
+low <- c(28, 97)
+
+enefit_df <- data.frame(energy_levels, high, low)
+
+enefit_gt <- enefit_df |>
+  gt(rowname_col = "energy_levels") |>
+  cols_align(align = "right", columns = energy_levels) |>
+  cols_align(align = "center",  columns = c(high, low)) |>
+  tab_spanner(columns = c(high, low),
+              label = "model predictions") |>
+  tab_style(locations = cells_body(columns = high, rows = 1),
+            style = list(cell_fill(color = "lightgreen"))) |>
+  tab_style(locations = cells_body(columns = low, rows = 2),
+            style = list(cell_fill(color = "lightgreen"))) |>
+  tab_style(locations = cells_body(columns = high, rows = 2),
+            style = list(cell_fill(color = "#FFB3B2"))) |>
+  tab_style(locations = cells_body(columns = low, rows = 1),
+            style = list(cell_fill(color = "#FFB3B2")))
+
+enefit_gt #display table
+```
+
+
+## Metrics
+
+For this confusion matrix, compute the accuracy, sensitivity, specificity, and F-score for the results.
+
+```{r}
+#| echo: false
+#| eval: true
+
+enefit_gt #display table
+```
+
+
+## Formulas
+
+$$\text{accuracy } = \frac{TP + TN}{TP + FN + FP + TN}$$
+$$\text{sensitivity } = \frac{TP}{TP + FN}$$
+$$\text{specificity } = \frac{TN}{FP + TN}$$
+$$\text{F-score } = \frac{2*TP}{2*TP + FN + FP}$$
+
+Source: [Wikipedia page on sensitivity and specificity](https://en.wikipedia.org/wiki/Sensitivity_and_specificity)
+
+:::
+
+::: {.callout-tip collapse="true"}
+
+## Row Span
+
+When these lecture notes were written, there might not have been a function to have a label span multiple rows in the `gt` package.  The left side of the confusion matrix should say "ground truth"
+
+:::
+
+## Practice
+
+Suppose that another team of contestants built a machine learning model for this Kaggle competition and achieved the results seen in the confusion matrix below.
+
+```{r}
+#| echo: false
+#| eval: true
+
+energy_levels <- c("high", "low")
+high <- c(94, 23)
+low <- c(80, 939)
+
+enefit_df2 <- data.frame(energy_levels, high, low)
+
+enefit_gt2 <- enefit_df2 |>
+  gt(rowname_col = "energy_levels") |>
+  cols_align(align = "right", columns = energy_levels) |>
+  cols_align(align = "center",  columns = c(high, low)) |>
+  tab_spanner(columns = c(high, low),
+              label = "model predictions") |>
+  tab_style(locations = cells_body(columns = high, rows = 1),
+            style = list(cell_fill(color = "lightgreen"))) |>
+  tab_style(locations = cells_body(columns = low, rows = 2),
+            style = list(cell_fill(color = "lightgreen"))) |>
+  tab_style(locations = cells_body(columns = high, rows = 2),
+            style = list(cell_fill(color = "#FFB3B2"))) |>
+  tab_style(locations = cells_body(columns = low, rows = 1),
+            style = list(cell_fill(color = "#FFB3B2")))
+
+enefit_gt2 #display table
+```
+
+For this confusion matrix, compute the accuracy, sensitivity, specificity, and F-score for the results.
+
+
+::: {.callout-warning collapse="true"}
+
+## Prosecutor's Fallacy
+
+For events $A$ and $B$, the inverse conditional probabilities are almost never equal to each other
+
+$$P(A|B) \neq P(B|A)$$
+
+:::
