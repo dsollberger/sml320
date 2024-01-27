@@ -2,6 +2,9 @@
 title: "1: Conditional Probability"
 author: "Derek Sollberger"
 date: "2024-01-30"
+# format: 
+#   revealjs:
+#     scrollable: true
 format: 
   html:
     toc: true
