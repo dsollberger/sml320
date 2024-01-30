@@ -23,6 +23,11 @@ library("tidyverse")
 ## Bayesian Analysis
 
 * Spring 2024
+* TuTh, 11 AM to 1220 PM
+* Bendheim House 103
+* Lecturer: Derek
+
+    - I go by "Derek" or "teacher"
 
 ::: {.callout-tip collapse="true"}
 ## Course Description
@@ -70,6 +75,23 @@ This course provides an introduction to Bayesian analysis---a powerful statistic
 :::
 
 ::::
+
+
+# Icebreaker
+
+* name
+* major (and minors or certificates if applicable)
+* unusual goal
+
+    - (please pick a goal other than "get good grades")
+    - whatever time frame makes sense
+    
+::: {.callout-tip collapse="true"}
+## Derek's Example
+
+"Hi.  My name is Derek, and I majored in applied mathematics.  My unusual goal is, for this upcoming year, to eat at that sushi place in Philadelphia that requires reservations a month in advance."
+:::
+
 
 # Assessment
 
@@ -138,6 +160,58 @@ This course provides an introduction to Bayesian analysis---a powerful statistic
 
 * 20 percent of semester grade
 * The culminating semester project will be due at the end of the semester examination period and will be assessed according to a rubric that will be provided in advance.
+
+:::
+
+
+# Probability
+
+## Classical Probability
+
+::: {.panel-tabset}
+
+## Definition
+
+$$P(A) = \frac{\text{number of outcomes that are } A}{\text{number of outcomes total}}$$
+
+## Example
+
+**Overly simplistic example**
+
+It snowed during 2 of the 30 days of January in 2024.  We can claim that it snows $\frac{2}{30}$ of the days in Princeton.
+
+:::
+
+## Frequentist Probablity
+
+::: {.panel-tabset}
+
+## Definition
+
+$$P(A) = \lim_{n \to \infty} \frac{\text{number of outcomes that are } A}{\text{number of outcomes total}}$$
+
+## Example
+
+**Overly simplistic example**
+
+If we can model many months of weather in Princeton, we expect it to snow in about 3 percent of the days.
+
+:::
+
+## Bayesian Probability
+
+::: {.panel-tabset}
+
+## Definition
+
+* prior belief: $P(A)$
+* updated belief: $P(A|B)$
+
+## Example
+
+**Overly simplistic example**
+
+It snowed during 2 of the 30 days of January in 2024.  Could we update our probability calculations for snow?
 
 :::
 
@@ -551,5 +625,13 @@ For this confusion matrix, compute the accuracy, sensitivity, specificity, and F
 For events $A$ and $B$, the inverse conditional probabilities are almost never equal to each other
 
 $$P(A|B) \neq P(B|A)$$
+
+:::
+
+::: {.callout-note collapse="true"}
+
+## (optional) Additional Resources
+
+* [Classical vs Frequentist vs Bayesian Probability](https://www.youtube.com/watch?v=dejy4PPCFHY) by Trefor Bazett
 
 :::
