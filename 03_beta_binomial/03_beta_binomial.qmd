@@ -1,12 +1,26 @@
 ---
-title: "2: Bayes Rule (Part 1)"
+title: "3: Beta-Binomial Models"
 author: "Derek Sollberger"
-date: "2023-02-01"
+date: "2023-02-06"
 format: 
   html:
     toc: true
 ---
 
-objectives
+```{r}
+#| message: false
+#| warning: false
 
-goals
+library("tidyverse")
+```
+
+```{r}
+#| message: false
+#| warning: false
+tips_df <- readr::read_csv("tips.csv")
+```
+
+```{r}
+str(tips_df, give.attr = FALSE)
+```
+

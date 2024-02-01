@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Derek Sollberger">
-<meta name="dcterms.date" content="2023-02-01">
+<meta name="dcterms.date" content="2024-02-01">
 
 <title>2: Bayes’ Rule</title>
 <style>
@@ -52,12 +52,15 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#bayes-rule" id="toc-bayes-rule" class="nav-link active" data-scroll-target="#bayes-rule">Bayes’ Rule</a></li>
   <li><a href="#a-deep-dive" id="toc-a-deep-dive" class="nav-link" data-scroll-target="#a-deep-dive">A Deep Dive</a></li>
   <li><a href="#more-practice" id="toc-more-practice" class="nav-link" data-scroll-target="#more-practice">More Practice</a></li>
+  <li><a href="#bayesian-concepts" id="toc-bayesian-concepts" class="nav-link" data-scroll-target="#bayesian-concepts">Bayesian Concepts</a>
+  <ul class="collapse">
   <li><a href="#example-spam-filtering" id="toc-example-spam-filtering" class="nav-link" data-scroll-target="#example-spam-filtering">Example: Spam Filtering</a></li>
   <li><a href="#example-quality-control" id="toc-example-quality-control" class="nav-link" data-scroll-target="#example-quality-control">Example: Quality Control</a></li>
   <li><a href="#example-dui-checkpoint" id="toc-example-dui-checkpoint" class="nav-link" data-scroll-target="#example-dui-checkpoint">Example: DUI Checkpoint</a></li>
   <li><a href="#example-monty-hall-problem" id="toc-example-monty-hall-problem" class="nav-link" data-scroll-target="#example-monty-hall-problem">Example: Monty Hall Problem</a></li>
   <li><a href="#generalized-bayes-rule" id="toc-generalized-bayes-rule" class="nav-link" data-scroll-target="#generalized-bayes-rule">Generalized Bayes’ Rule</a></li>
   <li><a href="#bayesian-odds" id="toc-bayesian-odds" class="nav-link" data-scroll-target="#bayesian-odds">Bayesian Odds</a></li>
+  </ul></li>
   </ul>
 </nav>
 </div>
@@ -82,7 +85,7 @@ ul.task-list li input[type="checkbox"] {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">February 1, 2023</p>
+      <p class="date">February 1, 2024</p>
     </div>
   </div>
   
@@ -215,6 +218,11 @@ Note
 </div>
 </div>
 </section>
+<section id="bayesian-concepts" class="level1">
+<h1>Bayesian Concepts</h1>
+<p><span class="math display">\[\text{posterior} = \frac{\text{prior} * \text{likelihood}}{\text{normalizing constant}}\]</span></p>
+<p>For observations <span class="math inline">\(\vec{y}\)</span> and probabilities <span class="math inline">\(\vec{\pi}\)</span>,</p>
+<p><span class="math display">\[f(\pi|y) = \frac{f(\pi)L(\pi|y)}{f(y)} \propto f(\pi)L(\pi|y)\]</span></p>
 <section id="example-spam-filtering" class="level2">
 <h2 class="anchored" data-anchor-id="example-spam-filtering">Example: Spam Filtering</h2>
 <p>In 2002, Paul Graham used Bayes’ Rule as part of his algorithms to greatly decrease false positive rates of unwanted e-mails (“spam”). Let <span class="math inline">\(H^{c}\)</span> be the event that an e-mail is “spam”. Let <span class="math inline">\(W\)</span> be the event that an e-mail contains a trigger word such as “watches”. Suppose that</p>
@@ -293,6 +301,7 @@ Note
 
 </div>
 </div>
+</section>
 </section>
 
 </main>
