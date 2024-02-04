@@ -2,25 +2,662 @@
 title: "3: Beta-Binomial Models"
 author: "Derek Sollberger"
 date: "2023-02-06"
+# format: 
+#   revealjs:
+#     scrollable: true
 format: 
   html:
     toc: true
 ---
 
+\newcommand{\ds}{\displaystyle}
+
 ```{r}
 #| message: false
 #| warning: false
 
+library("bayesrules")
+library("gt")
+library("janitor")
+library("patchwork")
+library("skimr")
 library("tidyverse")
-```
 
-```{r}
-#| message: false
-#| warning: false
 tips_df <- readr::read_csv("tips.csv")
 ```
+
+
+## Tips Data Set
+
+:::: {.panel-tabset}
+
+## Description
+
+* source: [Kaggle](https://www.kaggle.com/datasets/jsphyg/tipping)
+
+    - "The data was reported in a collection of case studies for business statistics.  Bryant, P. G. and Smith, M (1995) *Practical Data Analysis: Case Studies in Business Statistic*s. Homewood, IL: Richard D. Irwin Publishing
+
+* context: "One waiter recorded information about each tip he received over a period of a few months working in one restaurant. In all he recorded 244 tips. "
+
+## Glance
+
+```{r}
+head(tips_df)
+```
+
+
+## Structure
 
 ```{r}
 str(tips_df, give.attr = FALSE)
 ```
 
+
+## Skim
+
+```{r}
+skimr::skim(tips_df)
+```
+
+::::
+
+# Scenario 1: Discrete Prior
+
+:::: {.columns}
+
+::: {.column width="50%"}
+Today we are going to explore how prevalent smoking used to be in restaurants?  What percentage of customers smoked in restaurants? We can start with the following guesses
+
+* 25%
+* 50%
+* 75%
+:::
+
+::: {.column width="50%"}
+![source: Shutterstock](smoking_in_restaurants.png)
+:::
+
+::::
+
+## Prior Model
+
+```{r}
+#| echo: false
+#| eval: false
+
+col1 <- c("$$\\pi$$", "$$f(\\pi)$$")
+col2 <- c("0.25", "1/3")
+col3 <- c("0.50", "1/3")
+col4 <- c("0.75", "1/3")
+
+df_prior <- data.frame(col1, col2, col3, col4)
+
+df_prior |>
+  gt()
+```
+
+|   $\pi$  | 0.25 | 0.50 | 0.75 | total |
+|:--------:|:----:|:----:|:----:|-------|
+| $f(\pi)$ |  1/3 |  1/3 |  1/3 | 1     |
+
+* uniform prior
+* e.g. guessing the probability that the percentage of customers that smoked was 75% was $\frac{1}{3}$
+
+::: {.callout-note collapse="true"}
+## Discrete Probability Model
+
+Let $Y$ be a discrete random variable. The probability model of $Y$ is specified by a **probability mass function (pmf)** $f(y)$. This pmf defines the probability of any given outcome $y$,
+
+$$f(y) = P(Y = y)$$
+
+* $0 \leq f(y) \leq 1$
+* $\sum f(y) = 1$
+:::
+
+## Observed Data
+
+:::: {.panel-tabset}
+## Observed Sample
+
+Looking at the last 9 observations in the data set, 4 of the customers were smokers.
+
+```{r}
+#| echo: false
+#| eval: true
+tail(tips_df, 9) |>
+  gt() |>
+  tab_style(locations = cells_body(columns = smoker),
+            style = list(cell_fill(color = "gray80"))) |>
+  tab_style(locations = cells_body(columns = smoker,
+                                   rows = smoker == "Yes"),
+            style = list(cell_text(color = "red")))
+```
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+tail(tips_df, 9) |>
+  gt() |>
+  tab_style(locations = cells_body(columns = smoker),
+            style = list(cell_fill(color = "gray80"))) |>
+  tab_style(locations = cells_body(columns = smoker,
+                                   rows = smoker == "Yes"),
+            style = list(cell_text(color = "red")))
+```
+
+::::
+
+## Binomial Distribution
+
+::: {.callout-note collapse="true"}
+## Binomial Distribution
+
+Let random variable $Y$ be the number of successes in a fixed number of trials $n$. Assume that the trials are independent and that the probability of success in each trial is $\pi$. Then the conditional dependence of $Y$ on $\pi$ can be modeled by the Binomial model with parameters $n$ and $\pi$. In mathematical notation:
+
+$$Y|\pi \sim \text{Bin}(n,\pi)$$
+where $\sim$ can be read as "modeled by".  Correspondingly, the binomial model is specified by the conditional pmf
+
+$$f(y|\pi) = \binom{n}{y}\pi^{y}(1-\pi)^{n-y} \text{ for } y \in \{0, 1, 2, ..., n\}$$
+where $\binom{n}{y} = \ds\frac{n!}{y!(n-y)!}$
+:::
+
+In this example of $Y$ smokers in $n=9$ customers with probability $\pi$ of smokers,
+
+$$Y|\pi \sim \text{Bin}(9,\pi)$$
+$$f(y|\pi) = \binom{9}{y}\pi^{y}(1-\pi)^{9-y} \text{ for } y \in \{0, 1, 2, ..., 9\}$$
+
+## Conditional PMFs
+
+:::: {.panel-tabset}
+
+## Based on Observed Data
+
+```{r}
+#| echo: false
+#| eval: true
+highlight_col <- 0:9 == 4
+df_25 <- data.frame(k = 0:9, f_y_pi = dbinom(0:9, 9, 0.25), highlight_col)
+df_50 <- data.frame(k = 0:9, f_y_pi = dbinom(0:9, 9, 0.50), highlight_col)
+df_75 <- data.frame(k = 0:9, f_y_pi = dbinom(0:9, 9, 0.75), highlight_col)
+
+plot_25 <- df_25 |>
+  ggplot(aes(x = k, y = f_y_pi, fill = highlight_col)) +
+  geom_col(show.legend = FALSE) +
+  labs(title = "Bin(9,0.25)") +
+  scale_x_continuous(name = "customers", 
+                   breaks = 0:9, 
+                   labels = as.character(0:9)) +
+  theme_minimal()
+
+plot_50 <- df_50 |>
+  ggplot(aes(x = k, y = f_y_pi, fill = highlight_col)) +
+  geom_col(show.legend = FALSE) +
+  labs(title = "Bin(9,0.50)") +
+  scale_x_continuous(name = "customers", 
+                   breaks = 0:9, 
+                   labels = as.character(0:9)) +
+  theme_minimal()
+
+plot_75 <- df_75 |>
+  ggplot(aes(x = k, y = f_y_pi, fill = highlight_col)) +
+  geom_col(show.legend = FALSE) +
+  labs(title = "Bin(9,0.75)") +
+  scale_x_continuous(name = "customers", 
+                   breaks = 0:9, 
+                   labels = as.character(0:9)) +
+  theme_minimal()
+
+# patchwork
+plot_25 + plot_50 + plot_75
+```
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+highlight_col <- 0:9 == 4
+df_25 <- data.frame(k = 0:9, f_y_pi = dbinom(0:9, 9, 0.25), highlight_col)
+df_50 <- data.frame(k = 0:9, f_y_pi = dbinom(0:9, 9, 0.50), highlight_col)
+df_75 <- data.frame(k = 0:9, f_y_pi = dbinom(0:9, 9, 0.75), highlight_col)
+
+plot_25 <- df_25 |>
+  ggplot(aes(x = k, y = f_y_pi, fill = highlight_col)) +
+  geom_col(show.legend = FALSE) +
+  labs(title = "Bin(9,0.25)") +
+  scale_x_continuous(name = "customers", 
+                   breaks = 0:9, 
+                   labels = as.character(0:9)) +
+  theme_minimal()
+
+plot_50 <- df_50 |>
+  ggplot(aes(x = k, y = f_y_pi, fill = highlight_col)) +
+  geom_col(show.legend = FALSE) +
+  labs(title = "Bin(9,0.50)") +
+  scale_x_continuous(name = "customers", 
+                   breaks = 0:9, 
+                   labels = as.character(0:9)) +
+  theme_minimal()
+
+plot_75 <- df_75 |>
+  ggplot(aes(x = k, y = f_y_pi, fill = highlight_col)) +
+  geom_col(show.legend = FALSE) +
+  labs(title = "Bin(9,0.75)") +
+  scale_x_continuous(name = "customers", 
+                   breaks = 0:9, 
+                   labels = as.character(0:9)) +
+  theme_minimal()
+
+# patchwork
+plot_25 + plot_50 + plot_75
+```
+
+::::
+
+## Likelihoods
+
+With the observed data $Y = 4$ out of $n = 9$ customers, for $\pi = \{0.25, 0.50, 0.75\}$,
+$$L(\pi|y = 4) = f(y = 4|\pi) = \binom{9}{4}\pi^{4}(1-\pi)^{5}$$
+
+$$L(\pi = 0.25|y = 4) = \binom{9}{4}(0.25)^{4}(1-0.25)^{5} \approx 0.1168$$
+$$L(\pi = 0.50|y = 4) = \binom{9}{4}(0.50)^{4}(1-0.50)^{5} \approx 0.2461$$
+$$L(\pi = 0.75|y = 4) = \binom{9}{4}(0.75)^{4}(1-0.75)^{5} \approx 0.0389$$
+
+|     $\pi$     |  0.25  |  0.50  |  0.75  | total  |
+|:-------------:|:------:|:------:|:------:|--------|
+|    $f(\pi)$   |   1/3  |   1/3  |   1/3  | 1      |
+| $L(\pi|y=4)$  | 0.1168 | 0.2461 | 0.0389 | 0.4018 |
+
+
+## Bayesian Concepts
+
+$$\text{posterior} = \frac{\text{prior} * \text{likelihood}}{\text{normalizing constant}}$$
+
+For observations $\vec{y}$ and probabilities $\vec{\pi}$,
+
+$$f(\pi|y) = \frac{f(\pi)L(\pi|y)}{f(y)} \propto f(\pi)L(\pi|y)$$
+
+## Normalizing Constant
+
+$$f(y = 4) = \ds\sum_{\pi\in\{0.25, 0.50, 0.75\}} L(\pi|y=4) \cdot f(\pi)$$
+
+$$f(y = 4) = \ds\frac{0.1168}{3} + \ds\frac{0.2461}{3} + \ds\frac{0.0389}{3} \approx 0.1339$$
+
+## Posterior Distribution
+
+$$f(\pi|y=4) = \ds\frac{f(\pi)L(\pi|y=4)}{f(y=4)} \text{ for } \pi \in \{0.25, 0.50, 0.75 \}$$
+$$f(\pi=0.25|y=4) = \ds\frac{(1/3)(0.1168)}{0.1339} \approx 0.2907$$
+$$f(\pi=0.50|y=4) = \ds\frac{(1/3)(0.2461)}{0.1339} \approx 0.6126$$
+$$f(\pi=0.75|y=4) = \ds\frac{(1/3)(0.0389)}{0.1339} \approx 0.0968$$
+
+|     $\pi$     |  0.25  |  0.50  |  0.75  | total  |
+|:-------------:|:------:|:------:|:------:|--------|
+|    $f(\pi)$   |   1/3  |   1/3  |   1/3  | 1      |
+| $L(\pi|y=4)$  | 0.1168 | 0.2461 | 0.0389 | 0.4018 |
+| $f(\pi|y=4)$  | 0.2907 | 0.6126 | 0.0968 | 1      |
+
+## Computer Simulation
+
+:::: {.panel-tabset}
+
+## Simulation Samples
+
+```{r}
+# define possible smoker proportions
+smokers <- data.frame(pi = c(0.25, 0.50, 0.75))
+
+# define prior model
+prior <- c(1/3, 1/3, 1/3)
+
+# simulate 10000 values of pi from the prior
+set.seed(320)
+smoker_sim <- sample_n(smokers, size = 10000, weight = prior, replace = TRUE)
+
+# simulate 10000 samples of customers
+smoker_sim <- smoker_sim |>
+  mutate(y = rbinom(10000, size = 9, prob = pi))
+
+```
+
+So far, the simulation yields a data frame that looks like
+
+```{r}
+head(smoker_sim)
+```
+
+## Verify Prior
+
+```{r}
+# summarize the prior
+smoker_sim |>
+  tabyl(pi) |>
+  adorn_totals("row")
+```
+
+## PMFs
+
+```{r}
+# plot y by pi
+ggplot(smoker_sim, aes(x = y)) + 
+  stat_count(aes(y = after_stat(prop))) + 
+  facet_wrap(~ pi)
+```
+
+## Posterior Distribution
+
+```{r}
+# focus on simulations with y = 4
+four_smokers <- smoker_sim %>% 
+  filter(y == 4)
+
+# summarize the posterior approximation
+four_smokers %>% 
+  tabyl(pi) %>% 
+  adorn_totals("row")
+```
+
+```{r}
+# plot the posterior approximation
+ggplot(four_smokers, aes(x = pi)) + 
+  geom_bar()
+```
+
+
+::::
+
+
+# Scenario 2: Continuous Prior
+
+Instead of fixating on particular guesses for $\pi$, let us broaden the scope to allow the underlying probability to be any number between zero and one.
+
+$$\pi \in [0,1]$$
+
+::: {.callout-note collapse="true"}
+## Continuous Probability Model
+
+Let $\pi$ be a continuous random variable with **probability density function** $f(\pi)$, then $f(\pi)$ has the following properties.
+
+* $f(\pi) \geq 0$
+* $\int_{\pi} \! f(\pi) \, d\pi = 1$
+* $P(a \leq \pi \leq b) = \int_{a}^{b} \! f(\pi) \, d\pi$
+:::
+
+## Beta Distribution
+
+::: {.callout-note collapse="true"}
+## Beta Distribution
+
+Let $\pi \in [0,1]$, then the variability in $\pi$ may be modeled by a Beta distribution with shape hyperparameters $\alpha > 0$ and $\beta > 0$
+
+$$\pi \sim \text{Beta}(\alpha, \beta)$$
+with probability density function
+
+$$f(\pi) = \ds\frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}\pi^{\alpha-1}(1-\pi)^{\beta-1}$$
+
+where the gamma function
+
+* $\Gamma(z) = \ds\int_{0}^{\infty} \! x^{z-1}e^{-x} \, dx$
+* $\Gamma(z + 1) = z\Gamma(z)$
+
+:::
+
+::: {.callout-tip collapse="true"}
+## Corollary
+
+When $z$ is a positive integer, then
+$$\Gamma(z) = (z-1)!$$
+That is, the gamma function is a generalization of the factorial.
+:::
+
+::: {.callout-tip collapse="true"}
+## Hyperparameters
+
+A **hyperparameter** is a parameter used in a prior model.
+:::
+
+Explore! Matt Bognar at the University of Iowa created this [great webapp](https://homepage.stat.uiowa.edu/~mbognar/applets/beta.html) to explore the beta distribution.
+
+::: {.callout-note collapse="true"}
+## Uniform Distribution
+
+When it is equally plausible for $\pi$ to take on any value between zero and one, we can model $\pi$ by the standard uniform distribution
+
+$$\pi \sim \text{Unif}(0,1)$$
+
+with pdf $f(\pi) = 1$ for $\pi \in [0,1]$.  The $\text{Unif}(0,1)$ distribution is a special case of the beta distribution when $\alpha = 1$ and $\beta = 1$
+
+$$\text{Unif}(0,1) = \text{Beta}(1,1)$$
+:::
+
+
+## Sample Statistics
+
+For a beta distribution, $\pi \sim \text{Beta}(\alpha, \beta)$
+
+* expected value: $\text{E}(\pi) = \ds\frac{\alpha}{\alpha + \beta}$
+* variance: $\text{Var}(\pi) = \ds\frac{\alpha\beta}{(\alpha + \beta)^{2}(\alpha + \beta + 1)}$
+
+## Tuning the Beta Prior
+
+Here, let us use that sample of observations where 4 out of the 9 customers where smokers.  We might then try to align this sample proportion $\frac{4}{9}$ with the expected value
+
+$$\ds\frac{\alpha}{\alpha + \beta} = \ds\frac{4}{9} \quad\rightarrow\quad \alpha = 4, \quad \beta = 5$$
+
+to create a beta model $\pi \sim \text{Beta}(4, 5)$
+
+```{r}
+bayesrules::plot_beta(4,5)
+```
+
+We can compute the variance
+
+$$\text{Var}(\pi) = \ds\frac{\alpha\beta}{(\alpha + \beta)^{2}(\alpha + \beta + 1)} = \ds\frac{4 \cdot 5}{(4 + 5)^{2}(4 + 5 + 1)} \approx 0.0247$$
+
+
+## Binomial Data Model
+
+Suppose that we obtain a larger sample of observations with $n = 25$ customers. The number of smokers, denoted by random variable $Y$, may have a binomial model conditional on probability $\pi$,
+
+$$Y|\pi \sim \text{Bin}(25, \pi)$$
+
+with conditional pmf over $y \in \{0, 1, ..., 25\}$,
+$$f(y|\pi) = P(Y = y|\pi) = \binom{25}{y}\pi^{y}(1-\pi)^{25-y}$$
+
+## Likelihood
+
+:::: {.panel-tabset}
+
+## Function
+
+Suppose that in that sample of $n = 25$ customers, we observe that $y = 7$ of those customers were smokers.  Our likelihood function is then
+
+$$L(\pi|y = 7) = \binom{25}{7}\pi^{7}(1-\pi)^{18}$$
+
+## Plot
+
+```{r}
+#| echo: false
+#| eval: true
+
+pi <- seq(0, 1, 0.01)
+L_pi_y <- dbinom(7, 25, pi)
+
+df_for_graph <- data.frame(pi, L_pi_y)
+
+df_for_graph |>
+  ggplot(aes(x = pi, y = L_pi_y)) +
+  geom_line() +
+  labs(title = "Likelihood function",
+       subtitle = "y = 7, n = 25",
+       caption = "SML 320")
+```
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+pi <- seq(0, 1, 0.01)
+L_pi_y <- dbinom(7, 25, pi)
+
+df_for_graph <- data.frame(pi, L_pi_y)
+
+df_for_graph |>
+  ggplot(aes(x = pi, y = L_pi_y)) +
+  geom_line() +
+  labs(title = "Likelihood function",
+       subtitle = "y = 7, n = 25",
+       caption = "SML 320")
+```
+
+::::
+
+
+## Beta-Binomial Model
+
+**Claim:** With probability $\pi \in [0,1]$ and random variable $Y$ representing the number of "successes" in $n$ trials, if the behavior is modeled with prior distribution and likelihood
+
+$$\begin{array}{rcl}
+  \pi & \sim & \text{Beta}(\alpha, \beta) \\
+  Y|\pi & \sim & \text{Bin}(n,\pi) \\
+\end{array}$$
+
+then the posterior distribution can be modeled with an updated beta distribution
+
+$$\pi|(Y=y) \sim \text{Beta}(\alpha + y, \beta + n - y)$$
+
+with sample statistics
+
+$$\begin{array}{rcl}
+  \text{E}(\pi|Y=y) & = & \ds\frac{\alpha + y}{\alpha + \beta + n} \\
+  \text{Var}(\pi|Y=y) & = & \ds\frac{(\alpha  +y)(\beta + n - y)}{(\alpha + \beta + n)^{2}(\alpha + \beta + n + 1)} \\
+\end{array}$$
+
+::: {.callout-note collapse="true"}
+## Partial Proof
+
+With the conditional pmf
+
+$$f(\pi) = \ds\frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}\pi^{\alpha-1}(1-\pi)^{\beta-1}$$
+and likelihood function
+
+$$L(\pi|y) = \binom{n}{y}\pi^{y}(1-\pi)^{n-y}$$
+
+it follows from Bayes' Rule that the posterior distribution
+
+$$\begin{array}{rcl}
+  f(\pi|y) & \propto & f(\pi)L(\pi|y) \\
+  ~ & = & \ds\frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}\pi^{\alpha-1}(1-\pi)^{\beta-1} \cdot \binom{n}{y}\pi^{y}(1-\pi)^{n-y} \\
+  ~ & \propto & \pi^{(\alpha + y)-1}(1-\pi)^{(\beta+n-y)-1} \\
+\end{array}$$
+
+where that last expression is the unnormalized posterior pdf.  We observe that it has the same structure of the normalized $\text{Beta}(\alpha + y, \beta + n - y)$ pdf
+
+$$f(\pi|y) = \ds\frac{\Gamma(\alpha+\beta+n)}{\Gamma(\alpha+y)\Gamma(\beta+n-y)} \pi^{(\alpha + y)-1}(1-\pi)^{(\beta+n-y)-1}$$
+
+:::
+
+
+## Beta Posterior
+
+:::: {.panel-tabset}
+
+## Updated Distribution
+
+By the above theory, having started with a $\text{Beta}{(4,5)}$ prior, and then observing $y = 7$ smokers among $n = 25$ customers
+
+$$\alpha = 4, \quad \beta = 5, \quad y = 7, \quad n = 25$$
+
+our posterior distribution can be modeled with
+
+$$\pi|(Y=y) \sim \text{Beta}(\alpha + y, \beta + n - y) = \text{Beta}(11, 23)$$
+
+## Plot
+
+```{r}
+bayesrules::plot_beta(11,23)
+```
+
+## Both
+
+```{r}
+#| echo: false
+#| eval: true
+
+p1 <- bayesrules::plot_beta(4,5) + labs(title = "Prior Distribution", subtitle = "Beta(4,5)", caption = "SML 320") + theme_minimal()
+p2 <- bayesrules::plot_beta(11,23) + labs(title = "Posterior Distribution", subtitle = "Beta(11,23)", caption = "SML 320") + theme_minimal()
+
+# patchwork
+p1 / p2
+```
+
+
+::::
+
+
+## Putting it All Together
+
+:::: {.panel-tabset}
+
+## Helper Functions
+
+The `bayesrules` package (from the textbook authors) provide additonal helper functions for this procedure of modeling with a beta-binomial model.
+
+```
+bayesrules::summarize_beta_binomial(alpha, beta, y, n)
+```
+
+```
+bayesrules::plot_beta_binomial(alpha, beta, y, n)
+```
+
+## Table
+
+```{r}
+summarize_beta_binomial(alpha = 4, beta = 5, y = 7, n = 25) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+## Plot
+
+```{r}
+plot_beta_binomial(alpha = 4, beta = 5, y = 7, n = 25) +
+  theme_minimal()
+```
+
+::::
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+:::: {.columns}
+
+::: {.column width="50%"}
+	
+:::
+
+::: {.column width="50%"}
+
+:::
+
+::::
+
+:::: {.panel-tabset}
+
+
+
+::::
