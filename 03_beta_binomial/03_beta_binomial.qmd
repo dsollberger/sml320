@@ -2,12 +2,12 @@
 title: "3: Beta-Binomial Models"
 author: "Derek Sollberger"
 date: "2023-02-06"
+format:
+  revealjs:
+    scrollable: true
 # format: 
-#   revealjs:
-#     scrollable: true
-format: 
-  html:
-    toc: true
+#   html:
+#     toc: true
 ---
 
 \newcommand{\ds}{\displaystyle}
@@ -22,6 +22,8 @@ library("janitor")
 library("patchwork")
 library("skimr")
 library("tidyverse")
+
+knitr::opts_chunk$set(echo = TRUE)
 
 tips_df <- readr::read_csv("tips.csv")
 ```

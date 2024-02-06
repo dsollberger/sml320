@@ -2,12 +2,12 @@
 title: "2: Bayes' Rule"
 author: "Derek Sollberger"
 date: "2024-02-01"
+format:
+  revealjs:
+    scrollable: true
 # format: 
-#   revealjs:
-#     scrollable: true
-format: 
-  html:
-    toc: true
+#   html:
+#     toc: true
 ---
 
 \newcommand{\ds}{\displaystyle}
