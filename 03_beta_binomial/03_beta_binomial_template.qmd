@@ -1,0 +1,99 @@
+---
+title: "3: Beta-Binomial Models"
+author: "you"
+date: "2023-02-06"
+# format: 
+#   revealjs:
+#     scrollable: true
+format: 
+  html:
+    toc: true
+---
+
+Today, let's see if the following R code runs on your computer.
+
+Remember to install packages as needed.
+
+```{r}
+#| message: false
+#| warning: false
+
+library("bayesrules")
+library("gt")
+library("janitor")
+library("patchwork")
+library("skimr")
+library("tidyverse")
+```
+
+Also, place the `tips.csv` file in the same directory as this script.
+
+```{r}
+tips_df <- readr::read_csv("tips.csv")
+```
+
+
+# Scenario 1: Discrete Prior, Computer Simulation
+
+## Simulation Samples
+
+```{r}
+# define possible smoker proportions
+smokers <- data.frame(pi = c(0.25, 0.50, 0.75))
+
+# define prior model
+prior <- c(1/3, 1/3, 1/3)
+
+# simulate 10000 values of pi from the prior
+set.seed(320)
+smoker_sim <- sample_n(smokers, size = 10000, weight = prior, replace = TRUE)
+
+# simulate 10000 samples of customers
+smoker_sim <- smoker_sim |>
+  mutate(y = rbinom(10000, size = 9, prob = pi))
+```
+
+## PMFs
+
+```{r}
+# plot y by pi
+ggplot(smoker_sim, aes(x = y)) + 
+  stat_count(aes(y = after_stat(prop))) + 
+  facet_wrap(~ pi)
+```
+
+## Posterior Distribution
+
+```{r}
+# focus on simulations with y = 4
+four_smokers <- smoker_sim %>% 
+  filter(y == 4)
+
+# summarize the posterior approximation
+four_smokers %>% 
+  tabyl(pi) %>% 
+  adorn_totals("row")
+```
+
+```{r}
+# plot the posterior approximation
+ggplot(four_smokers, aes(x = pi)) + 
+  geom_bar()
+```
+
+
+# Scenario 2: Continuous Prior, Computer Simulation
+
+## Table
+
+```{r}
+summarize_beta_binomial(alpha = 4, beta = 5, y = 7, n = 25) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+## Plot
+
+```{r}
+plot_beta_binomial(alpha = 4, beta = 5, y = 7, n = 25) +
+  theme_minimal()
+```

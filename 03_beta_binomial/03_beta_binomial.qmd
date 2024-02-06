@@ -417,7 +417,13 @@ That is, the gamma function is a generalization of the factorial.
 A **hyperparameter** is a parameter used in a prior model.
 :::
 
-Explore! Matt Bognar at the University of Iowa created this [great webapp](https://homepage.stat.uiowa.edu/~mbognar/applets/beta.html) to explore the beta distribution.
+::: {.callout-tip collapse="true"}
+
+## Explore! 
+
+Matt Bognar at the University of Iowa created this [great webapp](https://homepage.stat.uiowa.edu/~mbognar/applets/beta.html) to explore the beta distribution.
+
+:::
 
 ::: {.callout-note collapse="true"}
 ## Uniform Distribution
@@ -630,8 +636,28 @@ plot_beta_binomial(alpha = 4, beta = 5, y = 7, n = 25) +
 
 ::::
 
+# Classroom Activity
 
 
+* In Canvas, find the `templates` folder
+    * SML 320 --> Files --> code templates
+* Download today's files
+    * template: `03_beta_binomial_template.qmd`
+    * data file: `tips.csv`
+* Place both files into the same folder on your computer
+    * advice: make a "SML 320" folder on your computer desktop
+* double-click the QMD file
+    * this opens `RStudio` and sets the directory location
+* try to run the code as-is
+    * use `install.packages()` when needed
+
+```{r}
+sessionInfo()
+```
+
+I doubt that any of my students are Frasier fans, but I made this for our class anyway
+
+![Frasier](frasier_posterior.png)
 
 
 
