@@ -1,0 +1,77 @@
+---
+title: "4: Balance and Sequentiality"
+author: "Derek Sollberger"
+date: "2024-02-08"
+# format:
+#   revealjs:
+#     scrollable: true
+format:
+  html:
+    toc: true
+---
+
+\newcommand{\ds}{\displaystyle}
+
+```{r}
+#| message: false
+#| warning: false
+
+library("bayesrules")
+library("gt")
+library("janitor")
+library("patchwork")
+library("skimr")
+library("tidyverse")
+
+knitr::opts_chunk$set(echo = TRUE)
+
+tips_df <- readr::read_csv("tips.csv")
+```
+
+
+## Journey so far
+
+With hopes of learning more about a target probability
+$$\pi \in [0,1]$$
+we have been applying beta-binomial models
+
+$$\begin{array}{rrcl}
+  \text{prior: } & \pi & \sim & \text{Beta}(\alpha, \beta) \\
+  \text{likelihood: } & Y|\pi & \sim & \text{Bin}(y, \pi) \\
+  \text{posterior: } & \pi|(Y = y) & \sim & \text{Beta}(\alpha + y, \beta + n - y) \\
+\end{array}$$
+
+# Experiment 1: Different Priors
+
+# Experiment 2: Different Data
+
+# Weights
+
+# Experiment 3: Sequential Data Sets
+
+
+
+
+
+
+
+
+
+
+:::: {.columns}
+
+::: {.column width="50%"}
+	
+:::
+
+::: {.column width="50%"}
+
+:::
+
+::::
+
+:::: {.panel-tabset}
+
+
+
+::::
