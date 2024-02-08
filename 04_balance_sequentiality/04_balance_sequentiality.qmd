@@ -17,10 +17,7 @@ format:
 #| warning: false
 
 library("bayesrules")
-library("gt")
-library("janitor")
 library("patchwork")
-library("skimr")
 library("tidyverse")
 
 knitr::opts_chunk$set(echo = TRUE)
@@ -41,22 +38,747 @@ $$\begin{array}{rrcl}
   \text{posterior: } & \pi|(Y = y) & \sim & \text{Beta}(\alpha + y, \beta + n - y) \\
 \end{array}$$
 
-# Experiment 1: Different Priors
+# Experiment 1: Different Prior Averages
 
-# Experiment 2: Different Data
+## Using `plot_beta`
+
+:::: {.panel-tabset}
+
+## Inclinations
+
+```{r}
+#| echo: false
+#| eval: true
+
+p1 <- bayesrules::plot_beta(4,8) +
+  labs(title = "Beta(4,8), E(pi) = 1/3")
+p2 <- bayesrules::plot_beta(6,6) +
+  labs(title = "Beta(6,6), E(pi) = 1/2")
+p3 <- bayesrules::plot_beta(8,4) +
+  labs(title = "Beta(8,4), E(pi) = 2/3")
+
+# patchwork
+p1 / p2 / p3
+```
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+p1 <- bayesrules::plot_beta(4,8) +
+  labs(title = "Beta(4,8), E(pi) = 1/3")
+p2 <- bayesrules::plot_beta(6,6) +
+  labs(title = "Beta(6,6), E(pi) = 1/2")
+p3 <- bayesrules::plot_beta(8,4) +
+  labs(title = "Beta(8,4), E(pi) = 2/3")
+
+# patchwork
+p1 / p2 / p3
+```
+
+::::
+
+## Subset: Thursday Customers
+
+```{r}
+Thursday <- tips_df |>
+  filter(day == "Thur")
+
+n_Thursday <- nrow(Thursday)
+y_Thursday <- Thursday |> 
+  filter(smoker == "Yes") |> 
+  nrow()
+```
+
+## Using `plot_beta_binomial`
+
+:::: {.panel-tabset}
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+p1 <- bayesrules::plot_beta_binomial(4, 8, y_Thursday, n_Thursday) +
+  labs(title = "Beta(4,8) prior")
+p2 <- bayesrules::plot_beta_binomial(6, 6, y_Thursday, n_Thursday) +
+  labs(title = "Beta(6,6) prior")
+p3 <- bayesrules::plot_beta_binomial(8, 4, y_Thursday, n_Thursday) +
+  labs(title = "Beta(8,4) prior")
+
+# patchwork
+p1 / p2 / p3
+```
+
+## Plots
+
+```{r}
+#| echo: false
+#| eval: true
+
+p1 <- bayesrules::plot_beta_binomial(4, 8, y_Thursday, n_Thursday) +
+  labs(title = "Beta(4,8) prior")
+p2 <- bayesrules::plot_beta_binomial(6, 6, y_Thursday, n_Thursday) +
+  labs(title = "Beta(6,6) prior")
+p3 <- bayesrules::plot_beta_binomial(8, 4, y_Thursday, n_Thursday) +
+  labs(title = "Beta(8,4) prior")
+
+# patchwork
+p1 / p2 / p3
+```
+
+## Statistics
+
+```{r}
+bayesrules::summarize_beta_binomial(4, 8, y_Thursday, n_Thursday) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+```{r}
+bayesrules::summarize_beta_binomial(6, 6, y_Thursday, n_Thursday) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+```{r}
+bayesrules::summarize_beta_binomial(8, 4, y_Thursday, n_Thursday) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+::::
+
+# Experiment 2: Different Prior Variance
+
+## Certainty
+
+:::: {.panel-tabset}
+
+## Inclinations
+
+```{r}
+#| echo: false
+#| eval: true
+
+p1 <- bayesrules::plot_beta(1,1) +
+  labs(title = "Uniform Prior: Beta(1,1), var(pi) = 0.0833")
+p2 <- bayesrules::plot_beta(4,4) +
+  labs(title = "Vague Prior: Beta(4,4), var(pi) = 0.0278")
+p3 <- bayesrules::plot_beta(16,16) +
+  labs(title = "Informative Prior: Beta(16,16), var(pi) = 0.0076")
+
+# patchwork
+p1 / p2 / p3
+```
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+p1 <- bayesrules::plot_beta(1,1) +
+  labs(title = "Uniform Prior: Beta(1,1), var(pi) = 0.0833")
+p2 <- bayesrules::plot_beta(4,4) +
+  labs(title = "Vague Prior: Beta(4,4), var(pi) = 0.0278")
+p3 <- bayesrules::plot_beta(16,16) +
+  labs(title = "Informative Prior: Beta(16,16), var(pi) = 0.0076")
+
+# patchwork
+p1 / p2 / p3
+```
+
+::::
+
+## Subset: Friday Customers
+
+```{r}
+Friday <- tips_df |>
+  filter(day == "Fri")
+
+n_Friday <- nrow(Friday)
+y_Friday <- Friday |> 
+  filter(smoker == "Yes") |> 
+  nrow()
+```
+
+
+## Applying the Friday Crowd
+
+:::: {.panel-tabset}
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+p1 <- bayesrules::plot_beta_binomial(1, 1, y_Friday, n_Friday) +
+  labs(title = "Uniform Prior: Beta(1,1)")
+p2 <- bayesrules::plot_beta_binomial(4, 4, y_Friday, n_Friday) +
+  labs(title = "Vague Prior: Beta(4,4)")
+p3 <- bayesrules::plot_beta_binomial(16, 16, y_Friday, n_Friday) +
+  labs(title = "Informative Prior: Beta(16,16)")
+
+# patchwork
+p1 / p2 / p3
+```
+
+## Plots
+
+```{r}
+#| echo: false
+#| eval: true
+
+p1 <- bayesrules::plot_beta_binomial(1, 1, y_Friday, n_Friday) +
+  labs(title = "Uniform Prior: Beta(1,1)")
+p2 <- bayesrules::plot_beta_binomial(4, 4, y_Friday, n_Friday) +
+  labs(title = "Vague Prior: Beta(4,4)")
+p3 <- bayesrules::plot_beta_binomial(16, 16, y_Friday, n_Friday) +
+  labs(title = "Informative Prior: Beta(16,16)")
+
+# patchwork
+p1 / p2 / p3
+```
+
+## Statistics
+
+```{r}
+bayesrules::summarize_beta_binomial(1, 1, y_Friday, n_Friday) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+```{r}
+bayesrules::summarize_beta_binomial(4, 4, y_Friday, n_Friday) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+```{r}
+bayesrules::summarize_beta_binomial(16, 16, y_Friday, n_Friday) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+::::
+
+
+# Experiment 3: Different Data Sets
+
+## Skewed Prior
+
+:::: {.panel-tabset}
+
+## Fixed Prior
+
+```{r}
+#| echo: false
+#| eval: true
+
+bayesrules::plot_beta(1,32) +
+  labs(title = "Skewed Prior: Beta(1,32), var(pi) = 0.0009")
+```
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+bayesrules::plot_beta(1,32) +
+  labs(title = "Skewed Prior: Beta(1,32), var(pi) = 0.0009")
+```
+
+::::
+
+## Subset: Saturday Customers
+
+```{r}
+Saturday <- tips_df |>
+  filter(day == "Sat")
+
+n_Saturday <- nrow(Saturday)
+y_Saturday <- Saturday |> 
+  filter(smoker == "Yes") |> 
+  nrow()
+```
+
+## Friday versus Saturday
+
+:::: {.panel-tabset}
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+p1 <- bayesrules::plot_beta_binomial(1, 32, y_Friday, n_Friday) +
+  labs(title = "Friday Customers")
+p2 <- bayesrules::plot_beta_binomial(1, 32, y_Saturday, n_Saturday) +
+  labs(title = "Saturday Customers")
+
+# patchwork
+p1 / p2
+```
+
+## Plots
+
+```{r}
+#| echo: false
+#| eval: true
+
+p1 <- bayesrules::plot_beta_binomial(1, 32, y_Friday, n_Friday) +
+  labs(title = "Friday Customers")
+p2 <- bayesrules::plot_beta_binomial(1, 32, y_Saturday, n_Saturday) +
+  labs(title = "Saturday Customers")
+
+# patchwork
+p1 / p2
+```
+
+## Statistics
+
+```{r}
+bayesrules::summarize_beta_binomial(1, 32, y_Friday, n_Friday) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+```{r}
+bayesrules::summarize_beta_binomial(1, 32, y_Saturday, n_Saturday) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+::::
+
 
 # Weights
 
-# Experiment 3: Sequential Data Sets
+With a $\text{Beta}(\alpha, \beta)$ prior distribution along with a posterior distribution $\text{Beta}(\alpha + y, \beta + n - y)$ from observing $y$ "successes" in $n$ trials, we have their respective expected values,
+
+$$\text{E}(\pi) = \ds\frac{\alpha}{\alpha + \beta}, \quad \text{E}(\pi|Y = y) = \ds\frac{\alpha + y}{\alpha + \beta + n}$$
+with a little bit of algebra
+
+
+::: {.callout-note collapse="true"}
+## the algebra
+
+$$\begin{array}{rcl}
+  \text{E}(\pi|Y = y) & = & \ds\frac{\alpha}{\alpha + \beta + n} + \ds\frac{y}{\alpha + \beta + n} \\
+  ~ & = & \ds\frac{\alpha}{\alpha + \beta + n} \cdot \ds\frac{\alpha + \beta}{\alpha + \beta} + \ds\frac{y}{\alpha + \beta + n} \cdot \ds\frac{n}{n} \\
+  ~ & = & \ds\frac{\alpha + \beta}{\alpha + \beta + n} \cdot \ds\frac{\alpha}{\alpha + \beta} + \ds\frac{n}{\alpha + \beta + n} \cdot \ds\frac{y}{n} \\
+  ~ & = & \ds\frac{\alpha + \beta}{\alpha + \beta + n} \cdot \text{E}(\pi) + \ds\frac{n}{\alpha + \beta + n} \cdot \ds\frac{y}{n} \\
+\end{array}$$
+:::
+
+we get
+
+$$\text{E}(\pi|Y = y) = \ds\frac{\alpha + \beta}{\alpha + \beta + n} \cdot \text{E}(\pi) + \ds\frac{n}{\alpha + \beta + n} \cdot \ds\frac{y}{n}$$
+That is, we can express the expected value of the posterior distribution as a weighted average of the expected value of the prior distribution $\text{E}(\pi)$ and the sample success rate $\frac{y}{n}$ since
+
+$$\ds\frac{\alpha + \beta}{\alpha + \beta + n} + \ds\frac{n}{\alpha + \beta + n} = 1$$
+
+* What happens if we have relatively small data sets?
+* What happens if we have relatively large data sets?
+
+
+# Experiment 4: Does Order Matter?
+
+## Vague Prior Revisited
+
+:::: {.panel-tabset}
+
+## Vague Prior
+
+```{r}
+#| echo: false
+#| eval: true
+
+bayesrules::plot_beta(4,4) +
+  labs(title = "Vague Prior: Beta(4,4), var(pi) = 0.0278")
+```
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+bayesrules::plot_beta(4,4) +
+  labs(title = "Vague Prior: Beta(4,4), var(pi) = 0.0278")
+```
+
+::::
+
+## Subsets: Lunch and Dinner
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+```{r}
+Lunch <- tips_df |>
+  filter(time == "Lunch")
+
+n_Lunch <- nrow(Lunch)
+y_Lunch <- Lunch |> 
+  filter(smoker == "Yes") |> 
+  nrow()
+```
+	
+:::
+
+::: {.column width="50%"}
+```{r}
+Dinner <- tips_df |>
+  filter(time == "Dinner")
+
+n_Dinner <- nrow(Dinner)
+y_Dinner <- Dinner |> 
+  filter(smoker == "Yes") |> 
+  nrow()
+```
+:::
+
+::::
+
+## Lunch First, then Dinner
+
+:::: {.panel-tabset}
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+alpha_1 <- 4
+beta_1  <- 4
+p1 <- bayesrules::plot_beta_binomial(alpha_1, beta_1, y_Lunch, n_Lunch) +
+  labs(title = "Lunch First")
+
+alpha_2 <- alpha_1 + y_Lunch
+beta_2  <- beta_1 + n_Lunch - y_Lunch
+p2 <- bayesrules::plot_beta_binomial(alpha_2, beta_2, y_Dinner, n_Dinner) +
+  labs(title = "then Dinner")
+
+# patchwork
+p1 / p2
+```
+
+## Plots
+
+```{r}
+#| echo: false
+#| eval: true
+
+alpha_1 <- 4
+beta_1  <- 4
+p1 <- bayesrules::plot_beta_binomial(alpha_1, beta_1, y_Lunch, n_Lunch) +
+  labs(title = "Lunch First")
+
+alpha_2 <- alpha_1 + y_Lunch
+beta_2  <- beta_1 + n_Lunch - y_Lunch
+p2 <- bayesrules::plot_beta_binomial(alpha_2, beta_2, y_Dinner, n_Dinner) +
+  labs(title = "then Dinner")
+
+# patchwork
+p1 / p2
+```
+
+## Statistics
+
+### Lunch First
+
+```{r}
+bayesrules::summarize_beta_binomial(alpha_1, beta_1, y_Lunch, n_Lunch) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+### then Dinner
+
+```{r}
+bayesrules::summarize_beta_binomial(alpha_2, beta_2, y_Dinner, n_Dinner) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+::::
+
+## Dinner First, then Lunch
+
+:::: {.panel-tabset}
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+alpha_1 <- 4
+beta_1  <- 4
+p1 <- bayesrules::plot_beta_binomial(alpha_1, beta_1, y_Dinner, n_Dinner) +
+  labs(title = "Dinner First")
+
+alpha_2 <- alpha_1 + y_Dinner
+beta_2  <- beta_1 + n_Dinner - y_Dinner
+p2 <- bayesrules::plot_beta_binomial(alpha_2, beta_2, y_Lunch, n_Lunch) +
+  labs(title = "then Lunch")
+
+# patchwork
+p1 / p2
+```
+
+## Plots
+
+```{r}
+#| echo: false
+#| eval: true
+
+alpha_1 <- 4
+beta_1  <- 4
+p1 <- bayesrules::plot_beta_binomial(alpha_1, beta_1, y_Dinner, n_Dinner) +
+  labs(title = "Dinner First")
+
+alpha_2 <- alpha_1 + y_Dinner
+beta_2  <- beta_1 + n_Dinner - y_Dinner
+p2 <- bayesrules::plot_beta_binomial(alpha_2, beta_2, y_Lunch, n_Lunch) +
+  labs(title = "then Lunch")
+
+# patchwork
+p1 / p2
+```
+
+## Statistics
+
+### Dinner First
+
+```{r}
+bayesrules::summarize_beta_binomial(alpha_1, beta_1, y_Dinner, n_Dinner) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+### then Lunch
+
+```{r}
+bayesrules::summarize_beta_binomial(alpha_2, beta_2, y_Lunch, n_Lunch) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+::::
+
+## Data Invariance
+
+Let $\theta$ be any parameter of interest with prior pdf $f(\theta)$. Then a sequential analysis in which we first observe a data point $y_{1}$ and then a second data point $y_{2}$ will produce the same posterior model of $\theta$ as if we first observe $y_{2}$ and then $y_{1}$:
+
+$$f(\theta|y1,y2)=f(\theta|y2,y1)$$
+
+Similarly, the posterior model is invariant to whether we observe the data all at once or sequentially.
+
+::: {.callout-tip collapse="true"}
+## proof
+
+[Please refer to section 4.5 of the textbook]
+:::
+
+# Experiment 5: The Whole Weekend
+
+## Uniform Prior Revisited
+
+:::: {.panel-tabset}
+
+## Uniform Prior
+
+```{r}
+#| echo: false
+#| eval: true
+
+bayesrules::plot_beta(1,1) +
+  labs(title = "Uniform Prior: Beta(1,1), var(pi) = 0.0833")
+```
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+bayesrules::plot_beta(1,1) +
+  labs(title = "Uniform Prior: Beta(1,1), var(pi) = 0.0833")
+```
+
+::::
+
+## Subset: Sunday Customers
+
+```{r}
+Sunday <- tips_df |>
+  filter(day == "Sun")
+
+n_Sunday <- nrow(Sunday)
+y_Sunday <- Sunday |> 
+  filter(smoker == "Yes") |> 
+  nrow()
+```
+
+## One Day at a Time
+
+:::: {.panel-tabset}
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+alpha <- 1
+beta  <- 1
+p1 <- bayesrules::plot_beta_binomial(alpha, beta, y_Thursday, n_Thursday) +
+  labs(title = "Thursday First")
+
+alpha <- alpha + y_Thursday
+beta  <- beta + n_Thursday - y_Thursday
+p2 <- bayesrules::plot_beta_binomial(alpha, beta, y_Friday, n_Friday) +
+  labs(title = "then Friday")
+
+alpha <- alpha + y_Friday
+beta  <- beta + n_Friday - y_Friday
+p3 <- bayesrules::plot_beta_binomial(alpha, beta, y_Saturday, n_Saturday) +
+  labs(title = "then Saturday")
+
+alpha <- alpha + y_Saturday
+beta  <- beta + n_Saturday - y_Saturday
+p4 <- bayesrules::plot_beta_binomial(alpha, beta, y_Sunday, n_Sunday) +
+  labs(title = "then Sunday")
+
+# patchwork
+p1 / p2 / p3 / p4
+```
+
+## Plots
+
+```{r}
+#| echo: false
+#| eval: true
+
+alpha <- 1
+beta  <- 1
+p1 <- bayesrules::plot_beta_binomial(alpha, beta, y_Thursday, n_Thursday) +
+  labs(title = "Thursday First")
+
+alpha <- alpha + y_Thursday
+beta  <- beta + n_Thursday - y_Thursday
+p2 <- bayesrules::plot_beta_binomial(alpha, beta, y_Friday, n_Friday) +
+  labs(title = "then Friday")
+
+alpha <- alpha + y_Friday
+beta  <- beta + n_Friday - y_Friday
+p3 <- bayesrules::plot_beta_binomial(alpha, beta, y_Saturday, n_Saturday) +
+  labs(title = "then Saturday")
+
+alpha <- alpha + y_Saturday
+beta  <- beta + n_Saturday - y_Saturday
+p4 <- bayesrules::plot_beta_binomial(alpha, beta, y_Sunday, n_Sunday) +
+  labs(title = "then Sunday")
+
+# patchwork
+p1 / p2 / p3 / p4
+```
+
+## Statistics
+
+### Thursday First
+
+```{r}
+alpha <- 1
+beta  <- 1
+bayesrules::summarize_beta_binomial(alpha, beta, y_Thursday, n_Thursday) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+### then Friday
+
+```{r}
+alpha <- alpha + y_Thursday
+beta  <- beta + n_Thursday - y_Thursday
+bayesrules::summarize_beta_binomial(alpha, beta, y_Friday, n_Friday) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+### then Saturday
+
+```{r}
+alpha <- alpha + y_Friday
+beta  <- beta + n_Friday - y_Friday
+bayesrules::summarize_beta_binomial(alpha, beta, y_Saturday, n_Saturday) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+### then Sunday
+
+```{r}
+alpha <- alpha + y_Saturday
+beta  <- beta + n_Saturday - y_Saturday
+bayesrules::summarize_beta_binomial(alpha, beta, y_Sunday, n_Sunday) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+::::
+
+## Subset: All Customers
+
+```{r}
+n_all <- nrow(tips_df)
+y_all <- tips_df |> 
+  filter(smoker == "Yes") |> 
+  nrow()
+```
+
+
+## All at Once
+
+:::: {.panel-tabset}
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+alpha <- 1
+beta  <- 1
+bayesrules::plot_beta_binomial(alpha, beta, y_all, n_all) +
+  labs(title = "All at Once")
+```
+
+## Plot
+
+```{r}
+#| echo: false
+#| eval: true
+
+alpha <- 1
+beta  <- 1
+bayesrules::plot_beta_binomial(alpha, beta, y_all, n_all) +
+  labs(title = "All at Once")
+```
+
+## Statistics
+
+```{r}
+alpha <- 1
+beta  <- 1
+bayesrules::summarize_beta_binomial(alpha, beta, y_all, n_all) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+::::
 
 
 
 
 
-
-
-
-
+```{r}
+sessionInfo()
+```
 
 :::: {.columns}
 

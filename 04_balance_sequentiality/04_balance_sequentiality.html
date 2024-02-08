@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.3.353">
+<meta name="generator" content="quarto-1.3.450">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -84,6 +84,41 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
    
   <ul>
   <li><a href="#journey-so-far" id="toc-journey-so-far" class="nav-link active" data-scroll-target="#journey-so-far">Journey so far</a></li>
+  <li><a href="#experiment-1-different-prior-averages" id="toc-experiment-1-different-prior-averages" class="nav-link" data-scroll-target="#experiment-1-different-prior-averages">Experiment 1: Different Prior Averages</a>
+  <ul class="collapse">
+  <li><a href="#using-plot_beta" id="toc-using-plot_beta" class="nav-link" data-scroll-target="#using-plot_beta">Using <code>plot_beta</code></a></li>
+  <li><a href="#subset-thursday-customers" id="toc-subset-thursday-customers" class="nav-link" data-scroll-target="#subset-thursday-customers">Subset: Thursday Customers</a></li>
+  <li><a href="#using-plot_beta_binomial" id="toc-using-plot_beta_binomial" class="nav-link" data-scroll-target="#using-plot_beta_binomial">Using <code>plot_beta_binomial</code></a></li>
+  </ul></li>
+  <li><a href="#experiment-2-different-prior-variance" id="toc-experiment-2-different-prior-variance" class="nav-link" data-scroll-target="#experiment-2-different-prior-variance">Experiment 2: Different Prior Variance</a>
+  <ul class="collapse">
+  <li><a href="#certainty" id="toc-certainty" class="nav-link" data-scroll-target="#certainty">Certainty</a></li>
+  <li><a href="#subset-friday-customers" id="toc-subset-friday-customers" class="nav-link" data-scroll-target="#subset-friday-customers">Subset: Friday Customers</a></li>
+  <li><a href="#applying-the-friday-crowd" id="toc-applying-the-friday-crowd" class="nav-link" data-scroll-target="#applying-the-friday-crowd">Applying the Friday Crowd</a></li>
+  </ul></li>
+  <li><a href="#experiment-3-different-data-sets" id="toc-experiment-3-different-data-sets" class="nav-link" data-scroll-target="#experiment-3-different-data-sets">Experiment 3: Different Data Sets</a>
+  <ul class="collapse">
+  <li><a href="#skewed-prior" id="toc-skewed-prior" class="nav-link" data-scroll-target="#skewed-prior">Skewed Prior</a></li>
+  <li><a href="#subset-saturday-customers" id="toc-subset-saturday-customers" class="nav-link" data-scroll-target="#subset-saturday-customers">Subset: Saturday Customers</a></li>
+  <li><a href="#friday-versus-saturday" id="toc-friday-versus-saturday" class="nav-link" data-scroll-target="#friday-versus-saturday">Friday versus Saturday</a></li>
+  </ul></li>
+  <li><a href="#weights" id="toc-weights" class="nav-link" data-scroll-target="#weights">Weights</a></li>
+  <li><a href="#experiment-4-does-order-matter" id="toc-experiment-4-does-order-matter" class="nav-link" data-scroll-target="#experiment-4-does-order-matter">Experiment 4: Does Order Matter?</a>
+  <ul class="collapse">
+  <li><a href="#vague-prior-revisited" id="toc-vague-prior-revisited" class="nav-link" data-scroll-target="#vague-prior-revisited">Vague Prior Revisited</a></li>
+  <li><a href="#subsets-lunch-and-dinner" id="toc-subsets-lunch-and-dinner" class="nav-link" data-scroll-target="#subsets-lunch-and-dinner">Subsets: Lunch and Dinner</a></li>
+  <li><a href="#lunch-first-then-dinner" id="toc-lunch-first-then-dinner" class="nav-link" data-scroll-target="#lunch-first-then-dinner">Lunch First, then Dinner</a></li>
+  <li><a href="#dinner-first-then-lunch" id="toc-dinner-first-then-lunch" class="nav-link" data-scroll-target="#dinner-first-then-lunch">Dinner First, then Lunch</a></li>
+  <li><a href="#data-invariance" id="toc-data-invariance" class="nav-link" data-scroll-target="#data-invariance">Data Invariance</a></li>
+  </ul></li>
+  <li><a href="#experiment-5-the-whole-weekend" id="toc-experiment-5-the-whole-weekend" class="nav-link" data-scroll-target="#experiment-5-the-whole-weekend">Experiment 5: The Whole Weekend</a>
+  <ul class="collapse">
+  <li><a href="#uniform-prior-revisited" id="toc-uniform-prior-revisited" class="nav-link" data-scroll-target="#uniform-prior-revisited">Uniform Prior Revisited</a></li>
+  <li><a href="#subset-sunday-customers" id="toc-subset-sunday-customers" class="nav-link" data-scroll-target="#subset-sunday-customers">Subset: Sunday Customers</a></li>
+  <li><a href="#one-day-at-a-time" id="toc-one-day-at-a-time" class="nav-link" data-scroll-target="#one-day-at-a-time">One Day at a Time</a></li>
+  <li><a href="#subset-all-customers" id="toc-subset-all-customers" class="nav-link" data-scroll-target="#subset-all-customers">Subset: All Customers</a></li>
+  <li><a href="#all-at-once" id="toc-all-at-once" class="nav-link" data-scroll-target="#all-at-once">All at Once</a></li>
+  </ul></li>
   </ul>
 </nav>
 </div>
@@ -120,15 +155,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"bayesrules"</span>)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"gt"</span>)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"janitor"</span>)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"patchwork"</span>)</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"skimr"</span>)</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"tidyverse"</span>)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span>opts_chunk<span class="sc">$</span><span class="fu">set</span>(<span class="at">echo =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>tips_df <span class="ot">&lt;-</span> readr<span class="sc">::</span><span class="fu">read_csv</span>(<span class="st">"tips.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"patchwork"</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"tidyverse"</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span>opts_chunk<span class="sc">$</span><span class="fu">set</span>(<span class="at">echo =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>tips_df <span class="ot">&lt;-</span> readr<span class="sc">::</span><span class="fu">read_csv</span>(<span class="st">"tips.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <section id="journey-so-far" class="level2">
 <h2 class="anchored" data-anchor-id="journey-so-far">Journey so far</h2>
@@ -138,6 +170,751 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   \text{likelihood: } &amp; Y|\pi &amp; \sim &amp; \text{Bin}(y, \pi) \\
   \text{posterior: } &amp; \pi|(Y = y) &amp; \sim &amp; \text{Beta}(\alpha + y, \beta + n - y) \\
 \end{array}\]</span></p>
+</section>
+<section id="experiment-1-different-prior-averages" class="level1">
+<h1>Experiment 1: Different Prior Averages</h1>
+<section id="using-plot_beta" class="level2">
+<h2 class="anchored" data-anchor-id="using-plot_beta">Using <code>plot_beta</code></h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true" href="">Inclinations</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false" href="">Code</a></li></ul>
+<div class="tab-content">
+<div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="04_balance_sequentiality_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> bayesrules<span class="sc">::</span><span class="fu">plot_beta</span>(<span class="dv">4</span>,<span class="dv">8</span>) <span class="sc">+</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Beta(4,8), E(pi) = 1/3"</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> bayesrules<span class="sc">::</span><span class="fu">plot_beta</span>(<span class="dv">6</span>,<span class="dv">6</span>) <span class="sc">+</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Beta(6,6), E(pi) = 1/2"</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>p3 <span class="ot">&lt;-</span> bayesrules<span class="sc">::</span><span class="fu">plot_beta</span>(<span class="dv">8</span>,<span class="dv">4</span>) <span class="sc">+</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Beta(8,4), E(pi) = 2/3"</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># patchwork</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>p1 <span class="sc">/</span> p2 <span class="sc">/</span> p3</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="subset-thursday-customers" class="level2">
+<h2 class="anchored" data-anchor-id="subset-thursday-customers">Subset: Thursday Customers</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>Thursday <span class="ot">&lt;-</span> tips_df <span class="sc">|&gt;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(day <span class="sc">==</span> <span class="st">"Thur"</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>n_Thursday <span class="ot">&lt;-</span> <span class="fu">nrow</span>(Thursday)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>y_Thursday <span class="ot">&lt;-</span> Thursday <span class="sc">|&gt;</span> </span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(smoker <span class="sc">==</span> <span class="st">"Yes"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nrow</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="using-plot_beta_binomial" class="level2">
+<h2 class="anchored" data-anchor-id="using-plot_beta_binomial">Using <code>plot_beta_binomial</code></h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true" href="">Code</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false" href="">Plots</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-3" role="tab" aria-controls="tabset-2-3" aria-selected="false" href="">Statistics</a></li></ul>
+<div class="tab-content">
+<div id="tabset-2-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-2-1-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> bayesrules<span class="sc">::</span><span class="fu">plot_beta_binomial</span>(<span class="dv">4</span>, <span class="dv">8</span>, y_Thursday, n_Thursday) <span class="sc">+</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Beta(4,8) prior"</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> bayesrules<span class="sc">::</span><span class="fu">plot_beta_binomial</span>(<span class="dv">6</span>, <span class="dv">6</span>, y_Thursday, n_Thursday) <span class="sc">+</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Beta(6,6) prior"</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>p3 <span class="ot">&lt;-</span> bayesrules<span class="sc">::</span><span class="fu">plot_beta_binomial</span>(<span class="dv">8</span>, <span class="dv">4</span>, y_Thursday, n_Thursday) <span class="sc">+</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Beta(8,4) prior"</span>)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co"># patchwork</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>p1 <span class="sc">/</span> p2 <span class="sc">/</span> p3</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="04_balance_sequentiality_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-2-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-3-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">summarize_beta_binomial</span>(<span class="dv">4</span>, <span class="dv">8</span>, y_Thursday, n_Thursday) <span class="sc">|&gt;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_if</span>(is.numeric, round, <span class="at">digits =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      model alpha beta   mean   mode    var     sd
+1     prior     4    8 0.3333 0.3000 0.0171 0.1307
+2 posterior    21   53 0.2838 0.2778 0.0027 0.0521</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">summarize_beta_binomial</span>(<span class="dv">6</span>, <span class="dv">6</span>, y_Thursday, n_Thursday) <span class="sc">|&gt;</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_if</span>(is.numeric, round, <span class="at">digits =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      model alpha beta   mean   mode    var     sd
+1     prior     6    6 0.5000 0.5000 0.0192 0.1387
+2 posterior    23   51 0.3108 0.3056 0.0029 0.0534</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">summarize_beta_binomial</span>(<span class="dv">8</span>, <span class="dv">4</span>, y_Thursday, n_Thursday) <span class="sc">|&gt;</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_if</span>(is.numeric, round, <span class="at">digits =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      model alpha beta   mean   mode    var     sd
+1     prior     8    4 0.6667 0.7000 0.0171 0.1307
+2 posterior    25   49 0.3378 0.3333 0.0030 0.0546</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="experiment-2-different-prior-variance" class="level1">
+<h1>Experiment 2: Different Prior Variance</h1>
+<section id="certainty" class="level2">
+<h2 class="anchored" data-anchor-id="certainty">Certainty</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-3-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-1" role="tab" aria-controls="tabset-3-1" aria-selected="true" href="">Inclinations</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-2" role="tab" aria-controls="tabset-3-2" aria-selected="false" href="">Code</a></li></ul>
+<div class="tab-content">
+<div id="tabset-3-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-3-1-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="04_balance_sequentiality_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-3-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-2-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> bayesrules<span class="sc">::</span><span class="fu">plot_beta</span>(<span class="dv">1</span>,<span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Uniform Prior: Beta(1,1), var(pi) = 0.0833"</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> bayesrules<span class="sc">::</span><span class="fu">plot_beta</span>(<span class="dv">4</span>,<span class="dv">4</span>) <span class="sc">+</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Vague Prior: Beta(4,4), var(pi) = 0.0278"</span>)</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>p3 <span class="ot">&lt;-</span> bayesrules<span class="sc">::</span><span class="fu">plot_beta</span>(<span class="dv">16</span>,<span class="dv">16</span>) <span class="sc">+</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Informative Prior: Beta(16,16), var(pi) = 0.0076"</span>)</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="co"># patchwork</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>p1 <span class="sc">/</span> p2 <span class="sc">/</span> p3</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="subset-friday-customers" class="level2">
+<h2 class="anchored" data-anchor-id="subset-friday-customers">Subset: Friday Customers</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>Friday <span class="ot">&lt;-</span> tips_df <span class="sc">|&gt;</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(day <span class="sc">==</span> <span class="st">"Fri"</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>n_Friday <span class="ot">&lt;-</span> <span class="fu">nrow</span>(Friday)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>y_Friday <span class="ot">&lt;-</span> Friday <span class="sc">|&gt;</span> </span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(smoker <span class="sc">==</span> <span class="st">"Yes"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nrow</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="applying-the-friday-crowd" class="level2">
+<h2 class="anchored" data-anchor-id="applying-the-friday-crowd">Applying the Friday Crowd</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-4-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-1" role="tab" aria-controls="tabset-4-1" aria-selected="true" href="">Code</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-2" role="tab" aria-controls="tabset-4-2" aria-selected="false" href="">Plots</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-3" role="tab" aria-controls="tabset-4-3" aria-selected="false" href="">Statistics</a></li></ul>
+<div class="tab-content">
+<div id="tabset-4-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-4-1-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> bayesrules<span class="sc">::</span><span class="fu">plot_beta_binomial</span>(<span class="dv">1</span>, <span class="dv">1</span>, y_Friday, n_Friday) <span class="sc">+</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Uniform Prior: Beta(1,1)"</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> bayesrules<span class="sc">::</span><span class="fu">plot_beta_binomial</span>(<span class="dv">4</span>, <span class="dv">4</span>, y_Friday, n_Friday) <span class="sc">+</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Vague Prior: Beta(4,4)"</span>)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>p3 <span class="ot">&lt;-</span> bayesrules<span class="sc">::</span><span class="fu">plot_beta_binomial</span>(<span class="dv">16</span>, <span class="dv">16</span>, y_Friday, n_Friday) <span class="sc">+</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Informative Prior: Beta(16,16)"</span>)</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="co"># patchwork</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>p1 <span class="sc">/</span> p2 <span class="sc">/</span> p3</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="tabset-4-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-2-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="04_balance_sequentiality_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-4-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-3-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">summarize_beta_binomial</span>(<span class="dv">1</span>, <span class="dv">1</span>, y_Friday, n_Friday) <span class="sc">|&gt;</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_if</span>(is.numeric, round, <span class="at">digits =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      model alpha beta   mean   mode    var     sd
+1     prior     1    1 0.5000    NaN 0.0833 0.2887
+2 posterior    16    5 0.7619 0.7895 0.0082 0.0908</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">summarize_beta_binomial</span>(<span class="dv">4</span>, <span class="dv">4</span>, y_Friday, n_Friday) <span class="sc">|&gt;</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_if</span>(is.numeric, round, <span class="at">digits =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      model alpha beta   mean mode    var     sd
+1     prior     4    4 0.5000 0.50 0.0278 0.1667
+2 posterior    19    8 0.7037 0.72 0.0074 0.0863</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">summarize_beta_binomial</span>(<span class="dv">16</span>, <span class="dv">16</span>, y_Friday, n_Friday) <span class="sc">|&gt;</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_if</span>(is.numeric, round, <span class="at">digits =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      model alpha beta   mean   mode    var     sd
+1     prior    16   16 0.5000 0.5000 0.0076 0.0870
+2 posterior    31   20 0.6078 0.6122 0.0046 0.0677</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="experiment-3-different-data-sets" class="level1">
+<h1>Experiment 3: Different Data Sets</h1>
+<section id="skewed-prior" class="level2">
+<h2 class="anchored" data-anchor-id="skewed-prior">Skewed Prior</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-5-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-1" role="tab" aria-controls="tabset-5-1" aria-selected="true" href="">Fixed Prior</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-5-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-2" role="tab" aria-controls="tabset-5-2" aria-selected="false" href="">Code</a></li></ul>
+<div class="tab-content">
+<div id="tabset-5-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-5-1-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="04_balance_sequentiality_files/figure-html/unnamed-chunk-18-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-5-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-5-2-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">plot_beta</span>(<span class="dv">1</span>,<span class="dv">32</span>) <span class="sc">+</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Skewed Prior: Beta(1,32), var(pi) = 0.0009"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="subset-saturday-customers" class="level2">
+<h2 class="anchored" data-anchor-id="subset-saturday-customers">Subset: Saturday Customers</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>Saturday <span class="ot">&lt;-</span> tips_df <span class="sc">|&gt;</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(day <span class="sc">==</span> <span class="st">"Sat"</span>)</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>n_Saturday <span class="ot">&lt;-</span> <span class="fu">nrow</span>(Saturday)</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>y_Saturday <span class="ot">&lt;-</span> Saturday <span class="sc">|&gt;</span> </span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(smoker <span class="sc">==</span> <span class="st">"Yes"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nrow</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="friday-versus-saturday" class="level2">
+<h2 class="anchored" data-anchor-id="friday-versus-saturday">Friday versus Saturday</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-6-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-1" role="tab" aria-controls="tabset-6-1" aria-selected="true" href="">Code</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-6-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-2" role="tab" aria-controls="tabset-6-2" aria-selected="false" href="">Plots</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-6-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-3" role="tab" aria-controls="tabset-6-3" aria-selected="false" href="">Statistics</a></li></ul>
+<div class="tab-content">
+<div id="tabset-6-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-6-1-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> bayesrules<span class="sc">::</span><span class="fu">plot_beta_binomial</span>(<span class="dv">1</span>, <span class="dv">32</span>, y_Friday, n_Friday) <span class="sc">+</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Friday Customers"</span>)</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> bayesrules<span class="sc">::</span><span class="fu">plot_beta_binomial</span>(<span class="dv">1</span>, <span class="dv">32</span>, y_Saturday, n_Saturday) <span class="sc">+</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Saturday Customers"</span>)</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="co"># patchwork</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>p1 <span class="sc">/</span> p2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="tabset-6-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-6-2-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="04_balance_sequentiality_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-6-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-6-3-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">summarize_beta_binomial</span>(<span class="dv">1</span>, <span class="dv">32</span>, y_Friday, n_Friday) <span class="sc">|&gt;</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_if</span>(is.numeric, round, <span class="at">digits =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      model alpha beta   mean mode   var     sd
+1     prior     1   32 0.0303  0.0 9e-04 0.0294
+2 posterior    16   36 0.3077  0.3 4e-03 0.0634</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">summarize_beta_binomial</span>(<span class="dv">1</span>, <span class="dv">32</span>, y_Saturday, n_Saturday) <span class="sc">|&gt;</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_if</span>(is.numeric, round, <span class="at">digits =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      model alpha beta   mean   mode    var     sd
+1     prior     1   32 0.0303 0.0000 0.0009 0.0294
+2 posterior    43   77 0.3583 0.3559 0.0019 0.0436</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="weights" class="level1">
+<h1>Weights</h1>
+<p>With a <span class="math inline">\(\text{Beta}(\alpha, \beta)\)</span> prior distribution along with a posterior distribution <span class="math inline">\(\text{Beta}(\alpha + y, \beta + n - y)\)</span> from observing <span class="math inline">\(y\)</span> “successes” in <span class="math inline">\(n\)</span> trials, we have their respective expected values,</p>
+<p><span class="math display">\[\text{E}(\pi) = \displaystyle\frac{\alpha}{\alpha + \beta}, \quad \text{E}(\pi|Y = y) = \displaystyle\frac{\alpha + y}{\alpha + \beta + n}\]</span> with a little bit of algebra</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+the algebra
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><span class="math display">\[\begin{array}{rcl}
+  \text{E}(\pi|Y = y) &amp; = &amp; \displaystyle\frac{\alpha}{\alpha + \beta + n} + \displaystyle\frac{y}{\alpha + \beta + n} \\
+  ~ &amp; = &amp; \displaystyle\frac{\alpha}{\alpha + \beta + n} \cdot \displaystyle\frac{\alpha + \beta}{\alpha + \beta} + \displaystyle\frac{y}{\alpha + \beta + n} \cdot \displaystyle\frac{n}{n} \\
+  ~ &amp; = &amp; \displaystyle\frac{\alpha + \beta}{\alpha + \beta + n} \cdot \displaystyle\frac{\alpha}{\alpha + \beta} + \displaystyle\frac{n}{\alpha + \beta + n} \cdot \displaystyle\frac{y}{n} \\
+  ~ &amp; = &amp; \displaystyle\frac{\alpha + \beta}{\alpha + \beta + n} \cdot \text{E}(\pi) + \displaystyle\frac{n}{\alpha + \beta + n} \cdot \displaystyle\frac{y}{n} \\
+\end{array}\]</span></p>
+</div>
+</div>
+</div>
+<p>we get</p>
+<p><span class="math display">\[\text{E}(\pi|Y = y) = \displaystyle\frac{\alpha + \beta}{\alpha + \beta + n} \cdot \text{E}(\pi) + \displaystyle\frac{n}{\alpha + \beta + n} \cdot \displaystyle\frac{y}{n}\]</span> That is, we can express the expected value of the posterior distribution as a weighted average of the expected value of the prior distribution <span class="math inline">\(\text{E}(\pi)\)</span> and the sample success rate <span class="math inline">\(\frac{y}{n}\)</span> since</p>
+<p><span class="math display">\[\displaystyle\frac{\alpha + \beta}{\alpha + \beta + n} + \displaystyle\frac{n}{\alpha + \beta + n} = 1\]</span></p>
+<ul>
+<li>What happens if we have relatively small data sets?</li>
+<li>What happens if we have relatively large data sets?</li>
+</ul>
+</section>
+<section id="experiment-4-does-order-matter" class="level1">
+<h1>Experiment 4: Does Order Matter?</h1>
+<section id="vague-prior-revisited" class="level2">
+<h2 class="anchored" data-anchor-id="vague-prior-revisited">Vague Prior Revisited</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-7-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-1" role="tab" aria-controls="tabset-7-1" aria-selected="true" href="">Vague Prior</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-7-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-2" role="tab" aria-controls="tabset-7-2" aria-selected="false" href="">Code</a></li></ul>
+<div class="tab-content">
+<div id="tabset-7-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-7-1-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="04_balance_sequentiality_files/figure-html/unnamed-chunk-25-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-7-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-7-2-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">plot_beta</span>(<span class="dv">4</span>,<span class="dv">4</span>) <span class="sc">+</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Vague Prior: Beta(4,4), var(pi) = 0.0278"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="subsets-lunch-and-dinner" class="level2">
+<h2 class="anchored" data-anchor-id="subsets-lunch-and-dinner">Subsets: Lunch and Dinner</h2>
+<div class="columns">
+<div class="column" style="width:50%;">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>Lunch <span class="ot">&lt;-</span> tips_df <span class="sc">|&gt;</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(time <span class="sc">==</span> <span class="st">"Lunch"</span>)</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>n_Lunch <span class="ot">&lt;-</span> <span class="fu">nrow</span>(Lunch)</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>y_Lunch <span class="ot">&lt;-</span> Lunch <span class="sc">|&gt;</span> </span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(smoker <span class="sc">==</span> <span class="st">"Yes"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nrow</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div><div class="column" style="width:50%;">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>Dinner <span class="ot">&lt;-</span> tips_df <span class="sc">|&gt;</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(time <span class="sc">==</span> <span class="st">"Dinner"</span>)</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>n_Dinner <span class="ot">&lt;-</span> <span class="fu">nrow</span>(Dinner)</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>y_Dinner <span class="ot">&lt;-</span> Dinner <span class="sc">|&gt;</span> </span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(smoker <span class="sc">==</span> <span class="st">"Yes"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nrow</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="lunch-first-then-dinner" class="level2">
+<h2 class="anchored" data-anchor-id="lunch-first-then-dinner">Lunch First, then Dinner</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-8-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-1" role="tab" aria-controls="tabset-8-1" aria-selected="true" href="">Code</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-8-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-2" role="tab" aria-controls="tabset-8-2" aria-selected="false" href="">Plots</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-8-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-3" role="tab" aria-controls="tabset-8-3" aria-selected="false" href="">Statistics</a></li></ul>
+<div class="tab-content">
+<div id="tabset-8-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-8-1-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>alpha_1 <span class="ot">&lt;-</span> <span class="dv">4</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>beta_1  <span class="ot">&lt;-</span> <span class="dv">4</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> bayesrules<span class="sc">::</span><span class="fu">plot_beta_binomial</span>(alpha_1, beta_1, y_Lunch, n_Lunch) <span class="sc">+</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Lunch First"</span>)</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>alpha_2 <span class="ot">&lt;-</span> alpha_1 <span class="sc">+</span> y_Lunch</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>beta_2  <span class="ot">&lt;-</span> beta_1 <span class="sc">+</span> n_Lunch <span class="sc">-</span> y_Lunch</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> bayesrules<span class="sc">::</span><span class="fu">plot_beta_binomial</span>(alpha_2, beta_2, y_Dinner, n_Dinner) <span class="sc">+</span></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"then Dinner"</span>)</span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a><span class="co"># patchwork</span></span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a>p1 <span class="sc">/</span> p2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="tabset-8-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-8-2-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="04_balance_sequentiality_files/figure-html/unnamed-chunk-30-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-8-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-8-3-tab">
+<section id="lunch-first" class="level3">
+<h3 class="anchored" data-anchor-id="lunch-first">Lunch First</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">summarize_beta_binomial</span>(alpha_1, beta_1, y_Lunch, n_Lunch) <span class="sc">|&gt;</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_if</span>(is.numeric, round, <span class="at">digits =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      model alpha beta   mean   mode    var     sd
+1     prior     4    4 0.5000 0.5000 0.0278 0.1667
+2 posterior    27   49 0.3553 0.3514 0.0030 0.0545</code></pre>
+</div>
+</div>
+</section>
+<section id="then-dinner" class="level3">
+<h3 class="anchored" data-anchor-id="then-dinner">then Dinner</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">summarize_beta_binomial</span>(alpha_2, beta_2, y_Dinner, n_Dinner) <span class="sc">|&gt;</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_if</span>(is.numeric, round, <span class="at">digits =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      model alpha beta   mean   mode   var     sd
+1     prior    27   49 0.3553 0.3514 3e-03 0.0545
+2 posterior    97  155 0.3849 0.3840 9e-04 0.0306</code></pre>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+</section>
+<section id="dinner-first-then-lunch" class="level2">
+<h2 class="anchored" data-anchor-id="dinner-first-then-lunch">Dinner First, then Lunch</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-9-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-9-1" role="tab" aria-controls="tabset-9-1" aria-selected="true" href="">Code</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-9-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-9-2" role="tab" aria-controls="tabset-9-2" aria-selected="false" href="">Plots</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-9-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-9-3" role="tab" aria-controls="tabset-9-3" aria-selected="false" href="">Statistics</a></li></ul>
+<div class="tab-content">
+<div id="tabset-9-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-9-1-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>alpha_1 <span class="ot">&lt;-</span> <span class="dv">4</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>beta_1  <span class="ot">&lt;-</span> <span class="dv">4</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> bayesrules<span class="sc">::</span><span class="fu">plot_beta_binomial</span>(alpha_1, beta_1, y_Dinner, n_Dinner) <span class="sc">+</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Dinner First"</span>)</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>alpha_2 <span class="ot">&lt;-</span> alpha_1 <span class="sc">+</span> y_Dinner</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>beta_2  <span class="ot">&lt;-</span> beta_1 <span class="sc">+</span> n_Dinner <span class="sc">-</span> y_Dinner</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> bayesrules<span class="sc">::</span><span class="fu">plot_beta_binomial</span>(alpha_2, beta_2, y_Lunch, n_Lunch) <span class="sc">+</span></span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"then Lunch"</span>)</span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a><span class="co"># patchwork</span></span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>p1 <span class="sc">/</span> p2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="tabset-9-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-9-2-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="04_balance_sequentiality_files/figure-html/unnamed-chunk-34-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-9-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-9-3-tab">
+<section id="dinner-first" class="level3">
+<h3 class="anchored" data-anchor-id="dinner-first">Dinner First</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">summarize_beta_binomial</span>(alpha_1, beta_1, y_Dinner, n_Dinner) <span class="sc">|&gt;</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_if</span>(is.numeric, round, <span class="at">digits =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      model alpha beta   mean   mode    var     sd
+1     prior     4    4 0.5000 0.5000 0.0278 0.1667
+2 posterior    74  110 0.4022 0.4011 0.0013 0.0361</code></pre>
+</div>
+</div>
+</section>
+<section id="then-lunch" class="level3">
+<h3 class="anchored" data-anchor-id="then-lunch">then Lunch</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">summarize_beta_binomial</span>(alpha_2, beta_2, y_Lunch, n_Lunch) <span class="sc">|&gt;</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_if</span>(is.numeric, round, <span class="at">digits =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      model alpha beta   mean   mode    var     sd
+1     prior    74  110 0.4022 0.4011 0.0013 0.0361
+2 posterior    97  155 0.3849 0.3840 0.0009 0.0306</code></pre>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+</section>
+<section id="data-invariance" class="level2">
+<h2 class="anchored" data-anchor-id="data-invariance">Data Invariance</h2>
+<p>Let <span class="math inline">\(\theta\)</span> be any parameter of interest with prior pdf <span class="math inline">\(f(\theta)\)</span>. Then a sequential analysis in which we first observe a data point <span class="math inline">\(y_{1}\)</span> and then a second data point <span class="math inline">\(y_{2}\)</span> will produce the same posterior model of <span class="math inline">\(\theta\)</span> as if we first observe <span class="math inline">\(y_{2}\)</span> and then <span class="math inline">\(y_{1}\)</span>:</p>
+<p><span class="math display">\[f(\theta|y1,y2)=f(\theta|y2,y1)\]</span></p>
+<p>Similarly, the posterior model is invariant to whether we observe the data all at once or sequentially.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+proof
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>[Please refer to section 4.5 of the textbook]</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="experiment-5-the-whole-weekend" class="level1">
+<h1>Experiment 5: The Whole Weekend</h1>
+<section id="uniform-prior-revisited" class="level2">
+<h2 class="anchored" data-anchor-id="uniform-prior-revisited">Uniform Prior Revisited</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-10-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-10-1" role="tab" aria-controls="tabset-10-1" aria-selected="true" href="">Uniform Prior</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-10-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-10-2" role="tab" aria-controls="tabset-10-2" aria-selected="false" href="">Code</a></li></ul>
+<div class="tab-content">
+<div id="tabset-10-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-10-1-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="04_balance_sequentiality_files/figure-html/unnamed-chunk-37-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-10-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-10-2-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">plot_beta</span>(<span class="dv">1</span>,<span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Uniform Prior: Beta(1,1), var(pi) = 0.0833"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="subset-sunday-customers" class="level2">
+<h2 class="anchored" data-anchor-id="subset-sunday-customers">Subset: Sunday Customers</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>Sunday <span class="ot">&lt;-</span> tips_df <span class="sc">|&gt;</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(day <span class="sc">==</span> <span class="st">"Sun"</span>)</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>n_Sunday <span class="ot">&lt;-</span> <span class="fu">nrow</span>(Sunday)</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>y_Sunday <span class="ot">&lt;-</span> Sunday <span class="sc">|&gt;</span> </span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(smoker <span class="sc">==</span> <span class="st">"Yes"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nrow</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="one-day-at-a-time" class="level2">
+<h2 class="anchored" data-anchor-id="one-day-at-a-time">One Day at a Time</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-11-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-11-1" role="tab" aria-controls="tabset-11-1" aria-selected="true" href="">Code</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-11-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-11-2" role="tab" aria-controls="tabset-11-2" aria-selected="false" href="">Plots</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-11-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-11-3" role="tab" aria-controls="tabset-11-3" aria-selected="false" href="">Statistics</a></li></ul>
+<div class="tab-content">
+<div id="tabset-11-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-11-1-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>alpha <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>beta  <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> bayesrules<span class="sc">::</span><span class="fu">plot_beta_binomial</span>(alpha, beta, y_Thursday, n_Thursday) <span class="sc">+</span></span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Thursday First"</span>)</span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>alpha <span class="ot">&lt;-</span> alpha <span class="sc">+</span> y_Thursday</span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>beta  <span class="ot">&lt;-</span> beta <span class="sc">+</span> n_Thursday <span class="sc">-</span> y_Thursday</span>
+<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> bayesrules<span class="sc">::</span><span class="fu">plot_beta_binomial</span>(alpha, beta, y_Friday, n_Friday) <span class="sc">+</span></span>
+<span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"then Friday"</span>)</span>
+<span id="cb42-10"><a href="#cb42-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-11"><a href="#cb42-11" aria-hidden="true" tabindex="-1"></a>alpha <span class="ot">&lt;-</span> alpha <span class="sc">+</span> y_Friday</span>
+<span id="cb42-12"><a href="#cb42-12" aria-hidden="true" tabindex="-1"></a>beta  <span class="ot">&lt;-</span> beta <span class="sc">+</span> n_Friday <span class="sc">-</span> y_Friday</span>
+<span id="cb42-13"><a href="#cb42-13" aria-hidden="true" tabindex="-1"></a>p3 <span class="ot">&lt;-</span> bayesrules<span class="sc">::</span><span class="fu">plot_beta_binomial</span>(alpha, beta, y_Saturday, n_Saturday) <span class="sc">+</span></span>
+<span id="cb42-14"><a href="#cb42-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"then Saturday"</span>)</span>
+<span id="cb42-15"><a href="#cb42-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-16"><a href="#cb42-16" aria-hidden="true" tabindex="-1"></a>alpha <span class="ot">&lt;-</span> alpha <span class="sc">+</span> y_Saturday</span>
+<span id="cb42-17"><a href="#cb42-17" aria-hidden="true" tabindex="-1"></a>beta  <span class="ot">&lt;-</span> beta <span class="sc">+</span> n_Saturday <span class="sc">-</span> y_Saturday</span>
+<span id="cb42-18"><a href="#cb42-18" aria-hidden="true" tabindex="-1"></a>p4 <span class="ot">&lt;-</span> bayesrules<span class="sc">::</span><span class="fu">plot_beta_binomial</span>(alpha, beta, y_Sunday, n_Sunday) <span class="sc">+</span></span>
+<span id="cb42-19"><a href="#cb42-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"then Sunday"</span>)</span>
+<span id="cb42-20"><a href="#cb42-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-21"><a href="#cb42-21" aria-hidden="true" tabindex="-1"></a><span class="co"># patchwork</span></span>
+<span id="cb42-22"><a href="#cb42-22" aria-hidden="true" tabindex="-1"></a>p1 <span class="sc">/</span> p2 <span class="sc">/</span> p3 <span class="sc">/</span> p4</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="tabset-11-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-11-2-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="04_balance_sequentiality_files/figure-html/unnamed-chunk-41-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-11-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-11-3-tab">
+<section id="thursday-first" class="level3">
+<h3 class="anchored" data-anchor-id="thursday-first">Thursday First</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>alpha <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>beta  <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">summarize_beta_binomial</span>(alpha, beta, y_Thursday, n_Thursday) <span class="sc">|&gt;</span></span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_if</span>(is.numeric, round, <span class="at">digits =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      model alpha beta   mean   mode    var     sd
+1     prior     1    1 0.5000    NaN 0.0833 0.2887
+2 posterior    18   46 0.2812 0.2742 0.0031 0.0558</code></pre>
+</div>
+</div>
+</section>
+<section id="then-friday" class="level3">
+<h3 class="anchored" data-anchor-id="then-friday">then Friday</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>alpha <span class="ot">&lt;-</span> alpha <span class="sc">+</span> y_Thursday</span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>beta  <span class="ot">&lt;-</span> beta <span class="sc">+</span> n_Thursday <span class="sc">-</span> y_Thursday</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">summarize_beta_binomial</span>(alpha, beta, y_Friday, n_Friday) <span class="sc">|&gt;</span></span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_if</span>(is.numeric, round, <span class="at">digits =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      model alpha beta   mean   mode    var     sd
+1     prior    18   46 0.2812 0.2742 0.0031 0.0558
+2 posterior    33   50 0.3976 0.3951 0.0029 0.0534</code></pre>
+</div>
+</div>
+</section>
+<section id="then-saturday" class="level3">
+<h3 class="anchored" data-anchor-id="then-saturday">then Saturday</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>alpha <span class="ot">&lt;-</span> alpha <span class="sc">+</span> y_Friday</span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>beta  <span class="ot">&lt;-</span> beta <span class="sc">+</span> n_Friday <span class="sc">-</span> y_Friday</span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">summarize_beta_binomial</span>(alpha, beta, y_Saturday, n_Saturday) <span class="sc">|&gt;</span></span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_if</span>(is.numeric, round, <span class="at">digits =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      model alpha beta   mean   mode    var     sd
+1     prior    33   50 0.3976 0.3951 0.0029 0.0534
+2 posterior    75   95 0.4412 0.4405 0.0014 0.0380</code></pre>
+</div>
+</div>
+</section>
+<section id="then-sunday" class="level3">
+<h3 class="anchored" data-anchor-id="then-sunday">then Sunday</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>alpha <span class="ot">&lt;-</span> alpha <span class="sc">+</span> y_Saturday</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>beta  <span class="ot">&lt;-</span> beta <span class="sc">+</span> n_Saturday <span class="sc">-</span> y_Saturday</span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">summarize_beta_binomial</span>(alpha, beta, y_Sunday, n_Sunday) <span class="sc">|&gt;</span></span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_if</span>(is.numeric, round, <span class="at">digits =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      model alpha beta   mean   mode    var     sd
+1     prior    75   95 0.4412 0.4405 0.0014 0.0380
+2 posterior    94  152 0.3821 0.3811 0.0010 0.0309</code></pre>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+</section>
+<section id="subset-all-customers" class="level2">
+<h2 class="anchored" data-anchor-id="subset-all-customers">Subset: All Customers</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>n_all <span class="ot">&lt;-</span> <span class="fu">nrow</span>(tips_df)</span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>y_all <span class="ot">&lt;-</span> tips_df <span class="sc">|&gt;</span> </span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(smoker <span class="sc">==</span> <span class="st">"Yes"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nrow</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="all-at-once" class="level2">
+<h2 class="anchored" data-anchor-id="all-at-once">All at Once</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-12-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-12-1" role="tab" aria-controls="tabset-12-1" aria-selected="true" href="">Code</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-12-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-12-2" role="tab" aria-controls="tabset-12-2" aria-selected="false" href="">Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-12-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-12-3" role="tab" aria-controls="tabset-12-3" aria-selected="false" href="">Statistics</a></li></ul>
+<div class="tab-content">
+<div id="tabset-12-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-12-1-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>alpha <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>beta  <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">plot_beta_binomial</span>(alpha, beta, y_all, n_all) <span class="sc">+</span></span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"All at Once"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="tabset-12-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-12-2-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="04_balance_sequentiality_files/figure-html/unnamed-chunk-48-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-12-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-12-3-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>alpha <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>beta  <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">summarize_beta_binomial</span>(alpha, beta, y_all, n_all) <span class="sc">|&gt;</span></span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_if</span>(is.numeric, round, <span class="at">digits =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      model alpha beta   mean   mode    var     sd
+1     prior     1    1 0.5000    NaN 0.0833 0.2887
+2 posterior    94  152 0.3821 0.3811 0.0010 0.0309</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>R version 4.3.0 (2023-04-21 ucrt)
+Platform: x86_64-w64-mingw32/x64 (64-bit)
+Running under: Windows 10 x64 (build 19045)
+
+Matrix products: default
+
+
+locale:
+[1] LC_COLLATE=English_United States.utf8 
+[2] LC_CTYPE=English_United States.utf8   
+[3] LC_MONETARY=English_United States.utf8
+[4] LC_NUMERIC=C                          
+[5] LC_TIME=English_United States.utf8    
+
+time zone: America/New_York
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] lubridate_1.9.2  forcats_1.0.0    stringr_1.5.0    dplyr_1.1.3     
+ [5] purrr_1.0.2      readr_2.1.4      tidyr_1.3.0      tibble_3.2.1    
+ [9] ggplot2_3.4.3    tidyverse_2.0.0  patchwork_1.1.2  bayesrules_0.0.2
+
+loaded via a namespace (and not attached):
+  [1] gridExtra_2.3       inline_0.3.19       rlang_1.1.1        
+  [4] magrittr_2.0.3      snakecase_0.11.0    matrixStats_1.0.0  
+  [7] e1071_1.7-13        compiler_4.3.0      loo_2.6.0          
+ [10] callr_3.7.3         vctrs_0.6.3         reshape2_1.4.4     
+ [13] pkgconfig_2.0.3     crayon_1.5.2        fastmap_1.1.1      
+ [16] ellipsis_0.3.2      labeling_0.4.3      utf8_1.2.3         
+ [19] threejs_0.3.3       promises_1.2.1      rmarkdown_2.24     
+ [22] tzdb_0.4.0          markdown_1.8        ps_1.7.5           
+ [25] nloptr_2.0.3        bit_4.0.5           xfun_0.40          
+ [28] jsonlite_1.8.7      later_1.3.1         parallel_4.3.0     
+ [31] prettyunits_1.1.1   R6_2.5.1            dygraphs_1.1.1.6   
+ [34] stringi_1.7.12      StanHeaders_2.26.26 boot_1.3-28.1      
+ [37] Rcpp_1.0.11         rstan_2.21.8        knitr_1.43         
+ [40] zoo_1.8-12          base64enc_0.1-3     bayesplot_1.10.0   
+ [43] httpuv_1.6.11       Matrix_1.5-4        splines_4.3.0      
+ [46] igraph_1.4.3        timechange_0.2.0    tidyselect_1.2.0   
+ [49] rstudioapi_0.15.0   yaml_2.3.7          codetools_0.2-19   
+ [52] miniUI_0.1.1.1      processx_3.8.1      pkgbuild_1.4.0     
+ [55] lattice_0.21-8      plyr_1.8.8          shiny_1.7.5        
+ [58] withr_2.5.2         groupdata2_2.0.2    evaluate_0.21      
+ [61] survival_3.5-5      proxy_0.4-27        RcppParallel_5.1.7 
+ [64] xts_0.13.1          pillar_1.9.0        DT_0.28            
+ [67] stats4_4.3.0        shinyjs_2.1.0       generics_0.1.3     
+ [70] vroom_1.6.3         hms_1.1.3           rstantools_2.3.1   
+ [73] munsell_0.5.0       scales_1.2.1        minqa_1.2.5        
+ [76] gtools_3.9.4        xtable_1.8-4        class_7.3-21       
+ [79] glue_1.6.2          janitor_2.2.0       tools_4.3.0        
+ [82] shinystan_2.6.0     lme4_1.1-33         colourpicker_1.2.0 
+ [85] grid_4.3.0          crosstalk_1.2.0     colorspace_2.1-0   
+ [88] nlme_3.1-162        cli_3.6.1           fansi_1.0.4        
+ [91] gtable_0.3.4        digest_0.6.33       farver_2.1.1       
+ [94] htmlwidgets_1.6.2   htmltools_0.5.6     lifecycle_1.0.4    
+ [97] mime_0.12           rstanarm_2.21.4     bit64_4.0.5        
+[100] shinythemes_1.2.0   MASS_7.3-58.4      </code></pre>
+</div>
+</div>
 <div class="columns">
 <div class="column" style="width:50%;">
 
@@ -151,6 +928,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </div>
 </div>
+</section>
 </section>
 
 </main>
