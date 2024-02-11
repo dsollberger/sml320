@@ -1,0 +1,19 @@
+:::: {.panel-tabset}
+
+## Table
+
+```{r}
+#| echo: false
+#| eval: true
+
+arrest_df <- data.frame(
+  year = seq(2014, 2022),
+  arrests = c(18, 14, 23, 22, 12, 22, 7, 0, 1)
+)
+
+arrest_df |>
+  t() |> #transpose!
+  set_colnames(arrest_df$year)
+```
+
+::::

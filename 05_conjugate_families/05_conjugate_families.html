@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Derek Sollberger">
+<meta name="dcterms.date" content="2024-02-13">
+
+<title>5: Conjugate Families</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="05_conjugate_families_files/libs/clipboard/clipboard.min.js"></script>
+<script src="05_conjugate_families_files/libs/quarto-html/quarto.js"></script>
+<script src="05_conjugate_families_files/libs/quarto-html/popper.min.js"></script>
+<script src="05_conjugate_families_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="05_conjugate_families_files/libs/quarto-html/anchor.min.js"></script>
+<link href="05_conjugate_families_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="05_conjugate_families_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="05_conjugate_families_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="05_conjugate_families_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="05_conjugate_families_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#motivations" id="toc-motivations" class="nav-link active" data-scroll-target="#motivations">Motivations</a>
+  <ul class="collapse">
+  <li><a href="#simple-prior" id="toc-simple-prior" class="nav-link" data-scroll-target="#simple-prior">Simple Prior</a></li>
+  <li><a href="#interpretability" id="toc-interpretability" class="nav-link" data-scroll-target="#interpretability">Interpretability</a></li>
+  <li><a href="#likelihood" id="toc-likelihood" class="nav-link" data-scroll-target="#likelihood">Likelihood</a></li>
+  <li><a href="#posterior-distribution" id="toc-posterior-distribution" class="nav-link" data-scroll-target="#posterior-distribution">Posterior Distribution</a></li>
+  <li><a href="#normalizing-constant" id="toc-normalizing-constant" class="nav-link" data-scroll-target="#normalizing-constant">Normalizing Constant</a></li>
+  <li><a href="#conjugate-priors" id="toc-conjugate-priors" class="nav-link" data-scroll-target="#conjugate-priors">Conjugate Priors</a></li>
+  </ul></li>
+  <li><a href="#poisson-model" id="toc-poisson-model" class="nav-link" data-scroll-target="#poisson-model">Poisson Model</a>
+  <ul class="collapse">
+  <li><a href="#poisson-process" id="toc-poisson-process" class="nav-link" data-scroll-target="#poisson-process">Poisson Process</a></li>
+  <li><a href="#poisson-distribution" id="toc-poisson-distribution" class="nav-link" data-scroll-target="#poisson-distribution">Poisson Distribution</a></li>
+  <li><a href="#guidance" id="toc-guidance" class="nav-link" data-scroll-target="#guidance">Guidance</a></li>
+  <li><a href="#joint-pmf" id="toc-joint-pmf" class="nav-link" data-scroll-target="#joint-pmf">Joint PMF</a></li>
+  <li><a href="#poisson-likelihood" id="toc-poisson-likelihood" class="nav-link" data-scroll-target="#poisson-likelihood">Poisson Likelihood</a></li>
+  <li><a href="#parameter-selection" id="toc-parameter-selection" class="nav-link" data-scroll-target="#parameter-selection">Parameter Selection</a></li>
+  <li><a href="#example-campus-safety" id="toc-example-campus-safety" class="nav-link" data-scroll-target="#example-campus-safety">Example: Campus Safety</a></li>
+  </ul></li>
+  <li><a href="#gamma-model" id="toc-gamma-model" class="nav-link" data-scroll-target="#gamma-model">Gamma Model</a>
+  <ul class="collapse">
+  <li><a href="#terminology" id="toc-terminology" class="nav-link" data-scroll-target="#terminology">Terminology</a></li>
+  <li><a href="#probablity-density-function" id="toc-probablity-density-function" class="nav-link" data-scroll-target="#probablity-density-function">Probablity Density Function</a></li>
+  <li><a href="#tuning-the-prior" id="toc-tuning-the-prior" class="nav-link" data-scroll-target="#tuning-the-prior">Tuning the Prior</a></li>
+  </ul></li>
+  <li><a href="#gamma-poisson-conjugate-family" id="toc-gamma-poisson-conjugate-family" class="nav-link" data-scroll-target="#gamma-poisson-conjugate-family">Gamma-Poisson Conjugate Family</a>
+  <ul class="collapse">
+  <li><a href="#gamma-poisson-bayesian-model" id="toc-gamma-poisson-bayesian-model" class="nav-link" data-scroll-target="#gamma-poisson-bayesian-model">Gamma-Poisson Bayesian Model</a></li>
+  <li><a href="#example-campus-safety-2" id="toc-example-campus-safety-2" class="nav-link" data-scroll-target="#example-campus-safety-2">Example: Campus Safety</a></li>
+  </ul></li>
+  <li><a href="#normal-normal" id="toc-normal-normal" class="nav-link" data-scroll-target="#normal-normal">Normal-Normal</a>
+  <ul class="collapse">
+  <li><a href="#terminology-1" id="toc-terminology-1" class="nav-link" data-scroll-target="#terminology-1">Terminology</a></li>
+  <li><a href="#probablity-density-function-1" id="toc-probablity-density-function-1" class="nav-link" data-scroll-target="#probablity-density-function-1">Probablity Density Function</a></li>
+  <li><a href="#tuning-the-prior-1" id="toc-tuning-the-prior-1" class="nav-link" data-scroll-target="#tuning-the-prior-1">Tuning the Prior</a></li>
+  <li><a href="#likelihood-2" id="toc-likelihood-2" class="nav-link" data-scroll-target="#likelihood-2">Likelihood</a></li>
+  <li><a href="#mles" id="toc-mles" class="nav-link" data-scroll-target="#mles">MLEs</a></li>
+  <li><a href="#dplyr" id="toc-dplyr" class="nav-link" data-scroll-target="#dplyr">dplyr</a></li>
+  <li><a href="#plot-4" id="toc-plot-4" class="nav-link" data-scroll-target="#plot-4">Plot</a></li>
+  <li><a href="#code-6" id="toc-code-6" class="nav-link" data-scroll-target="#code-6">Code</a></li>
+  <li><a href="#normal-normal-conjugacy" id="toc-normal-normal-conjugacy" class="nav-link" data-scroll-target="#normal-normal-conjugacy">Normal-Normal Conjugacy</a></li>
+  <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
+  <li><a href="#model-selection" id="toc-model-selection" class="nav-link" data-scroll-target="#model-selection">Model Selection</a></li>
+  </ul></li>
+  <li><a href="#footnotes" id="toc-footnotes" class="nav-link" data-scroll-target="#footnotes">Footnotes</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">5: Conjugate Families</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Derek Sollberger </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">February 13, 2024</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"bayesrules"</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"ggtext"</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"gt"</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"patchwork"</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"tidyverse"</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span>opts_chunk<span class="sc">$</span><span class="fu">set</span>(<span class="at">echo =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>tips_df <span class="ot">&lt;-</span> readr<span class="sc">::</span><span class="fu">read_csv</span>(<span class="st">"tips.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="motivations" class="level1">
+<h1>Motivations</h1>
+<section id="simple-prior" class="level2">
+<h2 class="anchored" data-anchor-id="simple-prior">Simple Prior</h2>
+<p>Suppose that we wanted to estimate a probability <span class="math inline">\(\pi \in [0,1]\)</span>, but perhaps the beta distribution seems complicated. Instead, we can try an elementary math function like <span class="math inline">\(f(\pi) = 3\pi^{2}\)</span>, where this is a probability density function since</p>
+<p><span class="math display">\[\displaystyle\int_{0}^{1} \! 3\pi^{2} \, d\pi = 1 \text{ and } f(\pi) \geq 0 \text{ for } \pi \in [0,1]\]</span></p>
+</section>
+<section id="interpretability" class="level2">
+<h2 class="anchored" data-anchor-id="interpretability">Interpretability</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true" href="">Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false" href="">Code</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false" href="">Interpretation</a></li></ul>
+<div class="tab-content">
+<div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="05_conjugate_families_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>pi <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="fl">0.01</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>f_pi <span class="ot">&lt;-</span> <span class="dv">3</span><span class="sc">*</span>pi<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>df_for_line <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(pi, f_pi)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>df_for_shade <span class="ot">&lt;-</span> df_for_line <span class="sc">|&gt;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rbind</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">0</span>)) <span class="co">#enforce lower-right corner</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>df_for_line <span class="sc">|&gt;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> pi, <span class="at">y =</span> f_pi)) <span class="sc">+</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_polygon</span>(<span class="at">data =</span> df_for_shade, <span class="at">fill =</span> <span class="st">"#E77500"</span>) <span class="sc">+</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">color =</span> <span class="st">"#121212"</span>, <span class="at">linewidth =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"&lt;span style='color:#E77500'&gt;Parabolic Prior&lt;/span&gt;: f(pi) = 3pi^2"</span>,</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"left-skew"</span>,</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption =</span> <span class="st">"SML 320"</span>) <span class="sc">+</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">plot.title =</span> <span class="fu">element_markdown</span>()) <span class="co">#use ggtext package</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
+<p>If we start with this prior, we are perhaps assuming a situation over <span class="math inline">\([0,1]\)</span> where we are expecting the event to likely occur:</p>
+<p><span class="math display">\[\text{E}(\pi) = \displaystyle\int_{0}^{1} \! \pi \cdot f(\pi) \, d\pi = \displaystyle\frac{3}{4}\]</span></p>
+</div>
+</div>
+</div>
+</section>
+<section id="likelihood" class="level2">
+<h2 class="anchored" data-anchor-id="likelihood">Likelihood</h2>
+<p>Suppose that we observe <span class="math inline">\(Y = 17\)</span> successes in <span class="math inline">\(n = 32\)</span> independent trials, then modeling the likelihood with a binomial model yields</p>
+<p><span class="math display">\[L(\pi|y = 17) = \binom{32}{17}\pi^{17}(1-\pi)^{15} \text{ for } \pi \in [0,1]\]</span></p>
+</section>
+<section id="posterior-distribution" class="level2">
+<h2 class="anchored" data-anchor-id="posterior-distribution">Posterior Distribution</h2>
+<p>Recall that the posterior distribution is proportional to the product of the prior distribution and the likelihood</p>
+<p><span class="math display">\[\begin{array}{rcl}
+  f(\pi|y=17) &amp; \propto &amp; f(\pi) \cdot L(\pi|y=17) \\
+  ~ &amp; \propto &amp; \pi^{2} \cdot \pi^{17}(1-\pi)^{15} \\
+\end{array}\]</span></p>
+<p><em>does not have the same form</em> as our prior <span class="math inline">\(f(\pi) = 3\pi^{2}\)</span></p>
+</section>
+<section id="normalizing-constant" class="level2">
+<h2 class="anchored" data-anchor-id="normalizing-constant">Normalizing Constant</h2>
+<p><span class="math display">\[f(\pi|y=17) = \displaystyle\frac{\pi^{19}(1-\pi)^{15}}{ \int_{0}^{1} \! \pi^{19}(1-\pi)^{15} \, d\pi } \text{ for } \pi \in [0,1]\]</span></p>
+<ul>
+<li>integrals can be tough to compute, even with numerical methods</li>
+<li>very low interpretability</li>
+<li>difficult to compute sample statistics for the posterior distribution (such as mean and variance)</li>
+</ul>
+</section>
+<section id="conjugate-priors" class="level2">
+<h2 class="anchored" data-anchor-id="conjugate-priors">Conjugate Priors</h2>
+<p>Conjugate families have both computational ease and interpretable posterior distributions.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Conjugate Priors
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Let the prior model for parameter <span class="math inline">\(\theta\)</span> have pdf <span class="math inline">\(f(\theta)\)</span> and the model of data Y conditioned on <span class="math inline">\(\theta\)</span> have likelihood function <span class="math inline">\(L(\theta|y)\)</span>. If the resulting posterior model with pdf <span class="math inline">\(f(\theta|y) \propto f(\theta)L(\theta|y)\)</span> is of the same model family as the prior, then we say this is a <strong>conjugate prior</strong>.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="poisson-model" class="level1">
+<h1>Poisson Model</h1>
+<section id="poisson-process" class="level2">
+<h2 class="anchored" data-anchor-id="poisson-process">Poisson Process</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true" href="">Motivation</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false" href="">Goal</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-3" role="tab" aria-controls="tabset-2-3" aria-selected="false" href="">Infinitessimal</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-4" role="tab" aria-controls="tabset-2-4" aria-selected="false" href="">Partial Proof</a></li></ul>
+<div class="tab-content">
+<div id="tabset-2-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-2-1-tab">
+<ul>
+<li>Assume a constant <span class="math inline">\(\lambda\)</span> of arrivals</li>
+<li>Let <span class="math inline">\(N_{t}\)</span> be the number of arrivals in time interval <span class="math inline">\([0,t]\)</span></li>
+<li>Homogeneity: <span class="math inline">\(\text{E}[N_{t}] = \lambda t\)</span> (``rate times time’’)</li>
+<li>Independence: numbers of arrivals in disjoint time intervals are independent random variables</li>
+</ul>
+</div>
+<div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
+<p>erive distribution of number of arrivals</p>
+<ul>
+<li>We expect <span class="math inline">\(\text{E}[N_{t}] = \lambda t\)</span> (``rate times time’’)</li>
+<li>Partition time interval <span class="math inline">\([0,t]\)</span> into <span class="math inline">\(n\)</span> subintervals</li>
+<li>Assuming <span class="math inline">\(n\)</span> is large enough so that each subinterval has zero or one arrival (i.e.&nbsp;Bernoulli trial)</li>
+<li>Probability of arrival in a random subinterval: <span class="math inline">\(p = \displaystyle\frac{\lambda t}{n}\)</span></li>
+</ul>
+<p>So far, we are assuming <span class="math inline">\(N_{t} \sim \text{Bin}(n,p)\)</span></p>
+<p><span class="math display">\[P(N_{t} = k) = \binom{n}{k} \left(\displaystyle\frac{\lambda t}{n}\right)^{k} \left(1 - \displaystyle\frac{\lambda t}{n}\right)^{n-k}\]</span></p>
+</div>
+<div id="tabset-2-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-3-tab">
+<p>However,</p>
+<ul>
+<li><span class="math inline">\(n\)</span> was arbitrary</li>
+<li>time is a continuous variable</li>
+</ul>
+<p>So let’s take the limit as <span class="math inline">\(n\)</span> goes to infinity.</p>
+<p><span class="math display">\[\displaystyle\lim_{n \to \infty} P(N_{t} = k) = \displaystyle\lim_{n \to \infty} {\color{purple}\binom{n}{k} \left(\displaystyle\frac{\lambda t}{n}\right)^{k}} {\color{blue}\left(1 - \displaystyle\frac{\lambda t}{n}\right)^{n}} {\color{red}\left(1 - \displaystyle\frac{\lambda t}{n}\right)^{-k}}\]</span></p>
+</div>
+<div id="tabset-2-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-4-tab">
+<p>Handling the limit by its factors: <span class="math display">\[\displaystyle\lim_{n \to \infty} {\color{red}\left(1 - \displaystyle\frac{\lambda t}{n}\right)^{-k}} = 1, \quad \displaystyle\lim_{n \to \infty} {\color{blue}\left(1 - \displaystyle\frac{\lambda t}{n}\right)^{n}} = e^{-\lambda t}\]</span></p>
+<p><span class="math display">\[\begin{array}{rcl}
+  \displaystyle\lim_{n \to \infty} {\color{purple}\binom{n}{k} \left(\displaystyle\frac{\lambda t}{n}\right)^{k}} &amp; = &amp; (\lambda t)^{k} \displaystyle\lim_{n \to \infty} \binom{n}{k} \left(\displaystyle\frac{1}{n}\right)^{k} \\
+  ~ &amp; = &amp; (\lambda t)^{k} \displaystyle\lim_{n \to \infty} \displaystyle\frac{n!}{k!(n-k)!} \cdot \displaystyle\frac{1}{n^{k}} \\
+  ~ &amp; = &amp; \displaystyle\frac{(\lambda t)^{k}}{k!} \displaystyle\lim_{n \to \infty} \displaystyle\frac{n!}{(n-k)!} \cdot \displaystyle\frac{1}{n^{k}} \\
+  ~ &amp; = &amp; \displaystyle\frac{(\lambda t)^{k}}{k!} \displaystyle\lim_{n \to \infty} \displaystyle\prod_{i = 0}^{k-1} \displaystyle\frac{n - i}{n} \\
+  ~ &amp; = &amp; \displaystyle\frac{(\lambda t)^{k}}{k!}  \displaystyle\prod_{i = 0}^{k-1} \displaystyle\lim_{n \to \infty} \displaystyle\frac{n - i}{n} \\
+  ~ &amp; = &amp; \displaystyle\frac{(\lambda t)^{k}}{k!}  \\
+\end{array}\]</span></p>
+</div>
+</div>
+</div>
+</section>
+<section id="poisson-distribution" class="level2">
+<h2 class="anchored" data-anchor-id="poisson-distribution">Poisson Distribution</h2>
+<p>Let discrete random variable <span class="math inline">\(Y\)</span> be the number of independent events that occur in a fixed amount of time or space, where <span class="math inline">\(\lambda&gt;0\)</span> is the rate at which these events occur. Then the dependence of <span class="math inline">\(Y\)</span> on parameter <span class="math inline">\(\lambda\)</span> can be modeled by the Poisson.</p>
+<p><span class="math display">\[Y|\lambda \sim \text{Pois}(\lambda)\]</span></p>
+<p>with probability mass function</p>
+<p><span class="math display">\[f(y|\lambda) = \displaystyle\frac{\lambda^{y}e^{-\lambda}}{y!} \text{ for } y \in \{0, 1, 2, ...\}\]</span></p>
+<ul>
+<li><span class="math inline">\(f(y|\lambda) \geq 0\)</span></li>
+<li><span class="math inline">\(\displaystyle\sum_{y=0}^{\infty} \! f(y|\lambda) = 1\)</span></li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Statistics
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>The Poisson distribution has the curious property where the randomness has equal mean and variance:</p>
+<p><span class="math display">\[\text{E}(Y|\lambda) = \text{Var}(Y|\lambda) = \lambda\]</span></p>
+</div>
+</div>
+</div>
+</section>
+<section id="guidance" class="level2">
+<h2 class="anchored" data-anchor-id="guidance">Guidance</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-3-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-1" role="tab" aria-controls="tabset-3-1" aria-selected="true" href="">Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-2" role="tab" aria-controls="tabset-3-2" aria-selected="false" href="">Code</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-3" role="tab" aria-controls="tabset-3-3" aria-selected="false" href="">Guidance</a></li></ul>
+<div class="tab-content">
+<div id="tabset-3-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-3-1-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="05_conjugate_families_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-3-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-2-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>y_i <span class="ot">&lt;-</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">10</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>f_y <span class="ot">&lt;-</span> <span class="fu">dpois</span>(y_i, <span class="dv">1</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>df_for_plots <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(y_i,f_y)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> df_for_plots <span class="sc">|&gt;</span> </span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> y_i, <span class="at">y =</span> <span class="fu">dpois</span>(y_i, <span class="dv">1</span>))) <span class="sc">+</span> </span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>() <span class="sc">+</span> </span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"lambda = 1"</span>) <span class="sc">+</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">name =</span> <span class="st">"y"</span>, </span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>                   <span class="at">breaks =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">10</span>, </span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>                   <span class="at">labels =</span> <span class="fu">as.character</span>(<span class="dv">0</span><span class="sc">:</span><span class="dv">10</span>)) <span class="sc">+</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> df_for_plots <span class="sc">|&gt;</span> </span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> y_i, <span class="at">y =</span> <span class="fu">dpois</span>(y_i, <span class="dv">2</span>))) <span class="sc">+</span> </span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>() <span class="sc">+</span> </span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"lambda = 2"</span>) <span class="sc">+</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">name =</span> <span class="st">"y"</span>, </span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>                   <span class="at">breaks =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">10</span>, </span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>                   <span class="at">labels =</span> <span class="fu">as.character</span>(<span class="dv">0</span><span class="sc">:</span><span class="dv">10</span>)) <span class="sc">+</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>p3 <span class="ot">&lt;-</span> df_for_plots <span class="sc">|&gt;</span> </span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> y_i, <span class="at">y =</span> <span class="fu">dpois</span>(y_i, <span class="dv">3</span>))) <span class="sc">+</span> </span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>() <span class="sc">+</span> </span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"lambda = 3"</span>) <span class="sc">+</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">name =</span> <span class="st">"y"</span>, </span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>                   <span class="at">breaks =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">10</span>, </span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>                   <span class="at">labels =</span> <span class="fu">as.character</span>(<span class="dv">0</span><span class="sc">:</span><span class="dv">10</span>)) <span class="sc">+</span></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>p4 <span class="ot">&lt;-</span> df_for_plots <span class="sc">|&gt;</span> </span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> y_i, <span class="at">y =</span> <span class="fu">dpois</span>(y_i, <span class="dv">4</span>))) <span class="sc">+</span> </span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>() <span class="sc">+</span> </span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"lambda = 4"</span>) <span class="sc">+</span></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">name =</span> <span class="st">"y"</span>, </span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>                   <span class="at">breaks =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">10</span>, </span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>                   <span class="at">labels =</span> <span class="fu">as.character</span>(<span class="dv">0</span><span class="sc">:</span><span class="dv">10</span>)) <span class="sc">+</span></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>p5 <span class="ot">&lt;-</span> df_for_plots <span class="sc">|&gt;</span> </span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> y_i, <span class="at">y =</span> <span class="fu">dpois</span>(y_i, <span class="dv">5</span>))) <span class="sc">+</span> </span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>() <span class="sc">+</span> </span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"lambda = 5"</span>) <span class="sc">+</span></span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">name =</span> <span class="st">"y"</span>, </span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>                   <span class="at">breaks =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">10</span>, </span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>                   <span class="at">labels =</span> <span class="fu">as.character</span>(<span class="dv">0</span><span class="sc">:</span><span class="dv">10</span>)) <span class="sc">+</span></span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a><span class="co"># patchwork</span></span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>p1 <span class="sc">+</span> p2 <span class="sc">+</span> p3 <span class="sc">+</span> p4 <span class="sc">+</span> p5</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="tabset-3-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-3-tab">
+<p>The Poisson distribution is a discrete distribution that tends to be used to model rare events.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="joint-pmf" class="level2">
+<h2 class="anchored" data-anchor-id="joint-pmf">Joint PMF</h2>
+<p>Let <span class="math inline">\((Y_1,Y_2,…,Y_n)\)</span> be an <em>independent</em> sample of random variables and <span class="math inline">\(\vec{y} = (y_1,y_2,…,y_n)\)</span> be the corresponding vector of observed values.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Joint Probability Mass Function
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Further, let <span class="math inline">\(f(y_i|\lambda)\)</span> denote the pmf of an individual observed data point <span class="math inline">\(Y_i=y_i\)</span>. Then by the assumption of independence, the following joint pmf specifies the randomness in and plausibility of the collective sample:</p>
+<p><span class="math display">\[f(\vec{y}|\lambda) = \displaystyle\prod_{i=1}^{n} f(y_{i}|\lambda) = f(y_{1}|\lambda) \cdot (y_{2}|\lambda) \cdots f(y_{n}|\lambda)\]</span></p>
+</div>
+</div>
+</div>
+<p>The Poisson probability mass function is then</p>
+<p><span class="math display">\[\begin{array}{rcl}
+  f(\vec{y}|\lambda) &amp; = &amp; \displaystyle\prod_{i=1}^{n} f(y_{i}|\lambda) \\
+  ~ &amp; = &amp; \displaystyle\prod_{i=1}^{n} \displaystyle\frac{\lambda^{y_{i}}e^{\lambda}}{y_{i}!} \\
+  ~ &amp; = &amp; \displaystyle\frac{\lambda^{y_{1}}e^{\lambda}}{y_{1}!} \cdot \displaystyle\frac{\lambda^{y_{2}}e^{\lambda}}{y_{2}!} \cdots \displaystyle\frac{\lambda^{y_{n}}e^{\lambda}}{y_{n}!} \\
+  ~ &amp; = &amp; \displaystyle\frac{ [\lambda^{y_{1}}\lambda^{y_{2}}\cdots\lambda^{y_{n}}][e^{-\lambda}e^{-\lambda} \cdots e^{-\lambda}] }{ y_{1}!y_{2}! \cdots y_{n}! } \\
+  ~ &amp; = &amp; \displaystyle\frac{\lambda^{\sum y_{i}}e^{-n\lambda}}{\prod y_{i}!} \\
+\end{array}\]</span></p>
+</section>
+<section id="poisson-likelihood" class="level2">
+<h2 class="anchored" data-anchor-id="poisson-likelihood">Poisson Likelihood</h2>
+<p>The Poisson likelihood function is then</p>
+<p><span class="math display">\[L(\lambda|\vec{y}) = \displaystyle\frac{\lambda^{\sum y_{i}}e^{-n\lambda}}{\prod y_{i}!}\]</span></p>
+</section>
+<section id="parameter-selection" class="level2">
+<h2 class="anchored" data-anchor-id="parameter-selection">Parameter Selection</h2>
+<p>How do we fit a Poisson model with our data? One idea is to seek the <em>maximum likelihood estimate</em> (MLE).</p>
+<p><strong>Claim:</strong> The MLE for the <span class="math inline">\(\text{Pois}(\lambda)\)</span> distribution is <span class="math display">\[\lambda^{*} = \bar{y} = \displaystyle\frac{\sum y_{i}}{n}\]</span></p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Proof
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>From the Poisson distribution’s PMF <span class="math inline">\(f(y) = \displaystyle\frac{\lambda^{y}e^{-\lambda}}{y!}\)</span>, the likelihood function</p>
+<p><span class="math display">\[L(\lambda) = \displaystyle\frac{\lambda^{y_{1}}e^{-\lambda}}{y_{1}!} \cdot \displaystyle\frac{\lambda^{y_{2}}e^{-\lambda}}{y_{2}!} \cdots \displaystyle\frac{\lambda^{y_{n}}e^{-\lambda}}{y_{n}!} \]</span></p>
+<p>Taking the natural logarithm of both sides, we create the <strong>log likelihood</strong> function <span class="math inline">\(\ell(\lambda)\)</span></p>
+$$
+<span class="math display">\[\begin{array}{rcl}
+  \ln L(\lambda) &amp; = &amp; \ln \left(\displaystyle\frac{\lambda^{y_{1}}e^{-\lambda}}{y_{1}!} \cdot \displaystyle\frac{\lambda^{y_{2}}e^{-\lambda}}{y_{2}!} \cdots \displaystyle\frac{\lambda^{y_{n}}e^{-\lambda}}{y_{n}!}\right) \\
+  \ell(\lambda) &amp; = &amp; \ln \displaystyle\prod_{i=1}^{n} \displaystyle\frac{\lambda^{y_{i}}e^{-\lambda}}{y_{i}!} \\
+  \ell(\lambda) &amp; = &amp; \displaystyle\sum_{i=1}^{n} \ln \displaystyle\frac{\lambda^{y_{i}}e^{-\lambda}}{y_{i}!} \\
+  
+  \ell(\lambda) &amp; = &amp; \displaystyle\sum_{i=1}^{n} \left( y_{i}\ln \lambda + \ln e^{-\lambda} - \ln y_{i}! \right) \\
+  
+  \ell(\lambda) &amp; = &amp; (\ln \lambda)\left(\displaystyle\sum_{i=1}^{n} y_{i}\right) -  \displaystyle\sum_{i=1}^{n}\lambda -  \displaystyle\sum_{i=1}^{n} \ln y_{i}! \\
+  
+  \ell(\lambda) &amp; = &amp;  (\ln \lambda)\left(\displaystyle\sum_{i=1}^{n} y_{i}\right) - n\lambda - \displaystyle\sum_{i=1}^{n} \ln (y_{i}!) \\
+\end{array}\]</span>
+<p>$$</p>
+<p>The motivation for the logarithm usage is to ease the process of taking the derivative. Here, taking the derivative with respect to <span class="math inline">\(\lambda\)</span>,</p>
+<p><span class="math display">\[0 = \ell'(\lambda)  \quad\Rightarrow\quad 0 = -n + \displaystyle\frac{ \sum_{i=1}^{n} y_{i} }{ \lambda } \quad\Rightarrow\quad \lambda = \displaystyle\frac{ \sum_{i=1}^{n} y_{i} }{ n } = \bar{y}\]</span></p>
+<p>That is, the optimal value for parameter <span class="math inline">\(\lambda\)</span> is the sample mean <span class="math inline">\(\bar{y}\)</span>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="example-campus-safety" class="level2">
+<h2 class="anchored" data-anchor-id="example-campus-safety">Example: Campus Safety</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-4-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-1" role="tab" aria-controls="tabset-4-1" aria-selected="true" href="">Data</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-2" role="tab" aria-controls="tabset-4-2" aria-selected="false" href="">Likelihood</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-3" role="tab" aria-controls="tabset-4-3" aria-selected="false" href="">Code</a></li></ul>
+<div class="tab-content">
+<div id="tabset-4-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-4-1-tab">
+<p>The following data on arrests for drug law violations come from the Princeton University <a href="https://publicsafety.princeton.edu/information/monthlyannual-data">Annual Security and Fire Safety Report</a> (in and around the main campus)</p>
+<table class="table">
+<colgroup>
+<col style="width: 14%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: center;">year</th>
+<th style="text-align: center;">2014</th>
+<th style="text-align: center;">2015</th>
+<th style="text-align: center;">2016</th>
+<th style="text-align: center;">2017</th>
+<th style="text-align: center;">2018</th>
+<th style="text-align: center;">2019</th>
+<th style="text-align: center;">2020</th>
+<th style="text-align: center;">2021</th>
+<th style="text-align: center;">2022</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">arrests</td>
+<td style="text-align: center;">18</td>
+<td style="text-align: center;">14</td>
+<td style="text-align: center;">23</td>
+<td style="text-align: center;">22</td>
+<td style="text-align: center;">12</td>
+<td style="text-align: center;">22</td>
+<td style="text-align: center;">7</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">1</td>
+</tr>
+</tbody>
+</table>
+<p>Our maximum likelihood estimate is</p>
+<p><span class="math display">\[\lambda^{*} = \displaystyle\frac{\sum y_{i}}{n} = \displaystyle\frac{119}{9} \approx 13.2222 \text{ arrests per year}\]</span></p>
+</div>
+<div id="tabset-4-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-2-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="05_conjugate_families_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-4-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-3-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">plot_poisson_likelihood</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">y =</span> <span class="fu">c</span>(<span class="dv">18</span>, <span class="dv">14</span>, <span class="dv">23</span>, <span class="dv">22</span>, <span class="dv">12</span>, <span class="dv">22</span>, <span class="dv">7</span>, <span class="dv">0</span>, <span class="dv">1</span>),</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">lambda_upper_bound =</span> <span class="dv">20</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>) <span class="sc">+</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Likelihood Curve"</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Arrests per year for drug law violations"</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption =</span> <span class="st">"SML 320"</span>) <span class="sc">+</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="gamma-model" class="level1">
+<h1>Gamma Model</h1>
+<section id="terminology" class="level2">
+<h2 class="anchored" data-anchor-id="terminology">Terminology</h2>
+<p>Let <span class="math inline">\(\lambda &gt; 0\)</span> be a continuous random variable. For modeling, we might try a Gamma model <span class="math display">\[\lambda \sim \text{Gamma}(s, r)\]</span></p>
+<ul>
+<li><span class="math inline">\(s\)</span>: shape parameter</li>
+<li><span class="math inline">\(r\)</span>: rate parameter</li>
+</ul>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Explore!
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-5" class="callout-5-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Matt Bognar at the University of Iowa created this <a href="https://homepage.divms.uiowa.edu/~mbognar/applets/gamma.html">great webapp</a> to explore the gamma distribution.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-6-contents" aria-controls="callout-6" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Exponential Model
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-6" class="callout-6-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>The Gamma model is a generalization of the exponential model. When the shape parameter <span class="math inline">\(s = 1\)</span>, then</p>
+<p><span class="math display">\[\lambda \sim \text{Gamma}(1,r) = \text{Exp}(r)\]</span></p>
+<p>where <span class="math inline">\(r\)</span> is once again the rate parameter.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="probablity-density-function" class="level2">
+<h2 class="anchored" data-anchor-id="probablity-density-function">Probablity Density Function</h2>
+<p>The Gamma model has a continuous pdf</p>
+<p><span class="math display">\[f(\lambda) = \displaystyle\frac{r^{s}}{\Gamma(s)} \lambda^{s-1}e^{-r\lambda} \text{ for } \lambda &gt; 0\]</span></p>
+<p>where the gamma function</p>
+<ul>
+<li><span class="math inline">\(\Gamma(z) = \displaystyle\int_{0}^{\infty} \! x^{z-1}e^{-x} \, dx\)</span></li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-7-contents" aria-controls="callout-7" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Statistics
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-7" class="callout-7-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Formulas for the Gamma model include</p>
+<p><span class="math display">\[\begin{array}{rcl}
+  \text{E}(\lambda) &amp; = &amp; \displaystyle\frac{s}{r} \\
+  \text{Mode}(\lambda) &amp; = &amp; \displaystyle\frac{s-1}{r} \\
+  \text{Var}(\lambda) &amp; = &amp; \displaystyle\frac{s}{r^{2}} \\
+\end{array}\]</span></p>
+</div>
+</div>
+</div>
+</section>
+<section id="tuning-the-prior" class="level2">
+<h2 class="anchored" data-anchor-id="tuning-the-prior">Tuning the Prior</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-5-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-1" role="tab" aria-controls="tabset-5-1" aria-selected="true" href="">Example: Campus Safety</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-5-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-2" role="tab" aria-controls="tabset-5-2" aria-selected="false" href="">Statistics</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-5-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-3" role="tab" aria-controls="tabset-5-3" aria-selected="false" href="">Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-5-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-4" role="tab" aria-controls="tabset-5-4" aria-selected="false" href="">Code</a></li></ul>
+<div class="tab-content">
+<div id="tabset-5-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-5-1-tab">
+<p>Suppose that a parent of an university applicant feels that the university has arrests for drug law violations with counts between 10 and 30 per year. Matching some statistics formulas</p>
+<p><span class="math display">\[[\mu - 2\sigma, \mu + 2\sigma] = [10, 30] \quad\rightarrow\quad \mu = 20, \quad \sigma = 5\]</span></p>
+</div>
+<div id="tabset-5-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-5-2-tab">
+<p><span class="math display">\[\text{E}(\lambda) = \displaystyle\frac{s}{r} = 20 \text{ and } \text{Var}(\lambda) = \displaystyle\frac{s}{r^{2}} = 5^{2}\]</span></p>
+</div>
+<div id="tabset-5-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-5-3-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="05_conjugate_families_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-5-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-5-4-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="05_conjugate_families_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="gamma-poisson-conjugate-family" class="level1">
+<h1>Gamma-Poisson Conjugate Family</h1>
+<section id="gamma-poisson-bayesian-model" class="level2">
+<h2 class="anchored" data-anchor-id="gamma-poisson-bayesian-model">Gamma-Poisson Bayesian Model</h2>
+<p>Let <span class="math inline">\(\lambda &gt; 0\)</span> be an unknown rate parameter and let <span class="math inline">\(\{Y_{1}, Y_{2}, ..., Y_{n}\}\)</span> be an i.i.d. sample from a <span class="math inline">\(\text{Pois}(\lambda)\)</span> distribution. With a setup of a Gamma prior and Poisson likelihood</p>
+<p><span class="math display">\[\begin{array}{rcl}
+  \lambda &amp; \sim &amp; \text{Gamma}(s,r) \\
+  Y_{i}|\lambda &amp; \sim &amp; \text{Pois}(\lambda) \\
+\end{array}\]</span></p>
+<p>and observing data <span class="math inline">\(\vec{y} = \{y_{1}, y_{2}, ..., y_{n}\}\)</span>, the posterior distribution also has a Gamma structure with updated parameters</p>
+<p><span class="math display">\[\lambda|\vec{y} \sim \text{Gamma}\left( s + \displaystyle\sum_{i=1}^{n} y_{i}, r + n \right)\]</span></p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-8-contents" aria-controls="callout-8" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Proof
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-8" class="callout-8-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><span class="math display">\[\begin{array}{rcl}
+  f(\lambda|\vec{y}) &amp; \propto &amp; f(\lambda) \cdot L(\lambda|\vec{y}) \\
+  ~ &amp; = &amp; \displaystyle\frac{r^{s}}{\Gamma(s)}\lambda^{s-1}e^{-r\lambda} \cdot \displaystyle\frac{\lambda^{\sum y_{i}}e^{-n\lambda}}{\prod y_{i}!} \\
+  ~ &amp; \propto &amp; \lambda^{s-1}e^{-r\lambda} \cdot \lambda^{\sum y_{i}}e^{-n\lambda} \\
+  ~ &amp; = &amp; \lambda^{s+\sum y_{i} - 1}e^{-(r+n)\lambda} \\
+\end{array}\]</span></p>
+</div>
+</div>
+</div>
+</section>
+<section id="example-campus-safety-2" class="level2">
+<h2 class="anchored" data-anchor-id="example-campus-safety-2">Example: Campus Safety</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-6-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-1" role="tab" aria-controls="tabset-6-1" aria-selected="true" href="">Recap</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-6-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-2" role="tab" aria-controls="tabset-6-2" aria-selected="false" href="">Plots</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-6-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-3" role="tab" aria-controls="tabset-6-3" aria-selected="false" href="">Code</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-6-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-4" role="tab" aria-controls="tabset-6-4" aria-selected="false" href="">Statistics</a></li></ul>
+<div class="tab-content">
+<div id="tabset-6-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-6-1-tab">
+<ul>
+<li>we tuned a <span class="math inline">\(\text{Gamma}(16, 0.8)\)</span> prior</li>
+<li>we observed 119 arrests for drug law violations over a <span class="math inline">\(n = 9\)</span> year time span</li>
+</ul>
+</div>
+<div id="tabset-6-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-6-2-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="05_conjugate_families_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-6-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-6-3-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">plot_gamma_poisson</span>(<span class="at">shape =</span> <span class="dv">16</span>, <span class="at">rate =</span> <span class="fl">0.8</span>,</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>                               <span class="at">sum_y =</span> <span class="dv">119</span>, <span class="at">n =</span> <span class="dv">9</span>) <span class="sc">+</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Gamma-Poisson Model"</span>,</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Drug Law Violations Example"</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption =</span> <span class="st">"SML 320"</span>,</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"arrests for drug law violations"</span>) <span class="sc">+</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="tabset-6-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-6-4-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">summarize_gamma_poisson</span>(<span class="at">shape =</span> <span class="dv">16</span>, <span class="at">rate =</span> <span class="fl">0.8</span>,</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">sum_y =</span> <span class="dv">119</span>, <span class="at">n =</span> <span class="dv">9</span>) <span class="sc">|&gt;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_if</span>(is.numeric, round, <span class="at">digits =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      model shape rate    mean    mode     var     sd
+1     prior    16  0.8 20.0000 18.7500 25.0000 5.0000
+2 posterior   135  9.8 13.7755 13.6735  1.4057 1.1856</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="normal-normal" class="level1">
+<h1>Normal-Normal</h1>
+<section id="terminology-1" class="level2">
+<h2 class="anchored" data-anchor-id="terminology-1">Terminology</h2>
+<p>Let <span class="math inline">\(Y &gt; 0\)</span> be a continuous random variable over all real numbers <span class="math inline">\(())-\infty, \infty)\)</span>. For modeling, we might try a normal distribution <span class="math display">\[Y \sim \text{N}(\mu, \sigma^{2})\]</span></p>
+<ul>
+<li><span class="math inline">\(\mu\)</span>: mean</li>
+<li><span class="math inline">\(\sigma\)</span>: standard deviation</li>
+</ul>
+</section>
+<section id="probablity-density-function-1" class="level2">
+<h2 class="anchored" data-anchor-id="probablity-density-function-1">Probablity Density Function</h2>
+<p>The normal distribution has a continuous probability density function</p>
+<p><span class="math display">\[f(y) = \displaystyle\frac{1}{\sqrt{2\pi \sigma^{2}}} \text{exp}\left[ -\displaystyle\frac{(y-\mu)^{2}}{2\sigma^{2}}\right] \text{ for } y \in (-\infty, \infty)\]</span></p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-9-contents" aria-controls="callout-9" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Statistics
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-9" class="callout-9-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Descriptions of normal distributions are dictated by their statistics</p>
+<p><span class="math display">\[\begin{array}{rcl}
+  \text{E}(Y) &amp; = &amp; \mu \\
+  \text{Mode}(Y) &amp; = &amp; \mu \\
+  \text{Var}(Y) &amp; = &amp; \sigma^{2} \\
+  \text{SD}(Y) &amp; = &amp; \sigma \\
+\end{array}\]</span></p>
+</div>
+</div>
+</div>
+</section>
+<section id="tuning-the-prior-1" class="level2">
+<h2 class="anchored" data-anchor-id="tuning-the-prior-1">Tuning the Prior</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-7-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-1" role="tab" aria-controls="tabset-7-1" aria-selected="true" href="">Example: Tips</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-7-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-2" role="tab" aria-controls="tabset-7-2" aria-selected="false" href="">Statistics</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-7-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-3" role="tab" aria-controls="tabset-7-3" aria-selected="false" href="">Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-7-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-4" role="tab" aria-controls="tabset-7-4" aria-selected="false" href="">Code</a></li></ul>
+<div class="tab-content">
+<div id="tabset-7-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-7-1-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(tips_df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 7
+  total_bill   tip sex    smoker day   time    size
+       &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;  &lt;dbl&gt;
+1       17.0  1.01 Female No     Sun   Dinner     2
+2       10.3  1.66 Male   No     Sun   Dinner     3
+3       21.0  3.5  Male   No     Sun   Dinner     3
+4       23.7  3.31 Male   No     Sun   Dinner     2
+5       24.6  3.61 Female No     Sun   Dinner     4
+6       25.3  4.71 Male   No     Sun   Dinner     4</code></pre>
+</div>
+</div>
+</div>
+<div id="tabset-7-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-7-2-tab">
+<p>Let us guess that Americans tend to tip between 5 and 25 percent of the total bill.</p>
+<p><span class="math display">\[[\mu - 2\sigma, \mu + 2\sigma] = [5, 25] \quad\rightarrow\quad \mu = 15, \quad \sigma = 5\]</span></p>
+</div>
+<div id="tabset-7-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-7-3-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="05_conjugate_families_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-7-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-7-4-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">plot_normal</span>(<span class="at">mean =</span> <span class="dv">15</span>, <span class="at">sd =</span> <span class="dv">5</span>) <span class="sc">+</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"N(15, 25) Prior"</span>,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"mean = 15, sd = 5"</span>,</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption =</span> <span class="st">"SML 320"</span>) <span class="sc">+</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="likelihood-2" class="level2">
+<h2 class="anchored" data-anchor-id="likelihood-2">Likelihood</h2>
+<p>In this conjugate prior relationship, the likelihood is also modeled as a normal distribution.</p>
+<p><span class="math display">\[L(\mu, \sigma|\vec{y}) \propto \displaystyle\prod_{i=1}^{n} \text{exp}\left[-\displaystyle\frac{(y_{i} - \mu)^{2}}{2\sigma^{2}}\right] = \text{exp}\left[-\displaystyle\frac{\sum_{i=1}^{n} (y_{i}-\mu)^{2}}{2\sigma^{2}}\right]\]</span></p>
+</section>
+<section id="mles" class="level2">
+<h2 class="anchored" data-anchor-id="mles">MLEs</h2>
+<p>The likelihood can also be expressed in terms of the sample mean <span class="math inline">\(\bar{y}\)</span> and the sample size <span class="math inline">\(n\)</span></p>
+<p><span class="math display">\[L(\mu, \sigma|\vec{y}) \propto \text{exp}\left[-\displaystyle\frac{ (\bar{y}-\mu)^{2}}{\frac{2\sigma^{2}}{n}}\right]\]</span></p>
+<p>It follows that the maximum likelihood estimates for the parameters are (<a href="https://www.statlect.com/fundamentals-of-statistics/normal-distribution-maximum-likelihood">source</a>)</p>
+<p><span class="math display">\[\begin{array}{rcl}
+  \mu^{*} &amp; = &amp; \displaystyle\frac{1}{n}\displaystyle\sum_{i=1}^{n} y_{i} \\
+  \sigma^{*} &amp; = &amp; \sqrt{\displaystyle\frac{1}{n}\displaystyle\sum_{i=1}^{n} (y_{i} - \mu^{2})^{2}} \\
+\end{array}\]</span></p>
+<p>which are the sample mean and from the <em>not-corrected</em> population variance.</p>
+</section>
+<section id="dplyr" class="level2">
+<h2 class="anchored" data-anchor-id="dplyr">dplyr</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="fu">nrow</span>(tips_df)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>tips_df <span class="sc">|&gt;</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">tips_pct =</span> tip<span class="sc">/</span>total_bill <span class="sc">*</span> <span class="dv">100</span>) <span class="sc">|&gt;</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">mu =</span> <span class="fu">mean</span>(tips_pct, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">sigma =</span> <span class="fu">sqrt</span>(<span class="fu">var</span>(tips_pct, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">*</span>(n<span class="dv">-1</span>)<span class="sc">/</span>(n)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 2
+     mu sigma
+  &lt;dbl&gt; &lt;dbl&gt;
+1  16.1  6.09</code></pre>
+</div>
+</div>
+</section>
+<section id="plot-4" class="level2">
+<h2 class="anchored" data-anchor-id="plot-4">Plot</h2>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="05_conjugate_families_files/figure-html/unnamed-chunk-17-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="code-6" class="level2">
+<h2 class="anchored" data-anchor-id="code-6">Code</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">plot_normal</span>(<span class="at">mean =</span> <span class="fl">16.08026</span>, <span class="at">sd =</span> <span class="fl">6.094693</span>  ) <span class="sc">+</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Normal "</span>,</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"MLEs: ybar = 16.08026, sigma = 6.094693"</span>,</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption =</span> <span class="st">"SML 320"</span>) <span class="sc">+</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="normal-normal-conjugacy" class="level2">
+<h2 class="anchored" data-anchor-id="normal-normal-conjugacy">Normal-Normal Conjugacy</h2>
+<p>Let <span class="math inline">\(\mu \in (-\infty, \infty)\)</span> be an unknown mean parameter and let <span class="math inline">\(\sigma^{2} &gt; 0\)</span> be an unknown variance parameter and let <span class="math inline">\(\{Y_{1}, Y_{2}, ..., Y_{n}\}\)</span> be an i.i.d. sample from a <span class="math inline">\(\text{N}(\mu, \sigma^{2})\)</span> distribution. With a setup of a normal prior and normal likelihood</p>
+<p><span class="math display">\[\begin{array}{rcl}
+  \mu,\sigma^{2} &amp; \sim &amp; \text{N}(\theta,\tau^{2}) \\
+  Y_{i}|\mu, \sigma^{2} &amp; \sim &amp; \text{N}(\mu,\sigma^{2}) \\
+\end{array}\]</span></p>
+<p>and observing data <span class="math inline">\(\vec{y} = \{y_{1}, y_{2}, ..., y_{n}\}\)</span>, the posterior distribution also has a normal structure with updated parameters</p>
+<p><span class="math display">\[\mu,\sigma^{2}|\vec{y} \sim \text{N}\left( \displaystyle\frac{\sigma^{2}}{n\tau^{2}+\sigma^{2}} \cdot \theta + \displaystyle\frac{n\tau^{2}}{n\tau^{2}+\sigma^{2}} \cdot \bar{y}, \quad \displaystyle\frac{\tau^{2}\sigma^{2}}{n\tau^{2}+\sigma^{2}} \right)\]</span></p>
+<ul>
+<li>What happens if we have relatively small data sets?</li>
+<li>What happens if we have relatively large data sets?</li>
+</ul>
+</section>
+<section id="example" class="level2">
+<h2 class="anchored" data-anchor-id="example">Example</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-8-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-1" role="tab" aria-controls="tabset-8-1" aria-selected="true" href="">Code</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-8-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-2" role="tab" aria-controls="tabset-8-2" aria-selected="false" href="">Plots</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-8-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-3" role="tab" aria-controls="tabset-8-3" aria-selected="false" href="">Statistics</a></li></ul>
+<div class="tab-content">
+<div id="tabset-8-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-8-1-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">plot_normal_normal</span>(</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># from prior</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">mean =</span> <span class="dv">15</span>, <span class="at">sd =</span> <span class="dv">5</span>,</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># from observations</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">y_bar =</span> <span class="fl">16.08026</span>, <span class="at">sigma =</span> <span class="fl">6.094693</span>, <span class="at">n =</span> <span class="dv">244</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>) <span class="sc">+</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Normal-Normal Model"</span>,</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Restaurant Tips Example"</span>,</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption =</span> <span class="st">"SML 320"</span>,</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"percent of total food bill"</span>) <span class="sc">+</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="tabset-8-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-8-2-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="05_conjugate_families_files/figure-html/unnamed-chunk-20-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-8-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-8-3-tab">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>bayesrules<span class="sc">::</span><span class="fu">summarize_normal_normal</span>(</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># from prior</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">mean =</span> <span class="dv">15</span>, <span class="at">sd =</span> <span class="dv">5</span>,</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># from observations</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">y_bar =</span> <span class="fl">16.08026</span>, <span class="at">sigma =</span> <span class="fl">6.094693</span>, <span class="at">n =</span> <span class="dv">244</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_if</span>(is.numeric, round, <span class="at">digits =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      model    mean    mode     var    sd
+1     prior 15.0000 15.0000 25.0000 5.000
+2 posterior 16.0737 16.0737  0.1513 0.389</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="model-selection" class="level2">
+<h2 class="anchored" data-anchor-id="model-selection">Model Selection</h2>
+<p>We looked at 3 conjugate families.</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-9-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-9-1" role="tab" aria-controls="tabset-9-1" aria-selected="true" href="">Beta-Binomial</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-9-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-9-2" role="tab" aria-controls="tabset-9-2" aria-selected="false" href="">Gamma-Poisson</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-9-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-9-3" role="tab" aria-controls="tabset-9-3" aria-selected="false" href="">Normal-Normal</a></li></ul>
+<div class="tab-content">
+<div id="tabset-9-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-9-1-tab">
+<ul>
+<li>estimate <span class="math inline">\(\pi \in [0,1]\)</span></li>
+<li>pro: good for interpretability</li>
+<li>con: computationally expensive for large <span class="math inline">\(n\)</span></li>
+</ul>
+</div>
+<div id="tabset-9-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-9-2-tab">
+<ul>
+<li>estimate <span class="math inline">\(\lambda &gt; 0\)</span></li>
+<li>pro: models rare events and skewed data well</li>
+<li>con: discussion of rates instead of counts</li>
+</ul>
+</div>
+<div id="tabset-9-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-9-3-tab">
+<ul>
+<li>estimate mean <span class="math inline">\(\mu\)</span> and variance <span class="math inline">\(\sigma\)</span></li>
+<li>pro: ubiquitous in scientific communities</li>
+<li>con: infinite support may lead to suboptimal results in larger networks</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="footnotes" class="level1">
+<h1>Footnotes</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>R version 4.3.0 (2023-04-21 ucrt)
+Platform: x86_64-w64-mingw32/x64 (64-bit)
+Running under: Windows 10 x64 (build 19045)
+
+Matrix products: default
+
+
+locale:
+[1] LC_COLLATE=English_United States.utf8 
+[2] LC_CTYPE=English_United States.utf8   
+[3] LC_MONETARY=English_United States.utf8
+[4] LC_NUMERIC=C                          
+[5] LC_TIME=English_United States.utf8    
+
+time zone: America/New_York
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] lubridate_1.9.2  forcats_1.0.0    stringr_1.5.0    dplyr_1.1.3     
+ [5] purrr_1.0.2      readr_2.1.4      tidyr_1.3.0      tibble_3.2.1    
+ [9] ggplot2_3.4.3    tidyverse_2.0.0  patchwork_1.1.2  gt_0.9.0        
+[13] ggtext_0.1.2     bayesrules_0.0.2
+
+loaded via a namespace (and not attached):
+  [1] gridExtra_2.3       inline_0.3.19       rlang_1.1.1        
+  [4] magrittr_2.0.3      snakecase_0.11.0    matrixStats_1.0.0  
+  [7] e1071_1.7-13        compiler_4.3.0      loo_2.6.0          
+ [10] callr_3.7.3         vctrs_0.6.3         reshape2_1.4.4     
+ [13] pkgconfig_2.0.3     crayon_1.5.2        fastmap_1.1.1      
+ [16] ellipsis_0.3.2      labeling_0.4.3      utf8_1.2.3         
+ [19] threejs_0.3.3       promises_1.2.1      rmarkdown_2.24     
+ [22] tzdb_0.4.0          markdown_1.8        ps_1.7.5           
+ [25] nloptr_2.0.3        bit_4.0.5           xfun_0.40          
+ [28] jsonlite_1.8.7      later_1.3.1         parallel_4.3.0     
+ [31] prettyunits_1.1.1   R6_2.5.1            dygraphs_1.1.1.6   
+ [34] stringi_1.7.12      StanHeaders_2.26.26 boot_1.3-28.1      
+ [37] Rcpp_1.0.11         rstan_2.21.8        knitr_1.43         
+ [40] zoo_1.8-12          base64enc_0.1-3     bayesplot_1.10.0   
+ [43] httpuv_1.6.11       Matrix_1.5-4        splines_4.3.0      
+ [46] igraph_1.4.3        timechange_0.2.0    tidyselect_1.2.0   
+ [49] rstudioapi_0.15.0   yaml_2.3.7          codetools_0.2-19   
+ [52] miniUI_0.1.1.1      processx_3.8.1      pkgbuild_1.4.0     
+ [55] lattice_0.21-8      plyr_1.8.8          withr_2.5.2        
+ [58] shiny_1.7.5         groupdata2_2.0.2    evaluate_0.21      
+ [61] survival_3.5-5      proxy_0.4-27        RcppParallel_5.1.7 
+ [64] xts_0.13.1          xml2_1.3.5          pillar_1.9.0       
+ [67] DT_0.28             stats4_4.3.0        shinyjs_2.1.0      
+ [70] generics_0.1.3      vroom_1.6.3         hms_1.1.3          
+ [73] commonmark_1.9.0    rstantools_2.3.1    munsell_0.5.0      
+ [76] scales_1.2.1        minqa_1.2.5         gtools_3.9.4       
+ [79] xtable_1.8-4        class_7.3-21        glue_1.6.2         
+ [82] janitor_2.2.0       tools_4.3.0         shinystan_2.6.0    
+ [85] lme4_1.1-33         colourpicker_1.2.0  grid_4.3.0         
+ [88] crosstalk_1.2.0     colorspace_2.1-0    nlme_3.1-162       
+ [91] cli_3.6.1           fansi_1.0.4         gtable_0.3.4       
+ [94] digest_0.6.33       farver_2.1.1        htmlwidgets_1.6.2  
+ [97] htmltools_0.5.6     lifecycle_1.0.4     mime_0.12          
+[100] rstanarm_2.21.4     bit64_4.0.5         gridtext_0.1.5     
+[103] shinythemes_1.2.0   MASS_7.3-58.4      </code></pre>
+</div>
+</div>
+<div class="columns">
+<div class="column" style="width:50%;">
+
+</div><div class="column" style="width:50%;">
+
+</div>
+</div>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"></ul>
+<div class="tab-content">
+
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
