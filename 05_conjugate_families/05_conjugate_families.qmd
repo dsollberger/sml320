@@ -523,8 +523,8 @@ bayesrules::plot_gamma(16, 0.8, mean = TRUE) +
 ## Code
 
 ```{r}
-#| echo: false
-#| eval: true
+#| echo: true
+#| eval: false
 
 bayesrules::plot_gamma(16, 0.8, mean = TRUE) +
   labs(title = "Gamma(16, 0.8) Prior",
@@ -699,14 +699,14 @@ The likelihood can also be expressed in terms of the sample mean $\bar{y}$ and t
 
 $$L(\mu, \sigma|\vec{y}) \propto \text{exp}\left[-\ds\frac{ (\bar{y}-\mu)^{2}}{\frac{2\sigma^{2}}{n}}\right]$$
 
-It follows that the maximum likelihood estimates for the parameters are ([source](https://www.statlect.com/fundamentals-of-statistics/normal-distribution-maximum-likelihood))
+It follows that the maximum likelihood estimates for the parameters are 
 
 $$\begin{array}{rcl}
   \mu^{*} & = & \ds\frac{1}{n}\ds\sum_{i=1}^{n} y_{i} \\
   \sigma^{*} & = & \sqrt{\ds\frac{1}{n}\ds\sum_{i=1}^{n} (y_{i} - \mu^{2})^{2}} \\
 \end{array}$$
 
-which are the sample mean and from the *not-corrected* population variance.
+which are the sample mean and from the *not-corrected* population variance ([source](https://www.statlect.com/fundamentals-of-statistics/normal-distribution-maximum-likelihood)).
 
 ## dplyr
 
@@ -846,7 +846,10 @@ We looked at 3 conjugate families.
 
 * estimate mean $\mu$ and variance $\sigma$
 * pro: ubiquitous in scientific communities
-* con: infinite support may lead to suboptimal results in larger networks
+* cons: 
+
+    * infinite support may lead to suboptimal results in larger networks
+    * was the data symmetric?
 
 
 ::::
