@@ -2,12 +2,12 @@
 title: "4: Balance and Sequentiality"
 author: "Derek Sollberger"
 date: "2024-02-08"
-# format:
-#   revealjs:
-#     scrollable: true
 format:
-  html:
-    toc: true
+  revealjs:
+    scrollable: true
+# format:
+#   html:
+#     toc: true
 ---
 
 \newcommand{\ds}{\displaystyle}
