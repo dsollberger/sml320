@@ -1,0 +1,947 @@
+---
+title: "6: Approximating the Posterior"
+author: "Derek Sollberger"
+date: "2024-02-15"
+# format:
+#   revealjs:
+#     scrollable: true
+format:
+  html:
+    toc: true
+params:
+  heavy_chunks: "true"
+  # heavy_chunks: "false"
+---
+
+\newcommand{\ds}{\displaystyle}
+
+```{r}
+#| message: false
+#| warning: false
+
+library("bayesplot")
+library("ggtext")
+library("rstan")
+library("tidyverse")
+
+knitr::opts_chunk$set(echo = TRUE)
+
+# tips_df <- readr::read_csv("tips.csv")
+```
+
+# Multivariate Data
+
+##  Setting: NOAA
+
+I will be studying weather data for a semester theme.  The main data will probably come from [NOAA](https://www.noaa.gov/) (National Oceanic and Atmospheric Administration), where the data consists of several readings (variables) from several research stations over many years.
+
+Let $\theta$ represent the high temperature recorded.  Across $k$ research stations,
+
+$$\vec{\theta} = (\theta_{1}, \theta_{2}, ..., \theta_{k})$$
+
+## Bayesian Approach
+
+If we have a vector of parameters to estimate,
+
+$$f(\vec{\theta} | \vec{y} ) \propto \text{prior}*\text{likelihood} = f(\vec{\theta}) \cdot L(\vec{\theta} | \vec{y})$$
+
+## Normalizing Constant
+
+$$f(y) = \ds\int_{\theta_{1}}\int_{\theta_{2}} \cdots \int_{\theta_{k}} \! f(\vec{\theta}) \cdot L(\vec{\theta} | \vec{y} ) \, d\theta_{k} \cdots d\theta_{2} \, d\theta_{1}$$
+
+* closed form solution probably does not exist
+* very expensive computationally
+
+
+# Strategy
+
+*Approximate* the posterior distribution via simulation
+
+* grid approximation, or
+* MCMC (Monte Carlo Markov Chains)
+
+Both produce a **sample** of $N$ $\theta$ values
+
+$$\{ \theta^{(1)}, \theta^{(2)}, ..., \theta^{(N)} \}$$
+
+that may have similar statistics to the posterior distribution of $\theta$.
+
+## Conjugate Priors
+
+For today, we will revisit the conjugate priors where we know a lot about the posterior distributions.
+
+* Beta-Binomial
+
+$$\begin{array}{rrcl}
+  \text{prior: } & \pi & \sim & \text{Beta}(\alpha, \beta) \\
+  \text{likelihood: } & Y|\pi & \sim & \text{Bin}(n, \pi) \\
+  \text{posterior: } & \pi|Y & \sim & \text{Beta}(\alpha + y, \beta + n - y) \\
+\end{array}$$
+
+* Gamma-Poisson
+
+$$\begin{array}{rrcl}
+  \text{prior: } & \pi & \sim & \text{Gamma}(s, r) \\
+  \text{likelihood: } & Y|\pi & \sim & \text{Pois}(\lambda) \\
+  \text{posterior: } & \pi|Y & \sim & \text{Gamma}\left(s + \ds\sum_{i=1}^{n} y, r + n\right) \\
+\end{array}$$
+
+
+# Grid Approximation
+
+## Broad Idea
+
+As we gather pieces, the overall picture might become clear.
+
+![Art of Ellis Rowan](ellis_rowan_puzzle_video.gif)
+
+* image source: [National Museum of Australia](https://www.nla.gov.au/stories/news/2020/puzzles-using-collection)
+
+## Math Definitions
+
+Grid approximation produces a sample of $N$ independent $\theta$ values, $\{\theta^(1),\theta^(2),…,\theta^(N)\}$, from a discretized approximation of posterior pdf $f(\theta|y)$. This algorithm evolves in four steps:
+
+1. Define a discrete grid of possible $\theta$ values.
+2. Evaluate the prior pdf $f(\theta)$ and likelihood function $L(\theta|y)$ at each $\theta$ grid value.
+3. Obtain a discrete approximation of the posterior pdf $f(\theta|y)$
+by: 
+
+    (a) calculating the product $f(\theta)L(\theta|y)$ at each $\theta$ grid value; and then 
+    (b) normalizing the products so that they sum to 1 across all $\theta$.
+4. Randomly sample $N$ $\theta$ grid values with respect to their corresponding normalized posterior probabilities.
+
+
+## Example: Beta-Binomial
+
+### Scenario: Smokers in Restaurants
+
+Let us start with a vague beta prior, use a binomial model to get the likelihood of $y = 4$ smokers among $n = 9$ customers, and then get a beta posterior.
+
+$$\begin{array}{rrcl}
+  \text{prior: } & \pi & \sim & \text{Beta}(3, 3) \\
+  \text{likelihood: } & Y|\pi & \sim & \text{Bin}(9, \pi) \\
+  \text{posterior: } & \pi|Y & \sim & \text{Beta}(7, 8) \\
+\end{array}$$
+
+## Sparse Grid
+
+Here we will try this grid approximation idea over $N = 5$ values
+
+$$\pi \in \{0, 0.25, 0.50, 0.75, 1.0\}$$
+
+:::: {.panel-tabset}
+
+## Bayes
+
+```{r}
+#| echo: true
+#| eval: true
+
+# Step 1: Define a grid of 6 pi values
+grid_data <- data.frame(pi_grid = seq(from = 0, to = 1, 
+                                      length = 5))
+
+# Step 2: Evaluate the prior & likelihood at each pi
+grid_data <- grid_data %>% 
+  mutate(prior = dbeta(pi_grid, 3, 3),
+         likelihood = dbinom(4, 9, pi_grid))
+
+# Step 3: Approximate the posterior
+grid_data <- grid_data %>% 
+  mutate(unnormalized = likelihood * prior,
+         posterior = unnormalized / sum(unnormalized))
+```
+
+## Grid Data
+
+```{r}
+#| echo: true
+#| eval: true
+
+round(grid_data, 4)
+```
+
+## Grid Values
+
+```{r}
+#| echo: false
+#| eval: true
+
+# Plot the grid approximated posterior
+ggplot(grid_data, aes(x = pi_grid, y = posterior)) + 
+  geom_segment(aes(x = pi_grid, xend = pi_grid, y = 0, yend = posterior),
+               color = "gray50",
+               linewidth = 2) +
+  geom_point(size = 7) + 
+  labs(title = "Sparse Grid",
+         subtitle = "Beta-Binomial Example",
+         caption = "SML 320") +
+  theme_minimal()
+```
+
+## Graph 1 Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+# Plot the grid approximated posterior
+ggplot(grid_data, aes(x = pi_grid, y = posterior)) + 
+  geom_segment(aes(x = pi_grid, xend = pi_grid, y = 0, yend = posterior),
+               color = "gray50",
+               linewidth = 2) +
+  geom_point(size = 7) + 
+  labs(title = "Sparse Grid",
+         subtitle = "Beta-Binomial Example",
+         caption = "SML 320") +
+  theme_minimal()
+```
+
+## Posterior Sampling
+
+```{r}
+#| echo: true
+#| eval: true
+
+# Step 4: sample from the discretized posterior
+posterior_sample <- sample_n(grid_data, 
+                             size = 10000, 
+                             weight = posterior, 
+                             replace = TRUE)
+```
+
+## Alignment
+
+```{r}
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+
+ggplot(posterior_sample, aes(x = pi_grid)) + 
+  geom_histogram(aes(y = after_stat(density)), 
+                 binwidth = 0.1,
+                 fill = "#7F7F7F") + 
+  stat_function(fun = dbeta, args = list(7, 8),
+                color = "#E77500", linewidth = 3) + 
+  lims(x = c(0, 1)) +
+  labs(title = "Sparse Grid: <span style='color:#7F7F7F'>simulation</span> versus <span style='color:#E77500'>theoretical</span>",
+         subtitle = "Beta-Binomial Example",
+         caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown())
+```
+
+## Graph 2 Code
+
+```{r}
+#| echo: true
+#| eval: false
+#| message: false
+#| warning: false
+
+ggplot(posterior_sample, aes(x = pi_grid)) + 
+  geom_histogram(aes(y = after_stat(density)), 
+                 binwidth = 0.1,
+                 fill = "gray50") + 
+  stat_function(fun = dbeta, args = list(7, 8),
+                color = "#E77500", linewidth = 3) + 
+  lims(x = c(0, 1)) +
+  labs(title = "Sparse Grid: <span style='color:#7F7F7F'>simulation</span> versus <span style='color:#E77500'>theoretical</span>",
+         subtitle = "Beta-Binomial Example",
+         caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown())
+```
+
+::::
+
+
+## Dense Grid
+
+Here we will try this grid approximation idea over $N = 101$ values
+
+$$\pi \in [0,1]$$
+
+:::: {.panel-tabset}
+
+## Bayes
+
+```{r}
+#| echo: true
+#| eval: true
+
+# Step 1: Define a grid of 6 pi values
+grid_data <- data.frame(pi_grid = seq(from = 0, to = 1, 
+                                      length = 101))
+
+# Step 2: Evaluate the prior & likelihood at each pi
+grid_data <- grid_data %>% 
+  mutate(prior = dbeta(pi_grid, 3, 3),
+         likelihood = dbinom(4, 9, pi_grid))
+
+# Step 3: Approximate the posterior
+grid_data <- grid_data %>% 
+  mutate(unnormalized = likelihood * prior,
+         posterior = unnormalized / sum(unnormalized))
+```
+
+## Grid Data
+
+```{r}
+#| echo: true
+#| eval: true
+
+round(grid_data, 4)
+```
+
+## Grid Values
+
+```{r}
+#| echo: false
+#| eval: true
+
+# Plot the grid approximated posterior
+ggplot(grid_data, aes(x = pi_grid, y = posterior)) + 
+  geom_segment(aes(x = pi_grid, xend = pi_grid, y = 0, yend = posterior),
+               color = "gray50",
+               linewidth = 1) +
+  geom_point(size = 2) + 
+  labs(title = "Dense Grid",
+         subtitle = "Beta-Binomial Example",
+         caption = "SML 320") +
+  theme_minimal()
+```
+
+## Graph 1 Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+# Plot the grid approximated posterior
+ggplot(grid_data, aes(x = pi_grid, y = posterior)) + 
+  geom_segment(aes(x = pi_grid, xend = pi_grid, y = 0, yend = posterior),
+               color = "gray50",
+               linewidth = 1) +
+  geom_point(size = 2) + 
+  labs(title = "Dense Grid",
+         subtitle = "Beta-Binomial Example",
+         caption = "SML 320") +
+  theme_minimal()
+```
+
+## Posterior Sampling
+
+```{r}
+#| echo: true
+#| eval: true
+
+# Step 4: sample from the discretized posterior
+posterior_sample <- sample_n(grid_data, 
+                             size = 10000, 
+                             weight = posterior, 
+                             replace = TRUE)
+```
+
+## Alignment
+
+```{r}
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+
+ggplot(posterior_sample, aes(x = pi_grid)) + 
+  geom_histogram(aes(y = after_stat(density)), 
+                 color = "black",
+                 binwidth = 0.05,
+                 fill = "gray50") + 
+  stat_function(fun = dbeta, args = list(7, 8),
+                color = "#E77500", linewidth = 3) + 
+  lims(x = c(0, 1)) +
+  labs(title = "Dense Grid: <span style='color:#7F7F7F'>simulation</span> versus <span style='color:#E77500'>theoretical</span>",
+         subtitle = "Beta-Binomial Example",
+         caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown())
+```
+
+## Graph 2 Code
+
+```{r}
+#| echo: true
+#| eval: false
+#| message: false
+#| warning: false
+
+ggplot(posterior_sample, aes(x = pi_grid)) + 
+  geom_histogram(aes(y = after_stat(density)), 
+                 color = "black", 
+                 binwidth = 0.05,
+                 fill = "gray50") + 
+  stat_function(fun = dbeta, args = list(7, 8),
+                color = "#E77500", linewidth = 3) + 
+  lims(x = c(0, 1)) +
+  labs(title = "Dense Grid: <span style='color:#7F7F7F'>simulation</span> versus <span style='color:#E77500'>theoretical</span>",
+         subtitle = "Beta-Binomial Example",
+         caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown())
+```
+
+::::
+
+
+## Example: Gamma-Poisson
+
+### Scenario: Drug Law Violations
+
+Let us start with a vague Gamma prior, use a binomial model to get the likelihood of $\sum y = 119$ drug law violations over $n = 9$ years, and then get a Gamma posterior.
+
+$$\begin{array}{rrcl}
+  \text{prior: } & \pi & \sim & \text{Gamma}(16, 0.8) \\
+  \text{likelihood: } & Y|\pi & \sim & \text{Pois}(119/9) \\
+  \text{posterior: } & \pi|Y & \sim & \text{Gamma}(135, 9.8) \\
+\end{array}$$
+
+## Sparse Grid
+
+Here we will try this grid approximation idea over $N = 11$ values
+
+$$\lambda \in \{0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30\}$$
+
+:::: {.panel-tabset}
+
+## Bayes
+
+```{r}
+#| echo: true
+#| eval: true
+
+obs_counts <- c(18, 14, 23, 22, 12, 22, 7, 0, 1)
+
+# Step 1: Define a grid of 11 pi values
+grid_data <- data.frame(lambda_grid = seq(from = 0, to = 30, 
+                                      length = 11))
+
+# Step 2: Evaluate the prior & likelihood at each pi
+grid_data <- grid_data %>% 
+  mutate(prior = dgamma(lambda_grid, 16, 0.8),
+         likelihood = dpois(18, lambda_grid)*
+           dpois(14, lambda_grid)*
+           dpois(23, lambda_grid)*
+           dpois(22, lambda_grid)*
+           dpois(12, lambda_grid)*
+           dpois(22, lambda_grid)*
+           dpois(7, lambda_grid)*
+           dpois(0, lambda_grid)*
+           dpois(1, lambda_grid))
+
+# Step 3: Approximate the posterior
+grid_data <- grid_data %>% 
+  mutate(unnormalized = likelihood * prior,
+         posterior = unnormalized / sum(unnormalized))
+```
+
+## Grid Data
+
+```{r}
+#| echo: true
+#| eval: true
+
+round(grid_data, 4)
+```
+
+## Grid Values
+
+```{r}
+#| echo: false
+#| eval: true
+
+# Plot the grid approximated posterior
+ggplot(grid_data, aes(x = lambda_grid, y = posterior)) + 
+  geom_segment(aes(x = lambda_grid, xend = lambda_grid, y = 0, yend = posterior),
+               color = "gray50",
+               linewidth = 2) +
+  geom_point(size = 7) + 
+  labs(title = "Sparse Grid",
+         subtitle = "Gamma-Poisson Example",
+         caption = "SML 320") +
+  theme_minimal()
+```
+
+## Graph 1 Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+# Plot the grid approximated posterior
+ggplot(grid_data, aes(x = lambda_grid, y = posterior)) + 
+  geom_segment(aes(x = lambda_grid, xend = lambda_grid, y = 0, yend = posterior),
+               color = "gray50",
+               linewidth = 2) +
+  geom_point(size = 7) + 
+  labs(title = "Sparse Grid",
+         subtitle = "Gamma-Poisson Example",
+         caption = "SML 320") +
+  theme_minimal()
+```
+
+## Posterior Sampling
+
+```{r}
+#| echo: true
+#| eval: true
+
+# Step 4: sample from the discretized posterior
+posterior_sample <- sample_n(grid_data, 
+                             size = 10000, 
+                             weight = posterior, 
+                             replace = TRUE)
+```
+
+## Alignment
+
+```{r}
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+
+ggplot(posterior_sample, aes(x = lambda_grid)) + 
+  geom_histogram(aes(y = after_stat(density)), 
+                 binwidth = 0.1,
+                 fill = "#7F7F7F") + 
+  stat_function(fun = dgamma, args = list(135, 9.8),
+                color = "#E77500", linewidth = 3) + 
+  labs(title = "Sparse Grid: <span style='color:#7F7F7F'>simulation</span> versus <span style='color:#E77500'>theoretical</span>",
+         subtitle = "Gamma-Poisson Example",
+         caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown())
+```
+
+## Graph 2 Code
+
+```{r}
+#| echo: true
+#| eval: false
+#| message: false
+#| warning: false
+
+ggplot(posterior_sample, aes(x = pi_grid)) + 
+  geom_histogram(aes(y = after_stat(density)), 
+                 binwidth = 0.1,
+                 fill = "gray50") + 
+  stat_function(fun = dbeta, args = list(7, 8),
+                color = "#E77500", linewidth = 3) + 
+  lims(x = c(0, 1)) +
+  labs(title = "Sparse Grid: <span style='color:#7F7F7F'>simulation</span> versus <span style='color:#E77500'>theoretical</span>",
+         subtitle = "Gamma-Poisson Example",
+         caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown())
+```
+
+::::
+
+
+## Dense Grid
+
+Here we will try this grid approximation idea over $N = 501$ values
+
+$$\lambda \in [0, 30]$$
+
+:::: {.panel-tabset}
+
+## Bayes
+
+```{r}
+#| echo: true
+#| eval: true
+
+obs_counts <- c(18, 14, 23, 22, 12, 22, 7, 0, 1)
+
+# Step 1: Define a grid of 11 pi values
+grid_data <- data.frame(lambda_grid = seq(from = 0, to = 30, 
+                                      length = 501))
+
+# Step 2: Evaluate the prior & likelihood at each pi
+grid_data <- grid_data %>% 
+  mutate(prior = dgamma(lambda_grid, 16, 0.8),
+         likelihood = dpois(18, lambda_grid)*
+           dpois(14, lambda_grid)*
+           dpois(23, lambda_grid)*
+           dpois(22, lambda_grid)*
+           dpois(12, lambda_grid)*
+           dpois(22, lambda_grid)*
+           dpois(7, lambda_grid)*
+           dpois(0, lambda_grid)*
+           dpois(1, lambda_grid))
+
+# Step 3: Approximate the posterior
+grid_data <- grid_data %>% 
+  mutate(unnormalized = likelihood * prior,
+         posterior = unnormalized / sum(unnormalized))
+```
+
+## Grid Data
+
+```{r}
+#| echo: true
+#| eval: true
+
+round(grid_data, 4)
+```
+
+## Grid Values
+
+```{r}
+#| echo: false
+#| eval: true
+
+# Plot the grid approximated posterior
+ggplot(grid_data, aes(x = lambda_grid, y = posterior)) + 
+  geom_segment(aes(x = lambda_grid, xend = lambda_grid, y = 0, yend = posterior),
+               color = "gray50",
+               linewidth = 1) +
+  geom_point(size = 2) + 
+  labs(title = "Dense Grid",
+         subtitle = "Gamma-Poisson Example",
+         caption = "SML 320") +
+  theme_minimal()
+```
+
+## Graph 1 Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+# Plot the grid approximated posterior
+ggplot(grid_data, aes(x = lambda_grid, y = posterior)) + 
+  geom_segment(aes(x = lambda_grid, xend = lambda_grid, y = 0, yend = posterior),
+               color = "gray50",
+               linewidth = 1) +
+  geom_point(size = 2) + 
+  labs(title = "Dense Grid",
+         subtitle = "Gamma-Poisson Example",
+         caption = "SML 320") +
+  theme_minimal()
+```
+
+## Posterior Sampling
+
+```{r}
+#| echo: true
+#| eval: true
+
+# Step 4: sample from the discretized posterior
+posterior_sample <- sample_n(grid_data, 
+                             size = 10000, 
+                             weight = posterior, 
+                             replace = TRUE)
+```
+
+## Alignment
+
+```{r}
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+
+ggplot(posterior_sample, aes(x = lambda_grid)) + 
+  geom_histogram(aes(y = after_stat(density)), 
+                 binwidth = 0.5,
+                 color = "black",
+                 fill = "#7F7F7F") + 
+  stat_function(fun = dgamma, args = list(135, 9.8),
+                color = "#E77500", linewidth = 3) + 
+  labs(title = "Dense Grid: <span style='color:#7F7F7F'>simulation</span> versus <span style='color:#E77500'>theoretical</span>",
+         subtitle = "Gamma-Poisson Example",
+         caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown())
+```
+
+## Graph 2 Code
+
+```{r}
+#| echo: true
+#| eval: false
+#| message: false
+#| warning: false
+
+ggplot(posterior_sample, aes(x = pi_grid)) + 
+  geom_histogram(aes(y = after_stat(density)), 
+                 binwidth = 0.5,
+                 color = "black",
+                 fill = "gray50") + 
+  stat_function(fun = dgamma, args = list(135, 9.8),
+                color = "#E77500", linewidth = 3) + 
+  lims(x = c(0, 1)) +
+  labs(title = "Dense Grid: <span style='color:#7F7F7F'>simulation</span> versus <span style='color:#E77500'>theoretical</span>",
+         subtitle = "Gamma-Poisson Example",
+         caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown())
+```
+
+::::
+
+## Limitations
+
+* Handling larger data sets
+* Handling multiple parameters
+
+$$\vec{\theta} = (\theta_{1}, \theta_{2}, ..., \theta_{k})$$
+
+* [Curse of dimensionality](https://en.wikipedia.org/wiki/Curse_of_dimensionality): As the number of variables increases, "the volume of the space increases so fast that the available data become sparse. In order to obtain a reliable result, the amount of data needed often grows exponentially with the dimensionality" --- Wikipedia
+
+    * Beta-Binomial example: $N = 101$ grid points
+    * Gamma-Poisson example: $N = 501$ grid points
+
+
+# MCMC
+
+## Andrey Markov
+
+:::: {.columns}
+
+::: {.column width="60%"}
+* 1868 - 1908
+* Russian Mathematician
+* known for stochastic processes
+* thesis supervisor of Georgy Voronoi
+:::
+
+::: {.column width="40%"}
+![Andrey Markov](Andrey_Markov.png)
+:::
+
+::::
+
+## Stanislaw Ulam
+
+:::: {.columns}
+
+::: {.column width="60%"}
+* 1909 - 1984
+* Polish Mathematician
+* known for Monte Carlo methods
+* indefinite appointment at [IAS](https://www.ias.edu/ideas/adventures-mathematician)
+:::
+
+::: {.column width="40%"}
+![John von Neumann, Richard Feynman, and Stanislaw Ulam, at Bandelier National Monument near Los Alamos, 1949 ](Neumann_Feynman_Ulam.png)
+
+* image source: Institute for Advanced Study
+:::
+
+::::
+
+## MCMC Chains
+
+Let $\{ \theta^{(1)}, \theta^{(2)}, ..., \theta^{(N)} \}$ be an **MCMC chain (Markov Chain Monte Carlo)**.
+
+* **Markov Property**:
+
+$$f\left( \theta^{(i+1)} \bigg| \theta^{(1)}, \theta^{(2)}, ..., \theta^{(i)}, y \right) = f\left( \theta^{(i+1)} \bigg| \theta^{(i)}, y \right)$$
+
+* MCMC simulation produces a chain of $N$ dependent values
+* These values are not drawn from the posterior pdf $f(\theta|y)$
+
+## Stan
+
+## Example: Beta-Binomial
+
+### Scenario: Smokers in Restaurants
+
+Let us start with a vague beta prior, use a binomial model to get the likelihood of $y = 4$ smokers among $n = 9$ customers, and then get a beta posterior.
+
+$$\begin{array}{rrcl}
+  \text{prior: } & \pi & \sim & \text{Beta}(3, 3) \\
+  \text{likelihood: } & Y|\pi & \sim & \text{Bin}(9, \pi) \\
+  \text{posterior: } & \pi|Y & \sim & \text{Beta}(7, 8) \\
+\end{array}$$
+
+:::: {.panel-tabset}
+
+## Define Model
+
+```{r}
+#| echo: true
+# STEP 1: DEFINE the model
+bb_model <- "
+  data {
+    int<lower = 0, upper = 9> Y;
+  }
+  parameters {
+    real<lower = 0, upper = 1> pi;
+  }
+  model {
+    Y ~ binomial(9, pi);
+    pi ~ beta(2, 2);
+  }
+"
+```
+
+## Simulate Posterior
+
+```{r}
+#| eval: !expr params$heavy_chunks
+#| message: false
+#| warning: false
+start_time <- Sys.time()
+
+# STEP 2: SIMULATE the posterior
+bb_sim <- stan(model_code = bb_model, data = list(Y = 4), 
+               chains = 4, iter = 5000*2, seed = 84735)
+
+end_time <- Sys.time()
+print(round(end_time- start_time))
+```
+
+## Histogram
+
+```{r}
+#| eval: !expr params$heavy_chunks
+#| message: false
+#| warning: false
+bayesplot::mcmc_hist(bb_sim, pars = "pi")
+```
+
+## Density
+
+```{r}
+#| eval: !expr params$heavy_chunks
+#| message: false
+#| warning: false
+bayesplot::mcmc_dens(bb_sim, pars = "pi") + 
+  stat_function(fun = dbeta, args = list(7, 8),
+                color = "#E77500", linewidth = 3) + 
+  labs(title = "MCMC: <span style='color:#619CFF'>simulation</span> versus <span style='color:#E77500'>theoretical</span>",
+         subtitle = "Beta-Binomial Example",
+         caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown())
+```
+
+::::
+
+
+## Example: Gamma-Poisson 
+
+### Scenario: Drug Law Violations
+
+Let us start with a vague Gamma prior, use a binomial model to get the likelihood of $\sum y = 119$ drug law violations over $n = 9$ years, and then get a Gamma posterior.
+
+$$\begin{array}{rrcl}
+  \text{prior: } & \pi & \sim & \text{Gamma}(16, 0.8) \\
+  \text{likelihood: } & Y|\pi & \sim & \text{Pois}(119/9) \\
+  \text{posterior: } & \pi|Y & \sim & \text{Gamma}(135, 9.8) \\
+\end{array}$$
+
+:::: {.panel-tabset}
+
+## Define Model
+
+```{r}
+#| echo: true
+# STEP 1: DEFINE the model
+gp_model <- "
+  data {
+    int<lower = 0> Y[9];
+  }
+  parameters {
+    real<lower = 0> lambda;
+  }
+  model {
+    Y ~ poisson(lambda);
+    lambda ~ gamma(16, 0.8);
+  }
+"
+```
+
+## Simulate Posterior
+
+```{r}
+#| eval: !expr params$heavy_chunks
+#| message: false
+#| warning: false
+start_time <- Sys.time()
+
+# STEP 2: SIMULATE the posterior
+obs_counts <- c(18, 14, 23, 22, 12, 22, 7, 0, 1)
+gp_sim <- stan(model_code = gp_model, 
+               data = list(Y = obs_counts), 
+               chains = 4, iter = 5000*2, seed = 84735)
+
+end_time <- Sys.time()
+print(round(end_time- start_time))
+```
+
+## Histogram
+
+```{r}
+#| eval: !expr params$heavy_chunks
+#| message: false
+#| warning: false
+bayesplot::mcmc_hist(gp_sim, pars = "lambda")
+```
+
+## Density
+
+```{r}
+#| eval: !expr params$heavy_chunks
+#| message: false
+#| warning: false
+bayesplot::mcmc_dens(gp_sim, pars = "lambda") + 
+  stat_function(fun = dgamma, args = list(135, 9.8),
+                color = "#E77500", linewidth = 3) + 
+  labs(title = "MCMC: <span style='color:#619CFF'>simulation</span> versus <span style='color:#E77500'>theoretical</span>",
+         subtitle = "Gamma-Poisson Example",
+         caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown())
+```
+
+::::
+
+# Quo Vadimus
+
+```{r}
+# Trace plots of the 4 Markov chains
+mcmc_trace(gp_sim, pars = "lambda", size = 0.1)
+```
+
+* How do we know if the MCMC calculations are complete?
+* How do we know if the MCMC calculations are reliable?
+* How does MCMC work in approximating the posterior distribution?
+
+# Footnotes
+
+```{r}
+sessionInfo()
+```
+
+:::: {.columns}
+
+::: {.column width="50%"}
+	
+:::
+
+::: {.column width="50%"}
+
+:::
+
+::::
+
+:::: {.panel-tabset}
+
+
+
+::::

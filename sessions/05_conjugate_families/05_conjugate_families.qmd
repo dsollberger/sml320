@@ -1,0 +1,882 @@
+---
+title: "5: Conjugate Families"
+author: "Derek Sollberger"
+date: "2024-02-13"
+format:
+  revealjs:
+    scrollable: true
+# format:
+#   html:
+#     toc: true
+---
+
+\newcommand{\ds}{\displaystyle}
+
+```{r}
+#| message: false
+#| warning: false
+
+library("bayesrules")
+library("ggtext")
+library("gt")
+library("patchwork")
+library("tidyverse")
+
+knitr::opts_chunk$set(echo = TRUE)
+
+tips_df <- readr::read_csv("tips.csv")
+```
+
+# Motivations
+
+## Simple Prior
+
+Suppose that we wanted to estimate a probability $\pi \in [0,1]$, but perhaps the beta distribution seems complicated.  Instead, we can try an elementary math function like $f(\pi) = 3\pi^{2}$, where this is a probability density function since
+
+$$\ds\int_{0}^{1} \! 3\pi^{2} \, d\pi = 1 \text{ and } f(\pi) \geq 0 \text{ for } \pi \in [0,1]$$
+
+## Interpretability
+
+:::: {.panel-tabset}
+
+## Plot
+
+```{r}
+#| echo: false
+#| eval: true
+
+pi <- seq(0, 1, 0.01)
+f_pi <- 3*pi^2
+
+df_for_line <- data.frame(pi, f_pi)
+df_for_shade <- df_for_line |>
+  rbind(c(1,0)) #enforce lower-right corner
+
+df_for_line |>
+  ggplot(aes(x = pi, y = f_pi)) +
+  geom_polygon(data = df_for_shade, fill = "#E77500") +
+  geom_line(color = "#121212", linewidth = 3) +
+  labs(title = "<span style='color:#E77500'>Parabolic Prior</span>: f(pi) = 3pi^2",
+       subtitle = "left-skew",
+       caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown()) #use ggtext package
+```
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+pi <- seq(0, 1, 0.01)
+f_pi <- 3*pi^2
+
+df_for_line <- data.frame(pi, f_pi)
+df_for_shade <- df_for_line |>
+  rbind(c(1,0)) #enforce lower-right corner
+
+df_for_line |>
+  ggplot(aes(x = pi, y = f_pi)) +
+  geom_polygon(data = df_for_shade, fill = "#E77500") +
+  geom_line(color = "#121212", linewidth = 3) +
+  labs(title = "<span style='color:#E77500'>Parabolic Prior</span>: f(pi) = 3pi^2",
+       subtitle = "left-skew",
+       caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown()) #use ggtext package
+```
+
+## Interpretation
+
+If we start with this prior, we are perhaps assuming a situation over $[0,1]$ where we are expecting the event to likely occur:
+
+$$\text{E}(\pi) = \ds\int_{0}^{1} \! \pi \cdot f(\pi) \, d\pi = \ds\frac{3}{4}$$
+
+::::
+
+## Likelihood
+
+Suppose that we observe $Y = 17$ successes in $n = 32$ independent trials, then modeling the likelihood with a binomial model yields
+
+$$L(\pi|y = 17) = \binom{32}{17}\pi^{17}(1-\pi)^{15} \text{ for } \pi \in [0,1]$$
+
+## Posterior Distribution
+
+Recall that the posterior distribution is proportional to the product of the prior distribution and the likelihood
+
+$$\begin{array}{rcl}
+  f(\pi|y=17) & \propto & f(\pi) \cdot L(\pi|y=17) \\
+  ~ & \propto & \pi^{2} \cdot \pi^{17}(1-\pi)^{15} \\
+\end{array}$$
+
+*does not have the same form* as our prior $f(\pi) = 3\pi^{2}$
+
+## Normalizing Constant
+
+$$f(\pi|y=17) = \ds\frac{\pi^{19}(1-\pi)^{15}}{ \int_{0}^{1} \! \pi^{19}(1-\pi)^{15} \, d\pi } \text{ for } \pi \in [0,1]$$
+
+* integrals can be tough to compute, even with numerical methods
+* very low interpretability
+* difficult to compute sample statistics for the posterior distribution (such as mean and variance)
+
+
+## Conjugate Priors
+
+Conjugate families have both computational ease and interpretable posterior distributions.
+
+::: {.callout-note collapse="true"}
+## Conjugate Priors
+
+Let the prior model for parameter $\theta$ have pdf $f(\theta)$ and the model of data Y conditioned on $\theta$ have likelihood function $L(\theta|y)$. If the resulting posterior model with pdf $f(\theta|y) \propto f(\theta)L(\theta|y)$ is of the same model family as the prior, then we say this is a **conjugate prior**.
+:::
+
+# Poisson Model
+
+## Poisson Process
+
+:::: {.panel-tabset}
+
+## Motivation
+
+- Assume a constant \textit{rate parameter} $\lambda$ of arrivals
+- Let $N_{t}$ be the number of arrivals in time interval $[0,t]$
+- Homogeneity:  $\text{E}[N_{t}] = \lambda t$ (``rate times time'')
+- Independence: numbers of arrivals in disjoint time intervals are independent random variables
+
+## Goal
+
+erive distribution of number of arrivals
+
+- We expect $\text{E}[N_{t}] = \lambda t$ (``rate times time'')
+- Partition time interval $[0,t]$ into $n$ subintervals
+- Assuming $n$ is large enough so that each subinterval has zero or one arrival (i.e. Bernoulli trial)
+- Probability of arrival in a random subinterval: $p = \ds\frac{\lambda t}{n}$
+
+So far, we are assuming $N_{t} \sim \text{Bin}(n,p)$
+
+$$P(N_{t} = k) = \binom{n}{k} \left(\ds\frac{\lambda t}{n}\right)^{k} \left(1 - \ds\frac{\lambda t}{n}\right)^{n-k}$$
+
+## Infinitessimal
+
+However,
+
+- $n$ was arbitrary
+- time is a continuous variable
+
+So let's take the limit as $n$ goes to infinity.
+
+$$\ds\lim_{n \to \infty} P(N_{t} = k) = \ds\lim_{n \to \infty} {\color{purple}\binom{n}{k} \left(\ds\frac{\lambda t}{n}\right)^{k}} {\color{blue}\left(1 - \ds\frac{\lambda t}{n}\right)^{n}} {\color{red}\left(1 - \ds\frac{\lambda t}{n}\right)^{-k}}$$
+
+## Partial Proof
+
+Handling the limit by its factors:
+$$\ds\lim_{n \to \infty} {\color{red}\left(1 - \ds\frac{\lambda t}{n}\right)^{-k}} = 1, \quad \ds\lim_{n \to \infty} {\color{blue}\left(1 - \ds\frac{\lambda t}{n}\right)^{n}} = e^{-\lambda t}$$
+
+$$\begin{array}{rcl}
+  \ds\lim_{n \to \infty} {\color{purple}\binom{n}{k} \left(\ds\frac{\lambda t}{n}\right)^{k}} & = & (\lambda t)^{k} \ds\lim_{n \to \infty} \binom{n}{k} \left(\ds\frac{1}{n}\right)^{k} \\
+  ~ & = & (\lambda t)^{k} \ds\lim_{n \to \infty} \ds\frac{n!}{k!(n-k)!} \cdot \ds\frac{1}{n^{k}} \\
+  ~ & = & \ds\frac{(\lambda t)^{k}}{k!} \ds\lim_{n \to \infty} \ds\frac{n!}{(n-k)!} \cdot \ds\frac{1}{n^{k}} \\
+  ~ & = & \ds\frac{(\lambda t)^{k}}{k!} \ds\lim_{n \to \infty} \ds\prod_{i = 0}^{k-1} \ds\frac{n - i}{n} \\
+  ~ & = & \ds\frac{(\lambda t)^{k}}{k!}  \ds\prod_{i = 0}^{k-1} \ds\lim_{n \to \infty} \ds\frac{n - i}{n} \\
+  ~ & = & \ds\frac{(\lambda t)^{k}}{k!}  \\
+\end{array}$$
+
+::::
+
+## Poisson Distribution
+
+Let discrete random variable $Y$ be the number of independent events that occur in a fixed amount of time or space, where $\lambda>0$ is the rate at which these events occur. Then the dependence of $Y$ on parameter $\lambda$ can be modeled by the Poisson.
+
+$$Y|\lambda \sim \text{Pois}(\lambda)$$
+
+with probability mass function
+
+$$f(y|\lambda) = \ds\frac{\lambda^{y}e^{-\lambda}}{y!} \text{ for } y \in \{0, 1, 2, ...\}$$
+
+* $f(y|\lambda) \geq 0$
+* $\ds\sum_{y=0}^{\infty} \! f(y|\lambda) = 1$
+
+::: {.callout-note collapse="true"}
+## Statistics
+
+The Poisson distribution has the curious property where the randomness has equal mean and variance:
+
+$$\text{E}(Y|\lambda) = \text{Var}(Y|\lambda) = \lambda$$
+:::
+
+## Guidance
+
+:::: {.panel-tabset}
+
+## Plot
+
+```{r}
+#| echo: false
+#| eval: true
+
+y_i <- 0:10
+f_y <- dpois(y_i, 1)
+df_for_plots <- data.frame(y_i,f_y)
+
+p1 <- df_for_plots |> 
+  ggplot(aes(x = y_i, y = dpois(y_i, 1))) + 
+  geom_col() + 
+  labs(title = "lambda = 1") +
+  scale_x_continuous(name = "y", 
+                   breaks = 0:10, 
+                   labels = as.character(0:10)) +
+  theme_minimal()
+
+p2 <- df_for_plots |> 
+  ggplot(aes(x = y_i, y = dpois(y_i, 2))) + 
+  geom_col() + 
+  labs(title = "lambda = 2") +
+  scale_x_continuous(name = "y", 
+                   breaks = 0:10, 
+                   labels = as.character(0:10)) +
+  theme_minimal()
+
+p3 <- df_for_plots |> 
+  ggplot(aes(x = y_i, y = dpois(y_i, 3))) + 
+  geom_col() + 
+  labs(title = "lambda = 3") +
+  scale_x_continuous(name = "y", 
+                   breaks = 0:10, 
+                   labels = as.character(0:10)) +
+  theme_minimal()
+
+p4 <- df_for_plots |> 
+  ggplot(aes(x = y_i, y = dpois(y_i, 4))) + 
+  geom_col() + 
+  labs(title = "lambda = 4") +
+  scale_x_continuous(name = "y", 
+                   breaks = 0:10, 
+                   labels = as.character(0:10)) +
+  theme_minimal()
+
+p5 <- df_for_plots |> 
+  ggplot(aes(x = y_i, y = dpois(y_i, 5))) + 
+  geom_col() + 
+  labs(title = "lambda = 5") +
+  scale_x_continuous(name = "y", 
+                   breaks = 0:10, 
+                   labels = as.character(0:10)) +
+  theme_minimal()
+
+# patchwork
+p1 + p2 + p3 + p4 + p5
+```
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+y_i <- 0:10
+f_y <- dpois(y_i, 1)
+df_for_plots <- data.frame(y_i,f_y)
+
+p1 <- df_for_plots |> 
+  ggplot(aes(x = y_i, y = dpois(y_i, 1))) + 
+  geom_col() + 
+  labs(title = "lambda = 1") +
+  scale_x_continuous(name = "y", 
+                   breaks = 0:10, 
+                   labels = as.character(0:10)) +
+  theme_minimal()
+
+p2 <- df_for_plots |> 
+  ggplot(aes(x = y_i, y = dpois(y_i, 2))) + 
+  geom_col() + 
+  labs(title = "lambda = 2") +
+  scale_x_continuous(name = "y", 
+                   breaks = 0:10, 
+                   labels = as.character(0:10)) +
+  theme_minimal()
+
+p3 <- df_for_plots |> 
+  ggplot(aes(x = y_i, y = dpois(y_i, 3))) + 
+  geom_col() + 
+  labs(title = "lambda = 3") +
+  scale_x_continuous(name = "y", 
+                   breaks = 0:10, 
+                   labels = as.character(0:10)) +
+  theme_minimal()
+
+p4 <- df_for_plots |> 
+  ggplot(aes(x = y_i, y = dpois(y_i, 4))) + 
+  geom_col() + 
+  labs(title = "lambda = 4") +
+  scale_x_continuous(name = "y", 
+                   breaks = 0:10, 
+                   labels = as.character(0:10)) +
+  theme_minimal()
+
+p5 <- df_for_plots |> 
+  ggplot(aes(x = y_i, y = dpois(y_i, 5))) + 
+  geom_col() + 
+  labs(title = "lambda = 5") +
+  scale_x_continuous(name = "y", 
+                   breaks = 0:10, 
+                   labels = as.character(0:10)) +
+  theme_minimal()
+
+# patchwork
+p1 + p2 + p3 + p4 + p5
+```
+
+## Guidance
+
+The Poisson distribution is a discrete distribution that tends to be used to model rare events.
+
+::::
+
+## Joint PMF
+
+Let $(Y_1,Y_2,…,Y_n)$ be an *independent* sample of random variables and $\vec{y} = (y_1,y_2,…,y_n)$ be the corresponding vector of observed values.
+
+::: {.callout-note collapse="true"}
+## Joint Probability Mass Function
+
+Further, let $f(y_i|\lambda)$ denote the pmf of an individual observed data point $Y_i=y_i$. Then by the assumption of independence, the following joint pmf specifies the randomness in and plausibility of the collective sample:
+
+$$f(\vec{y}|\lambda) = \ds\prod_{i=1}^{n} f(y_{i}|\lambda) = f(y_{1}|\lambda) \cdot (y_{2}|\lambda) \cdots f(y_{n}|\lambda)$$
+:::
+
+The Poisson probability mass function is then
+
+$$\begin{array}{rcl}
+  f(\vec{y}|\lambda) & = & \ds\prod_{i=1}^{n} f(y_{i}|\lambda) \\
+  ~ & = & \ds\prod_{i=1}^{n} \ds\frac{\lambda^{y_{i}}e^{\lambda}}{y_{i}!} \\
+  ~ & = & \ds\frac{\lambda^{y_{1}}e^{\lambda}}{y_{1}!} \cdot \ds\frac{\lambda^{y_{2}}e^{\lambda}}{y_{2}!} \cdots \ds\frac{\lambda^{y_{n}}e^{\lambda}}{y_{n}!} \\
+  ~ & = & \ds\frac{ [\lambda^{y_{1}}\lambda^{y_{2}}\cdots\lambda^{y_{n}}][e^{-\lambda}e^{-\lambda} \cdots e^{-\lambda}] }{ y_{1}!y_{2}! \cdots y_{n}! } \\
+  ~ & = & \ds\frac{\lambda^{\sum y_{i}}e^{-n\lambda}}{\prod y_{i}!} \\
+\end{array}$$
+
+## Poisson Likelihood
+
+The Poisson likelihood function is then
+
+$$L(\lambda|\vec{y}) = \ds\frac{\lambda^{\sum y_{i}}e^{-n\lambda}}{\prod y_{i}!}$$
+
+## Parameter Selection
+
+How do we fit a Poisson model with our data? One idea is to seek the *maximum likelihood estimate* (MLE).
+
+**Claim:** The MLE for the $\text{Pois}(\lambda)$ distribution is
+$$\lambda^{*} = \bar{y} = \ds\frac{\sum y_{i}}{n}$$
+
+::: {.callout-note collapse="true"}
+## Proof
+
+From the Poisson distribution's PMF $f(y) = \ds\frac{\lambda^{y}e^{-\lambda}}{y!}$, the likelihood function
+
+$$L(\lambda) = \ds\frac{\lambda^{y_{1}}e^{-\lambda}}{y_{1}!} \cdot \ds\frac{\lambda^{y_{2}}e^{-\lambda}}{y_{2}!} \cdots \ds\frac{\lambda^{y_{n}}e^{-\lambda}}{y_{n}!} $$
+
+Taking the natural logarithm of both sides, we create the **log likelihood** function $\ell(\lambda)$
+
+$$\begin{array}{rcl}
+  \ln L(\lambda) & = & \ln \left(\ds\frac{\lambda^{y_{1}}e^{-\lambda}}{y_{1}!} \cdot \ds\frac{\lambda^{y_{2}}e^{-\lambda}}{y_{2}!} \cdots \ds\frac{\lambda^{y_{n}}e^{-\lambda}}{y_{n}!}\right) \\
+  \ell(\lambda) & = & \ln \ds\prod_{i=1}^{n} \ds\frac{\lambda^{y_{i}}e^{-\lambda}}{y_{i}!} \\
+  \ell(\lambda) & = & \ds\sum_{i=1}^{n} \ln \ds\frac{\lambda^{y_{i}}e^{-\lambda}}{y_{i}!} \\
+  
+  \ell(\lambda) & = & \ds\sum_{i=1}^{n} \left( y_{i}\ln \lambda + \ln e^{-\lambda} - \ln y_{i}! \right) \\
+  
+  \ell(\lambda) & = & (\ln \lambda)\left(\ds\sum_{i=1}^{n} y_{i}\right) -  \ds\sum_{i=1}^{n}\lambda -  \ds\sum_{i=1}^{n} \ln y_{i}! \\
+  
+  \ell(\lambda) & = &  (\ln \lambda)\left(\ds\sum_{i=1}^{n} y_{i}\right) - n\lambda - \ds\sum_{i=1}^{n} \ln (y_{i}!) \\
+\end{array}$$
+
+The motivation for the logarithm usage is to ease the process of taking the derivative.  Here, taking the derivative with respect to $\lambda$, 
+
+$$0 = \ell'(\lambda)  \quad\Rightarrow\quad 0 = -n + \ds\frac{ \sum_{i=1}^{n} y_{i} }{ \lambda } \quad\Rightarrow\quad \lambda = \ds\frac{ \sum_{i=1}^{n} y_{i} }{ n } = \bar{y}$$
+
+That is, the optimal value for parameter $\lambda$ is the sample mean $\bar{y}$.
+:::
+
+## Example: Campus Safety
+
+:::: {.panel-tabset}
+
+## Data
+
+The following data on arrests for drug law violations come from the Princeton University [Annual Security and Fire Safety Report](https://publicsafety.princeton.edu/information/monthlyannual-data)  (in and around the main campus)
+
+|   year  | 2014 | 2015 | 2016 | 2017 | 2018 | 2019 | 2020 | 2021 | 2022 |
+|:-------:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|
+| arrests |  18  |  14  |  23  |  22  |  12  |  22  |   7  |   0  |   1  |
+
+Our maximum likelihood estimate is
+
+$$\lambda^{*} = \ds\frac{\sum y_{i}}{n} = \ds\frac{119}{9} \approx 13.2222 \text{ arrests per year}$$
+
+## Likelihood
+
+```{r}
+#| echo: false
+#| eval: true
+bayesrules::plot_poisson_likelihood(
+  y = c(18, 14, 23, 22, 12, 22, 7, 0, 1),
+  lambda_upper_bound = 20
+) +
+  labs(title = "Likelihood Curve",
+       subtitle = "Arrests per year for drug law violations",
+       caption = "SML 320") +
+  theme_minimal()
+```
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+bayesrules::plot_poisson_likelihood(
+  y = c(18, 14, 23, 22, 12, 22, 7, 0, 1),
+  lambda_upper_bound = 20
+) +
+  labs(title = "Likelihood Curve",
+       subtitle = "Arrests per year for drug law violations",
+       caption = "SML 320") +
+  theme_minimal()
+```
+
+::::
+
+
+# Gamma Model
+
+## Terminology
+
+Let $\lambda > 0$ be a continuous random variable. For modeling, we might try a Gamma model
+$$\lambda \sim \text{Gamma}(s, r)$$
+
+* $s$: shape parameter
+* $r$: rate parameter
+
+::: {.callout-tip collapse="true"}
+
+## Explore! 
+
+Matt Bognar at the University of Iowa created this [great webapp](https://homepage.divms.uiowa.edu/~mbognar/applets/gamma.html) to explore the gamma distribution.
+
+:::
+
+::: {.callout-note collapse="true"}
+## Exponential Model
+
+The Gamma model is a generalization of the exponential model.  When the shape parameter $s = 1$, then
+
+$$\lambda \sim \text{Gamma}(1,r) = \text{Exp}(r)$$
+
+where $r$ is once again the rate parameter.
+:::
+
+## Probablity Density Function
+
+The Gamma model has a continuous pdf
+
+$$f(\lambda) = \ds\frac{r^{s}}{\Gamma(s)} \lambda^{s-1}e^{-r\lambda} \text{ for } \lambda > 0$$
+
+where the gamma function
+
+* $\Gamma(z) = \ds\int_{0}^{\infty} \! x^{z-1}e^{-x} \, dx$
+
+::: {.callout-note collapse="true"}
+## Statistics
+
+Formulas for the Gamma model include
+
+$$\begin{array}{rcl}
+  \text{E}(\lambda) & = & \ds\frac{s}{r} \\
+  \text{Mode}(\lambda) & = & \ds\frac{s-1}{r} \\
+  \text{Var}(\lambda) & = & \ds\frac{s}{r^{2}} \\
+\end{array}$$
+:::
+
+## Tuning the Prior
+
+:::: {.panel-tabset}
+
+## Example: Campus Safety
+
+Suppose that a parent of an university applicant feels that the university has arrests for drug law violations with counts between 10 and 30 per year.  Matching some statistics formulas
+
+$$[\mu - 2\sigma, \mu + 2\sigma] = [10, 30] \quad\rightarrow\quad \mu = 20, \quad \sigma = 5$$
+
+## Statistics
+
+$$\text{E}(\lambda) = \ds\frac{s}{r} = 20 \text{ and } \text{Var}(\lambda) = \ds\frac{s}{r^{2}} = 5^{2}$$
+
+## Plot
+
+```{r}
+#| echo: false
+#| eval: true
+
+bayesrules::plot_gamma(16, 0.8, mean = TRUE) +
+  labs(title = "Gamma(16, 0.8) Prior",
+       subtitle = "mean = 20, sd = 5",
+       caption = "SML 320") +
+  theme_minimal()
+```
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+bayesrules::plot_gamma(16, 0.8, mean = TRUE) +
+  labs(title = "Gamma(16, 0.8) Prior",
+       subtitle = "mean = 20, sd = 5",
+       caption = "SML 320") +
+  theme_minimal()
+```
+
+::::
+
+
+# Gamma-Poisson Conjugate Family
+
+## Gamma-Poisson Bayesian Model
+
+Let $\lambda > 0$ be an unknown rate parameter and let $\{Y_{1}, Y_{2}, ..., Y_{n}\}$ be an i.i.d. sample from a $\text{Pois}(\lambda)$ distribution.  With a setup of a Gamma prior and Poisson likelihood
+
+$$\begin{array}{rcl}
+  \lambda & \sim & \text{Gamma}(s,r) \\
+  Y_{i}|\lambda & \sim & \text{Pois}(\lambda) \\
+\end{array}$$
+
+and observing data $\vec{y} = \{y_{1}, y_{2}, ..., y_{n}\}$, the posterior distribution also has a Gamma structure with updated parameters
+
+$$\lambda|\vec{y} \sim \text{Gamma}\left( s + \ds\sum_{i=1}^{n} y_{i}, r + n \right)$$
+
+::: {.callout-note collapse="true"}
+## Proof
+
+$$\begin{array}{rcl}
+  f(\lambda|\vec{y}) & \propto & f(\lambda) \cdot L(\lambda|\vec{y}) \\
+  ~ & = & \ds\frac{r^{s}}{\Gamma(s)}\lambda^{s-1}e^{-r\lambda} \cdot \ds\frac{\lambda^{\sum y_{i}}e^{-n\lambda}}{\prod y_{i}!} \\
+  ~ & \propto & \lambda^{s-1}e^{-r\lambda} \cdot \lambda^{\sum y_{i}}e^{-n\lambda} \\
+  ~ & = & \lambda^{s+\sum y_{i} - 1}e^{-(r+n)\lambda} \\
+\end{array}$$
+:::
+
+## Example: Campus Safety
+
+:::: {.panel-tabset}
+
+## Recap
+
+* we tuned a $\text{Gamma}(16, 0.8)$ prior
+* we observed 119 arrests for drug law violations over a $n = 9$ year time span
+
+## Plots
+
+```{r}
+#| echo: false
+#| eval: true
+
+bayesrules::plot_gamma_poisson(shape = 16, rate = 0.8,
+                               sum_y = 119, n = 9) +
+  labs(title = "Gamma-Poisson Model",
+       subtitle = "Drug Law Violations Example",
+       caption = "SML 320",
+       x = "arrests for drug law violations") +
+  theme_minimal()
+```
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+bayesrules::plot_gamma_poisson(shape = 16, rate = 0.8,
+                               sum_y = 119, n = 9) +
+  labs(title = "Gamma-Poisson Model",
+       subtitle = "Drug Law Violations Example",
+       caption = "SML 320",
+       x = "arrests for drug law violations") +
+  theme_minimal()
+```
+
+## Statistics
+
+```{r}
+bayesrules::summarize_gamma_poisson(shape = 16, rate = 0.8,
+                                    sum_y = 119, n = 9) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+
+::::
+
+
+# Normal-Normal
+
+## Terminology
+
+Let $Y > 0$ be a continuous random variable over all real numbers $())-\infty, \infty)$. For modeling, we might try a normal distribution
+$$Y \sim \text{N}(\mu, \sigma^{2})$$
+
+* $\mu$: mean
+* $\sigma$: standard deviation
+
+## Probablity Density Function
+
+The normal distribution has a continuous probability density function
+
+$$f(y) = \ds\frac{1}{\sqrt{2\pi \sigma^{2}}} \text{exp}\left[ -\ds\frac{(y-\mu)^{2}}{2\sigma^{2}}\right] \text{ for } y \in (-\infty, \infty)$$
+
+::: {.callout-note collapse="true"}
+## Statistics
+
+Descriptions of normal distributions are dictated by their statistics
+
+$$\begin{array}{rcl}
+  \text{E}(Y) & = & \mu \\
+  \text{Mode}(Y) & = & \mu \\
+  \text{Var}(Y) & = & \sigma^{2} \\
+  \text{SD}(Y) & = & \sigma \\
+\end{array}$$
+
+:::
+
+## Tuning the Prior
+
+:::: {.panel-tabset}
+
+## Example: Tips
+
+```{r}
+head(tips_df)
+```
+
+## Statistics
+
+Let us guess that Americans tend to tip between 5 and 25 percent of the total bill.
+
+$$[\mu - 2\sigma, \mu + 2\sigma] = [5, 25] \quad\rightarrow\quad \mu = 15, \quad \sigma = 5$$
+
+## Plot
+
+```{r}
+#| echo: false
+#| eval: true
+
+bayesrules::plot_normal(mean = 15, sd = 5) +
+  labs(title = "N(15, 25) Prior",
+       subtitle = "mean = 15, sd = 5",
+       caption = "SML 320") +
+  theme_minimal()
+```
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+bayesrules::plot_normal(mean = 15, sd = 5) +
+  labs(title = "N(15, 25) Prior",
+       subtitle = "mean = 15, sd = 5",
+       caption = "SML 320") +
+  theme_minimal()
+```
+
+::::
+
+## Likelihood
+
+In this conjugate prior relationship, the likelihood is also modeled as a normal distribution.
+
+$$L(\mu, \sigma|\vec{y}) \propto \ds\prod_{i=1}^{n} \text{exp}\left[-\ds\frac{(y_{i} - \mu)^{2}}{2\sigma^{2}}\right] = \text{exp}\left[-\ds\frac{\sum_{i=1}^{n} (y_{i}-\mu)^{2}}{2\sigma^{2}}\right]$$
+
+## MLEs
+
+The likelihood can also be expressed in terms of the sample mean $\bar{y}$ and the sample size $n$
+
+$$L(\mu, \sigma|\vec{y}) \propto \text{exp}\left[-\ds\frac{ (\bar{y}-\mu)^{2}}{\frac{2\sigma^{2}}{n}}\right]$$
+
+It follows that the maximum likelihood estimates for the parameters are 
+
+$$\begin{array}{rcl}
+  \mu^{*} & = & \ds\frac{1}{n}\ds\sum_{i=1}^{n} y_{i} \\
+  \sigma^{*} & = & \sqrt{\ds\frac{1}{n}\ds\sum_{i=1}^{n} (y_{i} - \mu^{2})^{2}} \\
+\end{array}$$
+
+which are the sample mean and from the *not-corrected* population variance ([source](https://www.statlect.com/fundamentals-of-statistics/normal-distribution-maximum-likelihood)).
+
+## dplyr
+
+```{r}
+n <- nrow(tips_df)
+tips_df |>
+  mutate(tips_pct = tip/total_bill * 100) |>
+  summarize(mu = mean(tips_pct, na.rm = TRUE),
+            sigma = sqrt(var(tips_pct, na.rm = TRUE) *(n-1)/(n)))
+```
+
+## Plot
+
+```{r}
+#| echo: false
+#| eval: true
+
+bayesrules::plot_normal(mean = 16.08026, sd = 6.094693	) +
+  labs(title = "Normal Likelihood",
+       subtitle = "MLEs: ybar = 16.08026, sigma = 6.094693",
+       caption = "SML 320") +
+  theme_minimal()
+```
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+bayesrules::plot_normal(mean = 16.08026, sd = 6.094693	) +
+  labs(title = "Normal ",
+       subtitle = "MLEs: ybar = 16.08026, sigma = 6.094693",
+       caption = "SML 320") +
+  theme_minimal()
+```
+
+
+## Normal-Normal Conjugacy
+
+Let $\mu \in (-\infty, \infty)$ be an unknown mean parameter and let $\sigma^{2} > 0$ be an unknown variance parameter and let $\{Y_{1}, Y_{2}, ..., Y_{n}\}$ be an i.i.d. sample from a $\text{N}(\mu, \sigma^{2})$ distribution.  With a setup of a normal prior and normal likelihood
+
+$$\begin{array}{rcl}
+  \mu,\sigma^{2} & \sim & \text{N}(\theta,\tau^{2}) \\
+  Y_{i}|\mu, \sigma^{2} & \sim & \text{N}(\mu,\sigma^{2}) \\
+\end{array}$$
+
+and observing data $\vec{y} = \{y_{1}, y_{2}, ..., y_{n}\}$, the posterior distribution also has a normal structure with updated parameters
+
+$$\mu,\sigma^{2}|\vec{y} \sim \text{N}\left( \ds\frac{\sigma^{2}}{n\tau^{2}+\sigma^{2}} \cdot \theta + \ds\frac{n\tau^{2}}{n\tau^{2}+\sigma^{2}} \cdot \bar{y}, \quad \ds\frac{\tau^{2}\sigma^{2}}{n\tau^{2}+\sigma^{2}} \right)$$
+
+* What happens if we have relatively small data sets?
+* What happens if we have relatively large data sets?
+
+## Example
+
+:::: {.panel-tabset}
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+bayesrules::plot_normal_normal(
+  
+  # from prior
+  mean = 15, sd = 5,
+  
+  # from observations
+  y_bar = 16.08026, sigma = 6.094693, n = 244
+) +
+  labs(title = "Normal-Normal Model",
+       subtitle = "Restaurant Tips Example",
+       caption = "SML 320",
+       x = "percent of total food bill") +
+  theme_minimal()
+```
+
+## Plots
+
+```{r}
+#| echo: false
+#| eval: true
+
+bayesrules::plot_normal_normal(
+  
+  # from prior
+  mean = 15, sd = 5,
+  
+  # from observations
+  y_bar = 16.08026, sigma = 6.094693, n = 244
+) +
+  labs(title = "Normal-Normal Model",
+       subtitle = "Restaurant Tips Example",
+       caption = "SML 320",
+       x = "percent of total food bill") +
+  theme_minimal()
+```
+
+## Statistics
+
+```{r}
+bayesrules::summarize_normal_normal(
+  
+  # from prior
+  mean = 15, sd = 5,
+  
+  # from observations
+  y_bar = 16.08026, sigma = 6.094693, n = 244
+) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+
+::::
+
+## Model Selection
+
+We looked at 3 conjugate families.
+
+:::: {.panel-tabset}
+
+## Beta-Binomial
+
+* estimate $\pi \in [0,1]$
+* pro: good for interpretability
+* con: computationally expensive for large $n$
+
+## Gamma-Poisson
+
+* estimate $\lambda > 0$
+* pro: models rare events and skewed data well
+* con: discussion of rates instead of counts
+
+## Normal-Normal
+
+* estimate mean $\mu$ and variance $\sigma$
+* pro: ubiquitous in scientific communities
+* cons: 
+
+    * infinite support may lead to suboptimal results in larger networks
+    * was the data symmetric?
+
+
+::::
+
+
+
+
+# Footnotes
+
+```{r}
+sessionInfo()
+```
+
+:::: {.columns}
+
+::: {.column width="50%"}
+	
+:::
+
+::: {.column width="50%"}
+
+:::
+
+::::
+
+:::: {.panel-tabset}
+
+
+
+::::
