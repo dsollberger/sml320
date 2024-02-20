@@ -2,12 +2,12 @@
 title: "6: Approximating the Posterior"
 author: "Derek Sollberger"
 date: "2024-02-15"
-# format:
-#   revealjs:
-#     scrollable: true
 format:
-  html:
-    toc: true
+  revealjs:
+    scrollable: true
+# format:
+#   html:
+#     toc: true
 params:
   heavy_chunks: "true"
   # heavy_chunks: "false"
