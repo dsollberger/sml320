@@ -1,0 +1,820 @@
+---
+title: "7: MCMC"
+author: "Derek Sollberger"
+date: "2024-02-20"
+# execute:
+#   cache: true
+# format:
+#   revealjs:
+#     scrollable: true
+format:
+  html:
+    toc: true
+params:
+  heavy_chunks: "true"
+  # heavy_chunks: "false"
+---
+
+\newcommand{\ds}{\displaystyle}
+
+```{r}
+#| message: false
+#| warning: false
+
+library("bayesplot")
+library("ggtext")
+library("rstan")
+library("patchwork")
+library("tidyverse")
+
+knitr::opts_chunk$set(echo = TRUE)
+
+# tips_df <- readr::read_csv("tips.csv")
+```
+
+# A Good Example
+
+:::: {.panel-tabset}
+
+## Define Model
+
+```{r}
+#| echo: true
+# STEP 1: DEFINE the model
+bb_model <- "
+  data {
+    int<lower = 0, upper = 9> Y;
+  }
+  parameters {
+    real<lower = 0, upper = 1> pi;
+  }
+  model {
+    Y ~ binomial(9, pi);
+    pi ~ beta(2, 2);
+  }
+"
+```
+
+## Simulate Posterior
+
+```{r}
+#| eval: !expr params$heavy_chunks
+#| message: false
+#| warning: false
+start_time <- Sys.time()
+
+# STEP 2: SIMULATE the posterior
+good_simulation <- stan(model_code = bb_model, data = list(Y = 4), 
+                        chains = 4, iter = 5000*2, seed = 84735)
+
+end_time <- Sys.time()
+print(round(end_time- start_time))
+```
+
+## Histogram
+
+```{r}
+#| eval: !expr params$heavy_chunks
+#| message: false
+#| warning: false
+bayesplot::mcmc_hist(good_simulation, pars = "pi")
+```
+
+## Density
+
+```{r}
+#| eval: !expr params$heavy_chunks
+#| message: false
+#| warning: false
+bayesplot::mcmc_dens(good_simulation, pars = "pi") + 
+  stat_function(fun = dbeta, args = list(7, 8),
+                color = "#E77500", linewidth = 3) + 
+  labs(title = "MCMC: <span style='color:#619CFF'>simulation</span> versus <span style='color:#E77500'>theoretical</span>",
+         subtitle = "Beta-Binomial Example",
+         caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown())
+```
+
+## Trace
+
+```{r}
+#| eval: !expr params$heavy_chunks
+#| message: false
+#| warning: false
+bayesplot::mcmc_trace(good_simulation, pars = "pi") + 
+  labs(title = "MCMC Trace",
+         subtitle = "Good Example",
+         caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown())
+```
+
+::::
+
+
+# A Bad Example
+
+:::: {.panel-tabset}
+
+## Define Model
+
+```{r}
+#| echo: true
+# STEP 1: DEFINE the model
+bb_model <- "
+  data {
+    int<lower = 0, upper = 9> Y;
+  }
+  parameters {
+    real<lower = 0, upper = 1> pi;
+  }
+  model {
+    Y ~ binomial(9, pi);
+    pi ~ beta(2, 2);
+  }
+"
+```
+
+## Simulate Posterior
+
+```{r}
+#| eval: !expr params$heavy_chunks
+#| message: false
+#| warning: false
+start_time <- Sys.time()
+
+# STEP 2: SIMULATE the posterior
+bad_simulation <- stan(model_code = bb_model, data = list(Y = 4), 
+                        chains = 4, iter = 50*2, seed = 84735)
+
+end_time <- Sys.time()
+print(round(end_time- start_time))
+```
+
+## Histogram
+
+```{r}
+#| eval: !expr params$heavy_chunks
+#| message: false
+#| warning: false
+bayesplot::mcmc_hist(bad_simulation, pars = "pi")
+```
+
+## Density
+
+```{r}
+#| eval: !expr params$heavy_chunks
+#| message: false
+#| warning: false
+bayesplot::mcmc_dens(bad_simulation, pars = "pi") + 
+  stat_function(fun = dbeta, args = list(7, 8),
+                color = "#E77500", linewidth = 3) + 
+  labs(title = "MCMC: <span style='color:#619CFF'>simulation</span> versus <span style='color:#E77500'>theoretical</span>",
+         subtitle = "Beta-Binomial Example",
+         caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown())
+```
+
+## Trace
+
+```{r}
+#| eval: !expr params$heavy_chunks
+#| message: false
+#| warning: false
+bayesplot::mcmc_trace(bad_simulation, pars = "pi") + 
+  labs(title = "MCMC Trace",
+         subtitle = "Bad Example",
+         caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown())
+```
+
+::::
+
+
+# Coins
+
+:::: {.panel-tabset}
+
+## Jakob Bernoulli
+
+:::: {.columns}
+
+::: {.column width="60%"}
+* German mathematician
+* 1654 - 1705
+* *Ars Conjectandi* published 1713
+* brother: Daniel Bernoulli
+:::
+
+::: {.column width="40%"}
+![Jakob Bernoulli](Jakob_Bernoulli.png)
+
+Image source: [Mathematical Association of America](https://maa.org/press/periodicals/convergence/euler-and-the-bernoullis-learning-by-teaching-jakob-bernoulli)
+:::
+
+::::
+
+## Flipping Coins
+
+![coin flip](coin_flip.png)
+
+Image source: [Liberty Coin and Currency](https://libertycoinandcurrency.com/blog/the-history-of-the-coin-flip/)
+
+## One Coin
+
+$$P(H) = 0.50$$
+$$P(T) = 0.50$$
+
+![](onecoin.png)
+
+## Codes
+
+```{r}
+k <- 0:2
+f_k <- dbinom(k, 2, 0.5)
+two_coin_plot <- data.frame(k, f_k) |>
+  ggplot(aes(x = k, y = f_k)) +
+  geom_bar(color = "black", fill = "#E77500", stat = "identity") +
+  labs(title = "2 Coins", subtitle = "fair coin", caption = "SML 320", x = "heads", y = "probability") +
+  theme_minimal()
+
+k <- 0:3
+f_k <- dbinom(k, 3, 0.5)
+three_coin_plot <- data.frame(k, f_k) |>
+  ggplot(aes(x = k, y = f_k)) +
+  geom_bar(color = "black", fill = "#E77500", stat = "identity") +
+  labs(title = "3 Coins", subtitle = "fair coin", caption = "SML 320", x = "heads", y = "probability") +
+  theme_minimal()
+
+k <- 0:4
+f_k <- dbinom(k, 4, 0.5)
+four_coin_plot <- data.frame(k, f_k) |>
+  ggplot(aes(x = k, y = f_k)) +
+  geom_bar(color = "black", fill = "#E77500", stat = "identity") +
+  labs(title = "4 Coins", subtitle = "fair coin", caption = "SML 320", x = "heads", y = "probability") +
+  theme_minimal()
+
+k <- 0:5
+f_k <- dbinom(k, 5, 0.5)
+five_coin_plot <- data.frame(k, f_k) |>
+  ggplot(aes(x = k, y = f_k)) +
+  geom_bar(color = "black", fill = "#E77500", stat = "identity") +
+  labs(title = "5 Coins", subtitle = "fair coin", caption = "SML 320", x = "heads", y = "probability") +
+  theme_minimal()
+```
+
+## 2 Coins
+
+```{r}
+#| echo: false
+two_coin_plot
+```
+
+## 3 Coins
+
+```{r}
+#| echo: false
+three_coin_plot
+```
+
+## 4 Coins
+
+```{r}
+#| echo: false
+four_coin_plot
+```
+
+
+## 5 Coins
+
+```{r}
+#| echo: false
+five_coin_plot
+```
+
+## Binomial Distribution
+
+Let random variable $Y$ be the number of successes in a fixed number of trials $n$. Assume that the trials are independent and that the probability of success in each trial is $\pi$. Then the conditional dependence of $Y$ on $\pi$ can be modeled by the Binomial model with parameters $n$ and $\pi$. In mathematical notation:
+
+$$Y|\pi \sim \text{Bin}(n,\pi)$$
+where $\sim$ can be read as "modeled by".  Correspondingly, the binomial model is specified by the conditional pmf
+
+$$f(y|\pi) = \binom{n}{y}\pi^{y}(1-\pi)^{n-y} \text{ for } y \in \{0, 1, 2, ..., n\}$$
+where $\binom{n}{y} = \ds\frac{n!}{y!(n-y)!}$
+
+::::
+
+# Random Walks
+
+:::: {.panel-tabset}
+
+## Definition
+
+A **random walk** is a *random process* where we start at $x = 0$ on a one-dimensional number line, and then
+
+* go left: $f(X = -1) = 0.50$
+* go right: $f(X = 1) = 0.50$
+
+(and then repeat the "step" many times)
+
+## 1D Distribution
+
+```{r}
+#| echo: false
+#| eval: true
+
+k <- 0:6
+f_k <- dbinom(k, 6, 0.5)
+random_walk_1d_plot <- data.frame(k, f_k) |>
+  ggplot(aes(x = k - 3, y = f_k)) +
+  geom_bar(color = "black", fill = "#E77500", stat = "identity") +
+  labs(title = "Random Walk", subtitle = "one dimension, after 6 steps", caption = "SML 320", x = "distance from start", y = "probability") +
+  theme_minimal()
+
+random_walk_1d_plot
+```
+
+## 2 Dimensions
+
+A **random walk** is a *random process* where we start at $x = 0$ on a two-dimensional Cartesian plane, and then
+
+* go left: $f(X = -1, Y = 0) = 0.25$
+* go right: $f(X = 1, Y = 0) = 0.25$
+* go up: $f(X = 0, Y = 1) = 0.25$
+* go down: $f(X = 0, Y = -1) 0.25$
+
+(and then repeat the "step" many times)
+
+## 2D Traces
+
+![trajectories of 6 particles](2D_traces.png)
+
+Image Source: [Research Gate](https://www.researchgate.net/figure/Two-dimensional-random-walk-simulation-demonstrates-that-a-particle-can-reach-all-parts_fig4_327566938)
+
+## 3D Traces
+
+![tracjectories of 4 random walks](3D_traces.png)
+
+Image Source: [The Koga](http://www.thekoga.com/research-and-academics/random-walks/)
+
+::::
+
+
+# Going on Tour
+
+## Metropolis-Hastings
+
+Using the analogy from the *Bayes Rules!* textbook, "As tour manager, you can automate the tour route using the **Metropolis-Hastings algorithm**. This algorithm iterates through a two-step process. Assuming the Markov chain is at location $\mu(i)=\mu$ at iteration or “tour stop” $i$, the next tour stop $\mu(i+1)$ is selected as follows:
+
+* Step 1: Propose a random location, $\mu^{′}$, for the next tour stop.
+* Step 2: Decide whether to 
+
+    * to to the proposed location
+    $$\mu(i+1)=\mu^{′}$$
+    * or to stay at the current location for another iteration
+    $$\mu(i+1)=\mu$$
+
+## Monte Carlo
+
+If we know the posterior distribution, this special case of the Metropolis-Hastings algorithm has a special name
+
+::: {.callout-note collapse="true"}
+## Monte Carlo algorithm
+
+To construct an *independent* Monte Carlo sample *directly* from posterior pdf $f(\mu|y)$, 
+$$\{\mu^{(1)},\mu^{(2)},...,\mu^{(N)}\}$$ 
+
+select each tour stop $\mu^{(i)}=\mu$
+
+as follows:
+
+* Step 1: Propose a location. Draw a location μ from the posterior model with pdf $f(\mu|y)$
+* Step 2: Go there.
+:::
+
+## Generalizing
+
+* we only need MCMC to approximate a Bayesian posterior when that posterior is too complicated to specify
+* if a posterior is too complicated to specify, it’s typically too complicated to directly sample or draw from as we did in our Monte Carlo tour above
+* Metropolis-Hastings relies on the fact that, even if we don’t know the posterior model, we do know that the posterior pdf is proportional to the product of the known prior pdf and likelihood function
+
+$$f(\mu|y) \propto f(\mu) \cdot L(\mu|y)$$
+
+
+# Metropolis-Hastings Algorithm
+
+## Nicholas Metropolis
+
+:::: {.columns}
+
+::: {.column width="50%"}
+* PhD: University of Chicago
+* Recruited by Oppenheimer
+* Team included von Neumann and Ulam
+:::
+
+::: {.column width="50%"}
+![Nicholas Metropolis](Nicholas_Metropolis.png)
+
+Image Source: [Nuclear Museum](https://ahf.nuclearmuseum.org/voices/oral-histories/nicholas-metropolis-interview/)
+:::
+
+::::
+
+:::: {.columns}
+
+
+## Wilfred Hastings
+
+::: {.column width="50%"}
+* PhD: University of Toronto
+* Bell Labs (New Jersey)
+* generalized Metropolis algorithm and MCMC
+:::
+
+::: {.column width="50%"}
+![Wilfred Hastings](Wilfred_Hastings.png)
+
+Image Source: [McCall Gardens](https://www.mccallgardens.com/obituaries/wilfred-keith-hastings)
+:::
+
+::::
+
+:::: {.columns}
+
+## Rosenbluths
+
+
+::: {.column width="50%"}
+### Arianna Rosenbluth
+
+* PhD: Harvard University
+* qualified for Olympics (fencing)
+* wrote first MCMC algorithm
+
+### Marshall Rosenbluth
+
+* PhD: University of Chicago
+* WWII veteran (navy)
+:::
+
+
+::: {.column width="50%"}
+![Marshall and Arianna Rosenbluth](Rosenbluths.png)
+
+Image Source: [Los Alamos National Laboratories](https://discover.lanl.gov/publications/the-vault/the-vault-2022/metropolis/)
+:::
+
+::::
+
+
+
+
+
+
+
+## Uniform proposal model
+
+Let $\mu^{(i)} = \mu$ denote the current tour location with $w$ being a *half-width* distance:
+
+* random draw: $\mu^{'}|\mu \sim \text{Unif}(\mu - w, \mu + w)$
+* pdf: $q(\mu^{'}|\mu) = \ds\frac{1}{2w} \text{ for } \mu^{'} \in [(\mu - w, \mu + w]$
+
+## Rejected Ideas
+
+* *Never* accept the proposed location.
+* *Always* accept the proposed location.
+* Only accept the proposed location *if* its (unnormalized) posterior plausibility is greater than that of the current location.
+
+## Main Idea
+
+* Step 1: Propose a location, $\mu^{'}$, for the next tour stop by taking a draw from a proposal model.
+* Step 2: Decide whether to go to the proposed location ($μ^{(i+1)}=\mu^{'}$) or to stay at the current location for another iteration ($μ^{(i+1)}=\mu$) as follows.
+
+    * If the (unnormalized) posterior plausibility of the proposed location $\mu^{'}$ is greater than that of the current location $\mu$, $$f(\mu^{'})L(\mu^{'}|y)>f(\mu)L(\mu|y)$$
+*definitely* go there.
+    * Otherwise, *maybe* go there.
+
+## Definition
+
+::: {.callout-note collapse="true"}
+## Metropolis-Hastings algorithm
+
+Conditioned on data $y$, let parameter $\mu$ have posterior pdf
+$$f(\mu|y)\propto f(\mu) \cdot L(\mu|y)$$ 
+A Metropolis-Hastings Markov chain for $f(\mu|y)$, $\{\mu^{(1)},\mu^{(2)},...,\mu^{(N)}\}$, evolves as follows. Let $\mu^{(i)}=\mu$ be the chain’s location at iteration $i\in\{1,2,...,N−1\}$ and identify the next location $\mu^{(i+1)}$ through a two-step process:
+
+* Step 1: *Propose a new location.* Conditioned on the current location $\mu$, draw a location $\mu^{′}$ from a proposal model with pdf $q(\mu^{′}|\mu)$.
+* Step 2: *Decide whether or not to go there.*
+
+    * Calculate the **acceptance probability** (i.e., the probability of accepting the proposal $\mu^{′}$):
+    $$\alpha = \text{min}\left\{1, \ds\frac{f(\mu^{′}) \cdot L(\mu^{′}|y)}{f(\mu) \cdot L(\mu|y)} \cdot \ds\frac{q(\mu^{′}|\mu)}{q(\mu|\mu^{′})} \right\}$$
+    * Figuratively, flip a weighted coin. If it’s Heads, with probability $\alpha$, go to the proposed location $\mu^{′}$. If it’s Tails, with probability $1−\alpha$, stay at $\mu$:
+    $$\mu^{(i+1)} = \begin{cases}
+      \mu^{'} & \text{with probability } \alpha \\
+      \mu & \text{with probability } 1-\alpha \\
+    \end{cases}$$
+:::
+
+## Symmetric Proposal
+
+What happens if we have a symmetric proposal model?  For instance, 
+
+$$\mu^{'}|\mu \sim \text{Unif}(\mu - w, \mu + w)$$
+
+leads to the probability density function
+
+$$q(\mu^{′}|\mu) = q(\mu|\mu^{′}) = \begin{cases}
+  \frac{1}{2w}, & |\mu - \mu^{'}| < w \\
+  0, & \text{otherwise} \\
+\end{cases}$$
+
+## Metropolis Algorithm
+
+::: {.callout-note collapse="true"}
+## Metropolis Algorithm
+
+The Metropolis algorithm is a special case of the Metropolis-Hastings in which the proposal model is symmetric. That is, the chance of proposing a move to $\mu^{′}$ from $\mu$ is equal to that of proposing a move to $\mu$ from $\mu^{′}$: 
+$$q(\mu^{′}|\mu) = q(\mu|\mu^{′})$$
+
+The acceptance probability simplifies to
+$$\alpha = \text{min}\left\{1, \ds\frac{f(\mu^{′}) \cdot L(\mu^{′}|y)}{f(\mu) \cdot L(\mu|y)} \right\}$$
+:::
+
+## Bayesian Ratio
+
+By dividing both the numerator and denominator by $f(y)$
+
+$$\alpha = \text{min}\left\{1, \ds\frac{f(\mu^{′}) \cdot L(\mu^{′}|y) / f(y)}{f(\mu)  \cdot L(\mu|y) / f(y)} \right\} = \text{min}\left\{1, \ds\frac{f(\mu^{'}|y)}{f(\mu|y)} \right\}$$
+
+This rewrite emphasizes that, though we can’t calculate the posterior pdfs of $\mu^{′}$ and $\mu$, $f(\mu^{'}|y)$ and $f(\mu|y)$, their ratio is equivalent to that of the *unnormalized posterior* pdfs (which we can calculate)
+
+
+## Tour Decisions
+
+Thus, the probability of accepting a move from a current location $\mu$ to a proposed location $\mu^{′}$ comes down to a comparison of their posterior plausibility: $f(\mu^{'}|y)$ versus $f(\mu|y)$. There are two possible scenarios here:
+
+* Scenario 1: $f(\mu^{'}|y) \geq f(\mu|y)$.  When the posterior plausibility of $\mu^{′}$ is at least as great as that of $\mu$, $\alpha=1$. Thus, we’ll *definitely* move there.
+* Scenario 2: $f(\mu^{'}|y) < f(\mu|y)$.  If the posterior plausibility of $\mu^{′}$ is less than that of $\mu$, then
+
+$$α=\ds\frac{f(\mu^{′}|y)}{f(\mu|y)}<1$$
+
+Thus, we *might* move there.
+
+::: {.callout-tip collapse="true"}
+## Near
+
+Further, $\alpha$ approaches 1 as $f(\mu^{'}|y)$ nears $f(\mu|y)$. That is, the probability of accepting the proposal increases with the plausibility of $\mu^{′}$ relative to $\mu$.
+:::
+
+
+# Metropolis-Hastings Implementation
+
+## Detailed Account
+
+* start location: $\mu^{(0)} = 3$
+* half-width: $w = 0.5$
+* normal-normal model:
+
+    * prior: $\mu \sim \text{N}(3, 0.50^2)$
+    * likelihood: $Y|\mu \sim \text{N}(\mu, 0.75^2)$
+    
+* observed value: $y = 3.20$
+
+```{r}
+set.seed(20240220)
+current  <- 3
+proposal <- runif(1, min = current - 1, max = current + 1)
+print(paste0("The proposed value is: ", proposal))
+
+proposal_plausibility <- dnorm(proposal, 3, 0.5) * dnorm(3.20, proposal, 0.75)
+print(paste0("The proposed plausibility is: ", proposal_plausibility))
+
+current_plausibility <- dnorm(current, 3, 0.5) * dnorm(3.20, current, 0.75)
+print(paste0("The current plausibility is: ", current_plausibility))
+
+alpha <- min(1, proposal_plausibility / current_plausibility)
+print(paste0("The acceptance probability is: ", alpha))
+```
+
+
+## Helper Function
+
+```{r}
+one_mh_iteration <- function(current, w, obs_value, tau, sigma){
+  # Step 1: propose next location in chain
+  proposal <- runif(1, min = current - w, current + w)
+  
+  # Step 2: decide whether or not to go there
+  proposal_plausibility <- dnorm(proposal, 3, tau) * dnorm(obs_value, proposal, sigma)
+  current_plausibility <- dnorm(current, 3, tau) * dnorm(obs_value, current, sigma)
+  alpha <- min(1, proposal_plausibility / current_plausibility)
+  next_stop <- sample(c(proposal, current), 
+                      size = 1, prob = c(alpha, 1 - alpha))
+  
+  # Return the results as a data frame
+  return(data.frame(proposal, alpha, next_stop))
+}
+```
+
+```{r}
+set.seed(1)
+one_mh_iteration(current = 3, w = 0.5, 
+                 obs_value = 3.20, tau = 0.75, sigma = 0.50)
+```
+
+```{r}
+set.seed(4)
+one_mh_iteration(current = 3, w = 0.5, 
+                 obs_value = 3.20, tau = 0.75, sigma = 0.50)
+```
+
+```{r}
+set.seed(5)
+one_mh_iteration(current = 3, w = 0.5, 
+                 obs_value = 3.20, tau = 0.75, sigma = 0.50)
+```
+
+
+## For Loop
+
+```{r}
+mh_tour <- function(N, current, w, obs_value, tau, sigma){
+  # N: chain length
+  # initialize vector
+  mu <- rep(0, N)
+  
+  # simulate N Markov chain stops
+  for(i in 1:N){
+    # simulate one iteration
+    this_iteration <- one_mh_iteration(current, w, obs_value, tau, sigma)
+    
+    # record next location
+    mu[i] <- this_iteration$next_stop
+    
+    # update current location
+    current <- this_iteration$next_stop
+  }
+  
+  # return the chain locations
+  return(data.frame(iteration = c(1:N), mu))
+}
+```
+
+## Go on Tour!
+
+```{r}
+our_mh_tour <- mh_tour(N = 5000, current = 3, w = 1, 
+                 obs_value = 3.20, tau = 0.50, sigma = 0.75)
+```
+
+
+# Metrics
+
+How do we know if our MCMC chain is reliable?
+
+## Traces
+
+### Our Metropolis-Hastings Tour
+
+From our knowledge of the Normal-Normal model, 
+
+```{r}
+bayesrules::summarize_normal_normal(
+  # from prior
+  mean = 3, sd = 0.50,
+  
+  # from observations
+  y_bar = 3.20, sigma = 0.75, n = 1
+) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+
+we should have a $\text{N}(3.0615, 0.4160^2)$ posterior distribution
+
+```{r}
+p1 <- ggplot(our_mh_tour, aes(x = iteration, y = mu)) + 
+  geom_line() +
+  labs(title = "Our Metropolis-Hastings Tour",
+       subtitle = "Posterior: N(3.0615, 0.4160^2)",
+       caption = "SML 320") +
+  theme_minimal()
+
+p2 <- ggplot(our_mh_tour, aes(x = mu)) + 
+  geom_histogram(aes(y = after_stat(density)), 
+                 binwidth = 0.1,
+                 color = "black", fill = "gray50") + 
+  stat_function(fun = dnorm, args = list(3.0615, 0.4160), 
+                color = "#E77500",
+                linewidth = 2) +
+  theme_minimal()
+
+# patchwork
+p1 + p2
+```
+
+## Bad Examples
+
+![bad examples](bad-trace-1.png)
+
+Image Source: [Bayes Rules!](https://www.bayesrulesbook.com/chapter-6#diagnostics
+
+## Density Overlay
+
+:::: {.panel-tabset}
+
+## Plots
+
+```{r}
+#| echo: false
+#| eval: true
+
+p1 <- mcmc_dens_overlay(bad_simulation, pars = "pi") + 
+  labs(title = "Density Overlay",
+       subtitle = "bad simulation",
+       caption = "SML 320",
+       y = "density") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+p2 <- mcmc_dens_overlay(good_simulation, pars = "pi") + 
+  labs(title = "Density Overlay",
+       subtitle = "good simulation",
+       caption = "SML 320",
+       y = "density") +
+  theme_minimal()
+
+# patchwork
+p1 + p2
+```
+
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+
+p1 <- mcmc_dens_overlay(bad_simulation, pars = "pi") + 
+  labs(title = "Density Overlay",
+       subtitle = "bad simulation",
+       caption = "SML 320",
+       y = "density") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+p2 <- mcmc_dens_overlay(good_simulation, pars = "pi") + 
+  labs(title = "Density Overlay",
+       subtitle = "good simulation",
+       caption = "SML 320",
+       y = "density") +
+  theme_minimal()
+
+# patchwork
+p1 + p2
+```
+
+::::
+
+
+
+# Footnotes
+
+## Legacy
+
+The Metropolis-Hastings algorithm appeared in a [top-ten list](https://www.andrew.cmu.edu/course/15-355/misc/Top%20Ten%20Algorithms.html) called ""the greatest influence on the development and practice of science and engineering in the 20th century".
+
+## Music Recommendation
+
+[Should I Stay or Should I Go](https://www.youtube.com/watch?v=xMaE6toi4mk) by The Clash
+
+::: {.callout-note collapse="true"}
+## Session Info
+
+```{r}
+sessionInfo()
+```
+:::
+
+
+:::: {.columns}
+
+::: {.column width="50%"}
+	
+:::
+
+::: {.column width="50%"}
+
+:::
+
+::::
+
+:::: {.panel-tabset}
+
+
+
+::::

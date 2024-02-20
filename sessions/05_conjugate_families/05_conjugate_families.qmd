@@ -140,14 +140,14 @@ Let the prior model for parameter $\theta$ have pdf $f(\theta)$ and the model of
 
 - Assume a constant \textit{rate parameter} $\lambda$ of arrivals
 - Let $N_{t}$ be the number of arrivals in time interval $[0,t]$
-- Homogeneity:  $\text{E}[N_{t}] = \lambda t$ (``rate times time'')
+- Homogeneity:  $\text{E}[N_{t}] = \lambda t$ ("rate times time")
 - Independence: numbers of arrivals in disjoint time intervals are independent random variables
 
 ## Goal
 
 erive distribution of number of arrivals
 
-- We expect $\text{E}[N_{t}] = \lambda t$ (``rate times time'')
+- We expect $\text{E}[N_{t}] = \lambda t$ ("rate times time")
 - Partition time interval $[0,t]$ into $n$ subintervals
 - Assuming $n$ is large enough so that each subinterval has zero or one arrival (i.e. Bernoulli trial)
 - Probability of arrival in a random subinterval: $p = \ds\frac{\lambda t}{n}$
@@ -165,15 +165,15 @@ However,
 
 So let's take the limit as $n$ goes to infinity.
 
-$$\ds\lim_{n \to \infty} P(N_{t} = k) = \ds\lim_{n \to \infty} {\color{purple}\binom{n}{k} \left(\ds\frac{\lambda t}{n}\right)^{k}} {\color{blue}\left(1 - \ds\frac{\lambda t}{n}\right)^{n}} {\color{red}\left(1 - \ds\frac{\lambda t}{n}\right)^{-k}}$$
+$$\ds\lim_{n \to \infty} P(N_{t} = k) = \ds\lim_{n \to \infty} \binom{n}{k} \left(\ds\frac{\lambda t}{n}\right)^{k} \left(1 - \ds\frac{\lambda t}{n}\right)^{n} \left(1 - \ds\frac{\lambda t}{n}\right)^{-k}$$
 
 ## Partial Proof
 
 Handling the limit by its factors:
-$$\ds\lim_{n \to \infty} {\color{red}\left(1 - \ds\frac{\lambda t}{n}\right)^{-k}} = 1, \quad \ds\lim_{n \to \infty} {\color{blue}\left(1 - \ds\frac{\lambda t}{n}\right)^{n}} = e^{-\lambda t}$$
+$$\ds\lim_{n \to \infty} \left(1 - \ds\frac{\lambda t}{n}\right)^{-k} = 1, \quad \ds\lim_{n \to \infty} \left(1 - \ds\frac{\lambda t}{n}\right)^{n} = e^{-\lambda t}$$
 
 $$\begin{array}{rcl}
-  \ds\lim_{n \to \infty} {\color{purple}\binom{n}{k} \left(\ds\frac{\lambda t}{n}\right)^{k}} & = & (\lambda t)^{k} \ds\lim_{n \to \infty} \binom{n}{k} \left(\ds\frac{1}{n}\right)^{k} \\
+  \ds\lim_{n \to \infty} \binom{n}{k} \left(\ds\frac{\lambda t}{n}\right)^{k} & = & (\lambda t)^{k} \ds\lim_{n \to \infty} \binom{n}{k} \left(\ds\frac{1}{n}\right)^{k} \\
   ~ & = & (\lambda t)^{k} \ds\lim_{n \to \infty} \ds\frac{n!}{k!(n-k)!} \cdot \ds\frac{1}{n^{k}} \\
   ~ & = & \ds\frac{(\lambda t)^{k}}{k!} \ds\lim_{n \to \infty} \ds\frac{n!}{(n-k)!} \cdot \ds\frac{1}{n^{k}} \\
   ~ & = & \ds\frac{(\lambda t)^{k}}{k!} \ds\lim_{n \to \infty} \ds\prod_{i = 0}^{k-1} \ds\frac{n - i}{n} \\
@@ -506,7 +506,8 @@ $$[\mu - 2\sigma, \mu + 2\sigma] = [10, 30] \quad\rightarrow\quad \mu = 20, \qua
 
 ## Statistics
 
-$$\text{E}(\lambda) = \ds\frac{s}{r} = 20 \text{ and } \text{Var}(\lambda) = \ds\frac{s}{r^{2}} = 5^{2}$$
+$$\text{E}(\lambda) = \ds\frac{s}{r} = 20$$
+$$\text{Var}(\lambda) = \ds\frac{s}{r^{2}} = 5^{2}$$
 
 ## Plot
 
@@ -617,7 +618,7 @@ bayesrules::summarize_gamma_poisson(shape = 16, rate = 0.8,
 
 ## Terminology
 
-Let $Y > 0$ be a continuous random variable over all real numbers $())-\infty, \infty)$. For modeling, we might try a normal distribution
+Let $Y > 0$ be a continuous random variable over all real numbers $(-\infty, \infty)$. For modeling, we might try a normal distribution
 $$Y \sim \text{N}(\mu, \sigma^{2})$$
 
 * $\mu$: mean
@@ -689,6 +690,10 @@ bayesrules::plot_normal(mean = 15, sd = 5) +
 
 ## Likelihood
 
+:::: {.panel-tabset}
+
+## Joint PDF
+
 In this conjugate prior relationship, the likelihood is also modeled as a normal distribution.
 
 $$L(\mu, \sigma|\vec{y}) \propto \ds\prod_{i=1}^{n} \text{exp}\left[-\ds\frac{(y_{i} - \mu)^{2}}{2\sigma^{2}}\right] = \text{exp}\left[-\ds\frac{\sum_{i=1}^{n} (y_{i}-\mu)^{2}}{2\sigma^{2}}\right]$$
@@ -744,6 +749,7 @@ bayesrules::plot_normal(mean = 16.08026, sd = 6.094693	) +
   theme_minimal()
 ```
 
+::::
 
 ## Normal-Normal Conjugacy
 
@@ -772,10 +778,8 @@ $$\mu,\sigma^{2}|\vec{y} \sim \text{N}\left( \ds\frac{\sigma^{2}}{n\tau^{2}+\sig
 #| eval: false
 
 bayesrules::plot_normal_normal(
-  
   # from prior
   mean = 15, sd = 5,
-  
   # from observations
   y_bar = 16.08026, sigma = 6.094693, n = 244
 ) +
@@ -793,7 +797,6 @@ bayesrules::plot_normal_normal(
 #| eval: true
 
 bayesrules::plot_normal_normal(
-  
   # from prior
   mean = 15, sd = 5,
   
@@ -811,7 +814,6 @@ bayesrules::plot_normal_normal(
 
 ```{r}
 bayesrules::summarize_normal_normal(
-  
   # from prior
   mean = 15, sd = 5,
   
@@ -858,6 +860,10 @@ We looked at 3 conjugate families.
 
 
 # Footnotes
+
+## (Optional) Additional Resources
+
+* [Tips received during my 10 Months as a Server](https://old.reddit.com/r/dataisbeautiful/comments/1ajfe7j/tips_received_during_my_10_months_as_a_serveroc/)
 
 ```{r}
 sessionInfo()

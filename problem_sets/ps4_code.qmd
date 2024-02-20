@@ -1,0 +1,450 @@
+---
+title: "ps4_code"
+author: "Derek Sollberger"
+format:
+  html:
+    toc: true
+# format:
+#   pdf:
+#     toc: true
+#     number-sections: true
+#     colorlinks: true
+---
+
+\newcommand{\ds}{\displaystyle}
+
+
+# 5.5
+
+## a
+
+$$\text{E}(\lambda) = \ds\frac{s}{r} = 5 \text{ and } \text{Var}(\lambda) = \ds\frac{s}{r^{2}} = (0.25)^{2} \quad\rightarrow\quad s = 400, \quad r = 80$$
+
+## b
+
+Since 10 is several standard deviations above the average value of 5, the prior probabliity is virtually zero.
+
+# 5.6
+
+## a
+
+```{r}
+#| message: false
+#| warning: false
+library("bayesrules")
+library("bayesplot")
+library("ggtext")
+library("rstan")
+library("tidyverse")
+
+bayesrules::plot_poisson_likelihood(
+  y = c(7, 3, 8, 9, 10, 12),
+  lambda_upper_bound = 15
+) +
+  labs(title = "Likelihood Curve",
+       subtitle = "Text messages people receive in an hour",
+       caption = "SML 320") +
+  theme_minimal()
+```
+
+## b
+
+```{r}
+bayesrules::plot_gamma_poisson(shape = 400, rate = 80,
+                               sum_y = 49, n = 6) +
+  labs(title = "Gamma-Poisson Model",
+       subtitle = "Text Messages with Data",
+       caption = "SML 320",
+       x = "Text messages people receive in an hour") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+## c
+
+```{r}
+bayesrules::summarize_gamma_poisson(shape = 400, rate = 80,
+                               sum_y = 49, n = 6) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+## d
+
+While the data from the six friends might be realistic, since we started with an overly informative prior (i.e. small variance), the application of the observed data barely changed the statistics from the prior distribution to the posterior distribution.
+
+
+# 5.9
+
+## a
+
+```{r}
+bayesrules::plot_normal(mean = 7.2, sd = 2.6) +
+  labs(title = "N(7.2, 6.76) Prior",
+       subtitle = "mean = 7.2, sd = 2.6",
+       caption = "SML 320") +
+  theme_minimal()
+```
+
+## b
+
+```{r}
+pnorm(7.6, 7.2, 2.6, lower.tail = FALSE)
+```
+
+Yes, it seems plausible that the stock can rise by 7.6 dollars.
+
+## c
+
+```{r}
+pnorm(4, 7.2, 2.6, lower.tail = FALSE)
+```
+
+Yes, it seems plausible that the stock can rise by 4 dollars.
+
+## d
+
+```{r}
+pnorm(0, 7.2, 2.6, lower.tail = TRUE)
+```
+
+The prior probability of a stock price decrease is about 0.3 percent.
+
+## e
+
+```{r}
+pnorm(8, 7.2, 2.6, lower.tail = FALSE)
+```
+
+The prior probability that the stock rises by at least 8 dollars is about 38 percent.
+
+
+# 5.10
+
+## a
+
+```{r}
+obs_data <- c(-0.7, 1.2, 4.5, -4)
+
+bayesrules::plot_normal(mean = mean(obs_data), sd = 2) +
+  labs(title = "Normal Likelihood",
+       subtitle = "FancyStock Data",
+       caption = "SML 320") +
+  theme_minimal()
+```
+
+## b
+
+```{r}
+bayesrules::plot_normal_normal(
+  
+  # from prior
+  mean = 7.6, sd = 2.6,
+  
+  # from observations
+  y_bar = mean(obs_data), sigma = 2, n = 4
+) +
+  labs(title = "Normal-Normal Model",
+       subtitle = "Exercise 5.5b",
+       caption = "SML 320",
+       x = "change in stock price") +
+  theme_minimal()
+```
+
+## c
+
+```{r}
+bayesrules::summarize_normal_normal(
+  # from prior
+  mean = 7.6, sd = 2.6,
+  
+  # from observations
+  y_bar = mean(obs_data), sigma = 2, n = 4
+) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+## d
+
+Now, in the posterior distribution, the view of the stock price change is more financially conservative with an average change of about 1.2 dollars.
+
+## e
+
+```{r}
+pnorm(0, 1.1972, 0.9333, lower.tail = TRUE)
+```
+
+The posterior probability of a decrease in the stock price is about 10 percent.
+
+## f
+
+```{r}
+pnorm(8, 1.1972, 0.9333, lower.tail = FALSE)
+```
+
+The posterior probability of the stock price increasing by over 8 dollars is virtually zero.
+
+
+# 6.5
+
+## a
+
+```{r}
+# Step 1: Define a grid of 6 pi values
+grid_data <- data.frame(pi_grid = seq(from = 0, to = 1, 
+                                      length = 5))
+
+# Step 2: Evaluate the prior & likelihood at each pi
+grid_data <- grid_data %>% 
+  mutate(prior = dbeta(pi_grid, 3, 8),
+         likelihood = dbinom(2, 10, pi_grid))
+
+# Step 3: Approximate the posterior
+grid_data <- grid_data %>% 
+  mutate(unnormalized = likelihood * prior,
+         posterior = unnormalized / sum(unnormalized))
+
+# Step 4: sample from the discretized posterior
+posterior_sample <- sample_n(grid_data, 
+                             size = 10000, 
+                             weight = posterior, 
+                             replace = TRUE)
+
+ggplot(posterior_sample, aes(x = pi_grid)) + 
+  geom_histogram(aes(y = after_stat(density)), 
+                 binwidth = 0.1,
+                 fill = "gray50") + 
+  stat_function(fun = dbeta, args = list(5, 16),
+                color = "#E77500", linewidth = 3) + 
+  lims(x = c(0, 1)) +
+  labs(title = "Sparse Grid: <span style='color:#7F7F7F'>simulation</span> versus <span style='color:#E77500'>theoretical</span>",
+         subtitle = "Beta-Binomial Example",
+         caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown())
+```
+
+## b
+
+```{r}
+# Step 1: Define a grid of 6 pi values
+grid_data <- data.frame(pi_grid = seq(from = 0, to = 1, 
+                                      length = 501))
+
+# Step 2: Evaluate the prior & likelihood at each pi
+grid_data <- grid_data %>% 
+  mutate(prior = dbeta(pi_grid, 3, 8),
+         likelihood = dbinom(2, 10, pi_grid))
+
+# Step 3: Approximate the posterior
+grid_data <- grid_data %>% 
+  mutate(unnormalized = likelihood * prior,
+         posterior = unnormalized / sum(unnormalized))
+
+# Step 4: sample from the discretized posterior
+posterior_sample <- sample_n(grid_data, 
+                             size = 10000, 
+                             weight = posterior, 
+                             replace = TRUE)
+
+ggplot(posterior_sample, aes(x = pi_grid)) + 
+  geom_histogram(aes(y = after_stat(density)), 
+                 binwidth = 0.01,
+                 fill = "gray50") + 
+  stat_function(fun = dbeta, args = list(5, 16),
+                color = "#E77500", linewidth = 3) + 
+  lims(x = c(0, 1)) +
+  labs(title = "Dense Grid: <span style='color:#7F7F7F'>simulation</span> versus <span style='color:#E77500'>theoretical</span>",
+         subtitle = "Beta-Binomial Example",
+         caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown())
+```
+
+
+# 6.6
+
+## a
+
+```{r}
+obs_counts <- c(0, 1, 0)
+
+# Step 1: Define a grid of 11 pi values
+grid_data <- data.frame(lambda_grid = seq(from = 0, to = 8, 
+                                      length = 9))
+
+# Step 2: Evaluate the prior & likelihood at each pi
+grid_data <- grid_data %>% 
+  mutate(prior = dgamma(lambda_grid, 20, 5),
+         likelihood = dpois(0, lambda_grid)*
+           dpois(1, lambda_grid)*
+           dpois(0, lambda_grid))
+
+# Step 3: Approximate the posterior
+grid_data <- grid_data %>% 
+  mutate(unnormalized = likelihood * prior,
+         posterior = unnormalized / sum(unnormalized))
+
+# Step 4: sample from the discretized posterior
+posterior_sample <- sample_n(grid_data, 
+                             size = 10000, 
+                             weight = posterior, 
+                             replace = TRUE)
+
+ggplot(posterior_sample, aes(x = lambda_grid)) + 
+  geom_histogram(aes(y = after_stat(density)), 
+                 binwidth = 0.5,
+                 color = "black",
+                 fill = "gray50") + 
+  stat_function(fun = dgamma, args = list(21, 8),
+                color = "#E77500", linewidth = 3) + 
+  labs(title = "Sparse Grid: <span style='color:#7F7F7F'>simulation</span> versus <span style='color:#E77500'>theoretical</span>",
+         subtitle = "Gamma-Poisson Example",
+         caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown())
+```
+
+## b
+
+
+```{r}
+obs_counts <- c(0, 1, 0)
+
+# Step 1: Define a grid of 11 pi values
+grid_data <- data.frame(lambda_grid = seq(from = 0, to = 8, 
+                                      length = 201))
+
+# Step 2: Evaluate the prior & likelihood at each pi
+grid_data <- grid_data %>% 
+  mutate(prior = dgamma(lambda_grid, 20, 5),
+         likelihood = dpois(0, lambda_grid)*
+           dpois(1, lambda_grid)*
+           dpois(0, lambda_grid))
+
+# Step 3: Approximate the posterior
+grid_data <- grid_data %>% 
+  mutate(unnormalized = likelihood * prior,
+         posterior = unnormalized / sum(unnormalized))
+
+# Step 4: sample from the discretized posterior
+posterior_sample <- sample_n(grid_data, 
+                             size = 10000, 
+                             weight = posterior, 
+                             replace = TRUE)
+
+ggplot(posterior_sample, aes(x = lambda_grid)) + 
+  geom_histogram(aes(y = after_stat(density)), 
+                 binwidth = 0.1,
+                 color = "black",
+                 fill = "gray50") + 
+  stat_function(fun = dgamma, args = list(21, 8),
+                color = "#E77500", linewidth = 3) + 
+  labs(title = "Dense Grid: <span style='color:#7F7F7F'>simulation</span> versus <span style='color:#E77500'>theoretical</span>",
+         subtitle = "Gamma-Poisson Example",
+         caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown())
+```
+
+# 6.13
+
+## a
+
+```{r}
+# STEP 1: DEFINE the model
+bb_model <- "
+  data {
+    int<lower = 0, upper = 10> Y;
+  }
+  parameters {
+    real<lower = 0, upper = 1> pi;
+  }
+  model {
+    Y ~ binomial(10, pi);
+    pi ~ beta(3, 8);
+  }
+"
+
+# STEP 2: SIMULATE the posterior
+bb_sim <- stan(model_code = bb_model, data = list(Y = 2), 
+               chains = 3, iter = 6000*2, seed = 84735)
+```
+
+## b
+
+```{r}
+bayesplot::mcmc_trace(bb_sim, pars = "pi", size = 0.1)
+```
+
+## c
+
+The trace plot displays only the last 6000 elements of each chain because we are disregarding the "burn-in" start of the MCMC.
+
+## d
+
+```{r}
+bayesplot::mcmc_dens(bb_sim, pars = "pi") + 
+  stat_function(fun = dbeta, args = list(5, 16),
+                color = "#E77500", linewidth = 3) + 
+  labs(title = "MCMC: <span style='color:#619CFF'>simulation</span> versus <span style='color:#E77500'>theoretical</span>",
+         subtitle = "Beta-Binomial Example",
+         caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown())
+```
+
+## e
+
+The simulation seems to align with the Beta(5,16) posterior model that we expect.
+
+
+# 6.15
+
+## a
+
+```{r}
+# STEP 1: DEFINE the model
+gp_model <- "
+  data {
+    int<lower = 0> Y[3];
+  }
+  parameters {
+    real<lower = 0> lambda;
+  }
+  model {
+    Y ~ poisson(lambda);
+    lambda ~ gamma(20, 5);
+  }
+"
+
+# STEP 2: SIMULATE the posterior
+obs_counts <- c(0, 1, 0)
+gp_sim <- stan(model_code = gp_model, 
+               data = list(Y = obs_counts), 
+               chains = 4, iter = 5000*2, seed = 84735)
+```
+
+## b
+
+```{r}
+bayesplot::mcmc_trace(gp_sim, pars = "lambda", size = 0.1)
+```
+
+```{r}
+bayesplot::mcmc_dens(gp_sim, pars = "lambda") + 
+  stat_function(fun = dgamma, args = list(21, 8),
+                color = "#E77500", linewidth = 3) + 
+  labs(title = "MCMC: <span style='color:#619CFF'>simulation</span> versus <span style='color:#E77500'>theoretical</span>",
+         subtitle = "Gamma-Poisson Example",
+         caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown())
+```
+
+## c
+
+From our density plots, the mode from the MCMC seems to be about 2.5
+
+##
+
+The simulation seems to align with the Gamma(21,8) posterior model that we expect.

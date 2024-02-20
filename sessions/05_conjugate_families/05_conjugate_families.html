@@ -511,14 +511,14 @@ Derek Sollberger
 <ul>
 <li>Assume a constant <span class="math inline">\(\lambda\)</span> of arrivals</li>
 <li>Let <span class="math inline">\(N_{t}\)</span> be the number of arrivals in time interval <span class="math inline">\([0,t]\)</span></li>
-<li>Homogeneity: <span class="math inline">\(\text{E}[N_{t}] = \lambda t\)</span> (``rate times time’’)</li>
+<li>Homogeneity: <span class="math inline">\(\text{E}[N_{t}] = \lambda t\)</span> (“rate times time”)</li>
 <li>Independence: numbers of arrivals in disjoint time intervals are independent random variables</li>
 </ul>
 </div>
 <div id="tabset-2-2">
 <p>erive distribution of number of arrivals</p>
 <ul>
-<li>We expect <span class="math inline">\(\text{E}[N_{t}] = \lambda t\)</span> (``rate times time’’)</li>
+<li>We expect <span class="math inline">\(\text{E}[N_{t}] = \lambda t\)</span> (“rate times time”)</li>
 <li>Partition time interval <span class="math inline">\([0,t]\)</span> into <span class="math inline">\(n\)</span> subintervals</li>
 <li>Assuming <span class="math inline">\(n\)</span> is large enough so that each subinterval has zero or one arrival (i.e.&nbsp;Bernoulli trial)</li>
 <li>Probability of arrival in a random subinterval: <span class="math inline">\(p = \displaystyle\frac{\lambda t}{n}\)</span></li>
@@ -533,12 +533,12 @@ Derek Sollberger
 <li>time is a continuous variable</li>
 </ul>
 <p>So let’s take the limit as <span class="math inline">\(n\)</span> goes to infinity.</p>
-<p><span class="math display">\[\displaystyle\lim_{n \to \infty} P(N_{t} = k) = \displaystyle\lim_{n \to \infty} {\color{purple}\binom{n}{k} \left(\displaystyle\frac{\lambda t}{n}\right)^{k}} {\color{blue}\left(1 - \displaystyle\frac{\lambda t}{n}\right)^{n}} {\color{red}\left(1 - \displaystyle\frac{\lambda t}{n}\right)^{-k}}\]</span></p>
+<p><span class="math display">\[\displaystyle\lim_{n \to \infty} P(N_{t} = k) = \displaystyle\lim_{n \to \infty} \binom{n}{k} \left(\displaystyle\frac{\lambda t}{n}\right)^{k} \left(1 - \displaystyle\frac{\lambda t}{n}\right)^{n} \left(1 - \displaystyle\frac{\lambda t}{n}\right)^{-k}\]</span></p>
 </div>
 <div id="tabset-2-4">
-<p>Handling the limit by its factors: <span class="math display">\[\displaystyle\lim_{n \to \infty} {\color{red}\left(1 - \displaystyle\frac{\lambda t}{n}\right)^{-k}} = 1, \quad \displaystyle\lim_{n \to \infty} {\color{blue}\left(1 - \displaystyle\frac{\lambda t}{n}\right)^{n}} = e^{-\lambda t}\]</span></p>
+<p>Handling the limit by its factors: <span class="math display">\[\displaystyle\lim_{n \to \infty} \left(1 - \displaystyle\frac{\lambda t}{n}\right)^{-k} = 1, \quad \displaystyle\lim_{n \to \infty} \left(1 - \displaystyle\frac{\lambda t}{n}\right)^{n} = e^{-\lambda t}\]</span></p>
 <p><span class="math display">\[\begin{array}{rcl}
-  \displaystyle\lim_{n \to \infty} {\color{purple}\binom{n}{k} \left(\displaystyle\frac{\lambda t}{n}\right)^{k}} &amp; = &amp; (\lambda t)^{k} \displaystyle\lim_{n \to \infty} \binom{n}{k} \left(\displaystyle\frac{1}{n}\right)^{k} \\
+  \displaystyle\lim_{n \to \infty} \binom{n}{k} \left(\displaystyle\frac{\lambda t}{n}\right)^{k} &amp; = &amp; (\lambda t)^{k} \displaystyle\lim_{n \to \infty} \binom{n}{k} \left(\displaystyle\frac{1}{n}\right)^{k} \\
   ~ &amp; = &amp; (\lambda t)^{k} \displaystyle\lim_{n \to \infty} \displaystyle\frac{n!}{k!(n-k)!} \cdot \displaystyle\frac{1}{n^{k}} \\
   ~ &amp; = &amp; \displaystyle\frac{(\lambda t)^{k}}{k!} \displaystyle\lim_{n \to \infty} \displaystyle\frac{n!}{(n-k)!} \cdot \displaystyle\frac{1}{n^{k}} \\
   ~ &amp; = &amp; \displaystyle\frac{(\lambda t)^{k}}{k!} \displaystyle\lim_{n \to \infty} \displaystyle\prod_{i = 0}^{k-1} \displaystyle\frac{n - i}{n} \\
@@ -866,7 +866,7 @@ $$
 <p><span class="math display">\[[\mu - 2\sigma, \mu + 2\sigma] = [10, 30] \quad\rightarrow\quad \mu = 20, \quad \sigma = 5\]</span></p>
 </div>
 <div id="tabset-5-2">
-<p><span class="math display">\[\text{E}(\lambda) = \displaystyle\frac{s}{r} = 20 \text{ and } \text{Var}(\lambda) = \displaystyle\frac{s}{r^{2}} = 5^{2}\]</span></p>
+<p><span class="math display">\[\text{E}(\lambda) = \displaystyle\frac{s}{r} = 20\]</span> <span class="math display">\[\text{Var}(\lambda) = \displaystyle\frac{s}{r^{2}} = 5^{2}\]</span></p>
 </div>
 <div id="tabset-5-3">
 <div class="cell">
@@ -971,7 +971,7 @@ $$
 </section>
 <section id="terminology-1" class="slide level2">
 <h2>Terminology</h2>
-<p>Let <span class="math inline">\(Y &gt; 0\)</span> be a continuous random variable over all real numbers <span class="math inline">\(())-\infty, \infty)\)</span>. For modeling, we might try a normal distribution <span class="math display">\[Y \sim \text{N}(\mu, \sigma^{2})\]</span></p>
+<p>Let <span class="math inline">\(Y &gt; 0\)</span> be a continuous random variable over all real numbers <span class="math inline">\((-\infty, \infty)\)</span>. For modeling, we might try a normal distribution <span class="math display">\[Y \sim \text{N}(\mu, \sigma^{2})\]</span></p>
 <ul>
 <li><span class="math inline">\(\mu\)</span>: mean</li>
 <li><span class="math inline">\(\sigma\)</span>: standard deviation</li>
@@ -1047,11 +1047,14 @@ $$
 </section>
 <section id="likelihood-2" class="slide level2">
 <h2>Likelihood</h2>
+<div class="panel-tabset">
+<ul id="tabset-8" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-8-1">Joint PDF</a></li><li><a href="#tabset-8-2">MLEs</a></li><li><a href="#tabset-8-3">dplyr</a></li><li><a href="#tabset-8-4">Plot</a></li><li><a href="#tabset-8-5">Code</a></li></ul>
+<div class="tab-content">
+<div id="tabset-8-1">
 <p>In this conjugate prior relationship, the likelihood is also modeled as a normal distribution.</p>
 <p><span class="math display">\[L(\mu, \sigma|\vec{y}) \propto \displaystyle\prod_{i=1}^{n} \text{exp}\left[-\displaystyle\frac{(y_{i} - \mu)^{2}}{2\sigma^{2}}\right] = \text{exp}\left[-\displaystyle\frac{\sum_{i=1}^{n} (y_{i}-\mu)^{2}}{2\sigma^{2}}\right]\]</span></p>
-</section>
-<section id="mles" class="slide level2">
-<h2>MLEs</h2>
+</div>
+<div id="tabset-8-2">
 <p>The likelihood can also be expressed in terms of the sample mean <span class="math inline">\(\bar{y}\)</span> and the sample size <span class="math inline">\(n\)</span></p>
 <p><span class="math display">\[L(\mu, \sigma|\vec{y}) \propto \text{exp}\left[-\displaystyle\frac{ (\bar{y}-\mu)^{2}}{\frac{2\sigma^{2}}{n}}\right]\]</span></p>
 <p>It follows that the maximum likelihood estimates for the parameters are</p>
@@ -1060,9 +1063,8 @@ $$
   \sigma^{*} &amp; = &amp; \sqrt{\displaystyle\frac{1}{n}\displaystyle\sum_{i=1}^{n} (y_{i} - \mu^{2})^{2}} \\
 \end{array}\]</span></p>
 <p>which are the sample mean and from the <em>not-corrected</em> population variance (<a href="https://www.statlect.com/fundamentals-of-statistics/normal-distribution-maximum-likelihood">source</a>).</p>
-</section>
-<section id="dplyr" class="slide level2">
-<h2>dplyr</h2>
+</div>
+<div id="tabset-8-3">
 <div class="cell">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a>n <span class="ot">&lt;-</span> <span class="fu">nrow</span>(tips_df)</span>
 <span id="cb11-2"><a href="#cb11-2"></a>tips_df <span class="sc">|&gt;</span></span>
@@ -1076,19 +1078,24 @@ $$
 1  16.1  6.09</code></pre>
 </div>
 </div>
-</section>
-<section id="plot-4" class="slide level2">
-<h2>Plot</h2>
-
-<img data-src="05_conjugate_families_files/figure-revealjs/unnamed-chunk-17-1.png" width="960" class="r-stretch"></section>
-<section id="code-6" class="slide level2">
-<h2>Code</h2>
+</div>
+<div id="tabset-8-4">
+<div class="cell">
+<div class="cell-output-display">
+<p><img data-src="05_conjugate_families_files/figure-revealjs/unnamed-chunk-17-1.png" width="960"></p>
+</div>
+</div>
+</div>
+<div id="tabset-8-5">
 <div class="cell">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1"></a>bayesrules<span class="sc">::</span><span class="fu">plot_normal</span>(<span class="at">mean =</span> <span class="fl">16.08026</span>, <span class="at">sd =</span> <span class="fl">6.094693</span>  ) <span class="sc">+</span></span>
 <span id="cb13-2"><a href="#cb13-2"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Normal "</span>,</span>
 <span id="cb13-3"><a href="#cb13-3"></a>       <span class="at">subtitle =</span> <span class="st">"MLEs: ybar = 16.08026, sigma = 6.094693"</span>,</span>
 <span id="cb13-4"><a href="#cb13-4"></a>       <span class="at">caption =</span> <span class="st">"SML 320"</span>) <span class="sc">+</span></span>
 <span id="cb13-5"><a href="#cb13-5"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
 </div>
 </section>
 <section id="normal-normal-conjugacy" class="slide level2">
@@ -1108,43 +1115,40 @@ $$
 <section id="example" class="slide level2">
 <h2>Example</h2>
 <div class="panel-tabset">
-<ul id="tabset-8" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-8-1">Code</a></li><li><a href="#tabset-8-2">Plots</a></li><li><a href="#tabset-8-3">Statistics</a></li></ul>
+<ul id="tabset-9" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-9-1">Code</a></li><li><a href="#tabset-9-2">Plots</a></li><li><a href="#tabset-9-3">Statistics</a></li></ul>
 <div class="tab-content">
-<div id="tabset-8-1">
+<div id="tabset-9-1">
 <div class="cell">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1"></a>bayesrules<span class="sc">::</span><span class="fu">plot_normal_normal</span>(</span>
-<span id="cb14-2"><a href="#cb14-2"></a>  </span>
-<span id="cb14-3"><a href="#cb14-3"></a>  <span class="co"># from prior</span></span>
-<span id="cb14-4"><a href="#cb14-4"></a>  <span class="at">mean =</span> <span class="dv">15</span>, <span class="at">sd =</span> <span class="dv">5</span>,</span>
-<span id="cb14-5"><a href="#cb14-5"></a>  </span>
-<span id="cb14-6"><a href="#cb14-6"></a>  <span class="co"># from observations</span></span>
-<span id="cb14-7"><a href="#cb14-7"></a>  <span class="at">y_bar =</span> <span class="fl">16.08026</span>, <span class="at">sigma =</span> <span class="fl">6.094693</span>, <span class="at">n =</span> <span class="dv">244</span></span>
-<span id="cb14-8"><a href="#cb14-8"></a>) <span class="sc">+</span></span>
-<span id="cb14-9"><a href="#cb14-9"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Normal-Normal Model"</span>,</span>
-<span id="cb14-10"><a href="#cb14-10"></a>       <span class="at">subtitle =</span> <span class="st">"Restaurant Tips Example"</span>,</span>
-<span id="cb14-11"><a href="#cb14-11"></a>       <span class="at">caption =</span> <span class="st">"SML 320"</span>,</span>
-<span id="cb14-12"><a href="#cb14-12"></a>       <span class="at">x =</span> <span class="st">"percent of total food bill"</span>) <span class="sc">+</span></span>
-<span id="cb14-13"><a href="#cb14-13"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb14-2"><a href="#cb14-2"></a>  <span class="co"># from prior</span></span>
+<span id="cb14-3"><a href="#cb14-3"></a>  <span class="at">mean =</span> <span class="dv">15</span>, <span class="at">sd =</span> <span class="dv">5</span>,</span>
+<span id="cb14-4"><a href="#cb14-4"></a>  <span class="co"># from observations</span></span>
+<span id="cb14-5"><a href="#cb14-5"></a>  <span class="at">y_bar =</span> <span class="fl">16.08026</span>, <span class="at">sigma =</span> <span class="fl">6.094693</span>, <span class="at">n =</span> <span class="dv">244</span></span>
+<span id="cb14-6"><a href="#cb14-6"></a>) <span class="sc">+</span></span>
+<span id="cb14-7"><a href="#cb14-7"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Normal-Normal Model"</span>,</span>
+<span id="cb14-8"><a href="#cb14-8"></a>       <span class="at">subtitle =</span> <span class="st">"Restaurant Tips Example"</span>,</span>
+<span id="cb14-9"><a href="#cb14-9"></a>       <span class="at">caption =</span> <span class="st">"SML 320"</span>,</span>
+<span id="cb14-10"><a href="#cb14-10"></a>       <span class="at">x =</span> <span class="st">"percent of total food bill"</span>) <span class="sc">+</span></span>
+<span id="cb14-11"><a href="#cb14-11"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
-<div id="tabset-8-2">
+<div id="tabset-9-2">
 <div class="cell">
 <div class="cell-output-display">
 <p><img data-src="05_conjugate_families_files/figure-revealjs/unnamed-chunk-20-1.png" width="960"></p>
 </div>
 </div>
 </div>
-<div id="tabset-8-3">
+<div id="tabset-9-3">
 <div class="cell">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1"></a>bayesrules<span class="sc">::</span><span class="fu">summarize_normal_normal</span>(</span>
-<span id="cb15-2"><a href="#cb15-2"></a>  </span>
-<span id="cb15-3"><a href="#cb15-3"></a>  <span class="co"># from prior</span></span>
-<span id="cb15-4"><a href="#cb15-4"></a>  <span class="at">mean =</span> <span class="dv">15</span>, <span class="at">sd =</span> <span class="dv">5</span>,</span>
-<span id="cb15-5"><a href="#cb15-5"></a>  </span>
-<span id="cb15-6"><a href="#cb15-6"></a>  <span class="co"># from observations</span></span>
-<span id="cb15-7"><a href="#cb15-7"></a>  <span class="at">y_bar =</span> <span class="fl">16.08026</span>, <span class="at">sigma =</span> <span class="fl">6.094693</span>, <span class="at">n =</span> <span class="dv">244</span></span>
-<span id="cb15-8"><a href="#cb15-8"></a>) <span class="sc">|&gt;</span></span>
-<span id="cb15-9"><a href="#cb15-9"></a>  <span class="fu">mutate_if</span>(is.numeric, round, <span class="at">digits =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb15-2"><a href="#cb15-2"></a>  <span class="co"># from prior</span></span>
+<span id="cb15-3"><a href="#cb15-3"></a>  <span class="at">mean =</span> <span class="dv">15</span>, <span class="at">sd =</span> <span class="dv">5</span>,</span>
+<span id="cb15-4"><a href="#cb15-4"></a>  </span>
+<span id="cb15-5"><a href="#cb15-5"></a>  <span class="co"># from observations</span></span>
+<span id="cb15-6"><a href="#cb15-6"></a>  <span class="at">y_bar =</span> <span class="fl">16.08026</span>, <span class="at">sigma =</span> <span class="fl">6.094693</span>, <span class="at">n =</span> <span class="dv">244</span></span>
+<span id="cb15-7"><a href="#cb15-7"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb15-8"><a href="#cb15-8"></a>  <span class="fu">mutate_if</span>(is.numeric, round, <span class="at">digits =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>      model    mean    mode     var    sd
 1     prior 15.0000 15.0000 25.0000 5.000
@@ -1159,23 +1163,23 @@ $$
 <h2>Model Selection</h2>
 <p>We looked at 3 conjugate families.</p>
 <div class="panel-tabset">
-<ul id="tabset-9" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-9-1">Beta-Binomial</a></li><li><a href="#tabset-9-2">Gamma-Poisson</a></li><li><a href="#tabset-9-3">Normal-Normal</a></li></ul>
+<ul id="tabset-10" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-10-1">Beta-Binomial</a></li><li><a href="#tabset-10-2">Gamma-Poisson</a></li><li><a href="#tabset-10-3">Normal-Normal</a></li></ul>
 <div class="tab-content">
-<div id="tabset-9-1">
+<div id="tabset-10-1">
 <ul>
 <li>estimate <span class="math inline">\(\pi \in [0,1]\)</span></li>
 <li>pro: good for interpretability</li>
 <li>con: computationally expensive for large <span class="math inline">\(n\)</span></li>
 </ul>
 </div>
-<div id="tabset-9-2">
+<div id="tabset-10-2">
 <ul>
 <li>estimate <span class="math inline">\(\lambda &gt; 0\)</span></li>
 <li>pro: models rare events and skewed data well</li>
 <li>con: discussion of rates instead of counts</li>
 </ul>
 </div>
-<div id="tabset-9-3">
+<div id="tabset-10-3">
 <ul>
 <li><p>estimate mean <span class="math inline">\(\mu\)</span> and variance <span class="math inline">\(\sigma\)</span></p></li>
 <li><p>pro: ubiquitous in scientific communities</p></li>
@@ -1189,8 +1193,16 @@ $$
 </div>
 </div>
 </section></section>
+<section>
 <section id="footnotes" class="title-slide slide level1 center">
 <h1>Footnotes</h1>
+
+</section>
+<section id="optional-additional-resources" class="slide level2">
+<h2>(Optional) Additional Resources</h2>
+<ul>
+<li><a href="https://old.reddit.com/r/dataisbeautiful/comments/1ajfe7j/tips_received_during_my_10_months_as_a_serveroc/">Tips received during my 10 Months as a Server</a></li>
+</ul>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -1267,7 +1279,7 @@ loaded via a namespace (and not attached):
 </div>
 </div>
 <div class="panel-tabset">
-<ul id="tabset-10" class="panel-tabset-tabby"></ul>
+<ul id="tabset-11" class="panel-tabset-tabby"></ul>
 <div class="tab-content">
 
 </div>
@@ -1275,7 +1287,7 @@ loaded via a namespace (and not attached):
 <div class="footer footer-default">
 
 </div>
-</section>
+</section></section>
     </div>
   </div>
 
