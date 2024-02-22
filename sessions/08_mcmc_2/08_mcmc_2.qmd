@@ -1,0 +1,555 @@
+---
+title: "8: MCMC"
+author: "Derek Sollberger"
+date: "2024-02-22"
+# execute:
+#   cache: true
+# format:
+#   revealjs:
+#     scrollable: true
+format:
+  html:
+    toc: true
+params:
+  heavy_chunks: "true"
+  # heavy_chunks: "false"
+---
+
+\newcommand{\ds}{\displaystyle}
+
+```{r}
+#| message: false
+#| warning: false
+
+library("bayesplot")
+library("ggtext")
+library("rstan")
+library("patchwork")
+library("tidyverse")
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# A Good Example
+
+:::: {.panel-tabset}
+
+## Define Model
+
+```{r}
+#| echo: true
+# STEP 1: DEFINE the model
+bb_model <- "
+  data {
+    int<lower = 0, upper = 9> Y;
+  }
+  parameters {
+    real<lower = 0, upper = 1> pi;
+  }
+  model {
+    Y ~ binomial(9, pi);
+    pi ~ beta(2, 2);
+  }
+"
+```
+
+## Simulate Posterior
+
+```{r}
+#| eval: !expr params$heavy_chunks
+#| message: false
+#| warning: false
+start_time <- Sys.time()
+
+# STEP 2: SIMULATE the posterior
+good_simulation <- stan(model_code = bb_model, data = list(Y = 4), 
+                        chains = 4, iter = 5000*2, seed = 84735)
+
+end_time <- Sys.time()
+print(round(end_time- start_time))
+```
+
+## Histogram
+
+```{r}
+#| eval: !expr params$heavy_chunks
+#| message: false
+#| warning: false
+bayesplot::mcmc_hist(good_simulation, pars = "pi")
+```
+
+## Density
+
+```{r}
+#| eval: !expr params$heavy_chunks
+#| message: false
+#| warning: false
+bayesplot::mcmc_dens(good_simulation, pars = "pi") + 
+  stat_function(fun = dbeta, args = list(7, 8),
+                color = "#E77500", linewidth = 3) + 
+  labs(title = "MCMC: <span style='color:#619CFF'>simulation</span> versus <span style='color:#E77500'>theoretical</span>",
+         subtitle = "Beta-Binomial Example",
+         caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown())
+```
+
+## Trace
+
+```{r}
+#| eval: !expr params$heavy_chunks
+#| message: false
+#| warning: false
+bayesplot::mcmc_trace(good_simulation, pars = "pi") + 
+  labs(title = "MCMC Trace",
+         subtitle = "Good Example",
+         caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown())
+```
+
+::::
+
+
+# A Bad Example
+
+:::: {.panel-tabset}
+
+## Define Model
+
+```{r}
+#| echo: true
+# STEP 1: DEFINE the model
+bb_model <- "
+  data {
+    int<lower = 0, upper = 9> Y;
+  }
+  parameters {
+    real<lower = 0, upper = 1> pi;
+  }
+  model {
+    Y ~ binomial(9, pi);
+    pi ~ beta(2, 2);
+  }
+"
+```
+
+## Simulate Posterior
+
+```{r}
+#| eval: !expr params$heavy_chunks
+#| message: false
+#| warning: false
+start_time <- Sys.time()
+
+# STEP 2: SIMULATE the posterior
+bad_simulation <- stan(model_code = bb_model, data = list(Y = 4), 
+                        chains = 4, iter = 50*2, seed = 84735)
+
+end_time <- Sys.time()
+print(round(end_time- start_time))
+```
+
+## Histogram
+
+```{r}
+#| eval: !expr params$heavy_chunks
+#| message: false
+#| warning: false
+bayesplot::mcmc_hist(bad_simulation, pars = "pi")
+```
+
+## Density
+
+```{r}
+#| eval: !expr params$heavy_chunks
+#| message: false
+#| warning: false
+bayesplot::mcmc_dens(bad_simulation, pars = "pi") + 
+  stat_function(fun = dbeta, args = list(7, 8),
+                color = "#E77500", linewidth = 3) + 
+  labs(title = "MCMC: <span style='color:#619CFF'>simulation</span> versus <span style='color:#E77500'>theoretical</span>",
+         subtitle = "Beta-Binomial Example",
+         caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown())
+```
+
+## Trace
+
+```{r}
+#| eval: !expr params$heavy_chunks
+#| message: false
+#| warning: false
+bayesplot::mcmc_trace(bad_simulation, pars = "pi") + 
+  labs(title = "MCMC Trace",
+         subtitle = "Bad Example",
+         caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown())
+```
+
+::::
+
+
+# A Thin Example
+
+:::: {.panel-tabset}
+
+## Define Model
+
+```{r}
+#| echo: true
+# STEP 1: DEFINE the model
+bb_model <- "
+  data {
+    int<lower = 0, upper = 9> Y;
+  }
+  parameters {
+    real<lower = 0, upper = 1> pi;
+  }
+  model {
+    Y ~ binomial(9, pi);
+    pi ~ beta(2, 2);
+  }
+"
+```
+
+## Simulate Posterior
+
+```{r}
+#| eval: !expr params$heavy_chunks
+#| message: false
+#| warning: false
+start_time <- Sys.time()
+
+# STEP 2: SIMULATE the posterior
+thin_simulation <- stan(model_code = bb_model, data = list(Y = 4), 
+                        chains = 4, iter = 5000*2, seed = 84735,
+                        thin = 10)
+
+end_time <- Sys.time()
+print(round(end_time- start_time))
+```
+
+## Histogram
+
+```{r}
+#| eval: !expr params$heavy_chunks
+#| message: false
+#| warning: false
+bayesplot::mcmc_hist(thin_simulation, pars = "pi")
+```
+
+## Density
+
+```{r}
+#| eval: !expr params$heavy_chunks
+#| message: false
+#| warning: false
+bayesplot::mcmc_dens(thin_simulation, pars = "pi") + 
+  stat_function(fun = dbeta, args = list(7, 8),
+                color = "#E77500", linewidth = 3) + 
+  labs(title = "MCMC: <span style='color:#619CFF'>simulation</span> versus <span style='color:#E77500'>theoretical</span>",
+         subtitle = "Beta-Binomial Example",
+         caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown())
+```
+
+## Trace
+
+```{r}
+#| eval: !expr params$heavy_chunks
+#| message: false
+#| warning: false
+bayesplot::mcmc_trace(thin_simulation, pars = "pi") + 
+  labs(title = "MCMC Trace",
+         subtitle = "Thin Example",
+         caption = "SML 320") +
+  theme_minimal() +
+  theme(plot.title = element_markdown())
+```
+
+## Commentary
+
+The notion of "thinning" an MCMC chain (or other stochastic process) might have been desirable years ago with less computer power, but nearly all of the current textbooks and software documentation advise against thinning the chains.
+
+::::
+
+
+# Metrics
+
+How do we know if an MCMC is reliable?
+
+## Autocorrelation
+
+:::: {.panel-tabset}
+
+## Markov Property
+
+If we are assuming the Markov property
+
+$$f\left( \theta^{(i+1)} \bigg| \theta^{(1)}, \theta^{(2)}, ..., \theta^{(i)}, y \right) = f\left( \theta^{(i+1)} \bigg| \theta^{(i)}, y \right)$$
+
+then autocorrelation measurements should only be "large" with a lag of one.
+
+## Plots
+
+```{r}
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+
+p1 <- bayesplot::mcmc_acf(good_simulation, pars = "pi") +
+  labs(title = "Good Simulation",
+       subtitle = "10000 iterations",
+       caption = "SML 320")
+
+p2 <- bayesplot::mcmc_acf(bad_simulation, pars = "pi") +
+  labs(title = "Bad Simulation",
+       subtitle = "100 iterations",
+       caption = "SML 320")
+
+p3 <- bayesplot::mcmc_acf(thin_simulation, pars = "pi") +
+  labs(title = "Thinned Simulation",
+       subtitle = "Retained every 10 values",
+       caption = "SML 320")
+
+# patchwork
+p1 + p2 + p3
+```
+
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+#| message: false
+#| warning: false
+
+p1 <- bayesplot::mcmc_acf(good_simulation, pars = "pi") +
+  labs(title = "Good Simulation",
+       subtitle = "10000 iterations",
+       caption = "SML 320")
+
+p2 <- bayesplot::mcmc_acf(bad_simulation, pars = "pi") +
+  labs(title = "Bad Simulation",
+       subtitle = "100 iterations",
+       caption = "SML 320")
+
+p3 <- bayesplot::mcmc_acf(thin_simulation, pars = "pi") +
+  labs(title = "Thinned Simulation",
+       subtitle = "Retained every 10 values",
+       caption = "SML 320")
+
+# patchwork
+p1 + p2 + p3
+```
+
+::::
+
+
+## Split R Metric
+
+:::: {.panel-tabset}
+
+## Analysis of Variance
+
+![Bayes Rules! Figure 6.19](rhat-ch6-1.png)
+
+## Definition
+
+::: {.callout-note collapse="true"}
+## R-Hat
+
+Consider a Markov chain simulation of parameter $\theta$ which utilizes four parallel chains. Let $\text{Var}_{\text{combined}}$ denote the variability in $\theta$ across all four chains combined and $\text{Var}_{\text{within}}$ denote the typical variability within any individual chain. The R-hat metric calculates the ratio between these two sources of variability:
+
+$$\text{R-hat} \approx \sqrt{\ds\frac{\text{Var}_{\text{combined}}}{\text{Var}_{\text{within}}}}$$
+
+:::
+
+## Guidance
+
+* Ideally, $\text{R-hat}\approx 1$, reflecting stability across the parallel chains. 
+* In contrast, $\text{R-hat} > 1$ indicates instability, with the variability in the combined chains exceeding that within the chains. 
+* Though no golden rule exists, an R-hat ratio greater than 1.05 raises some red flags about the stability of the simulation.
+
+
+## Examples
+
+```{r}
+bayesplot::rhat(good_simulation, pars = "pi") |> round(digits = 4)
+```
+```{r}
+bayesplot::rhat(bad_simulation, pars = "pi") |> round(digits = 4)
+```
+
+```{r}
+bayesplot::rhat(thin_simulation, pars = "pi") |> round(digits = 4)
+```
+
+::::
+
+
+## Effective Sample Size
+
+:::: {.panel-tabset}
+
+## Motivation
+
+Loosely speaking, how many independent sample values would it take to produce an equivalently accurate posterior approximation?
+
+## Description
+
+::: {.callout-note collapse="true"}
+## Effective Sample Size Ratio
+
+Let $N$ denote the actual sample size or length of a dependent Markov chain. The effective sample size of this chain, $N_{\text{eff}$, quantifies the number of independent samples it would take to produce an equivalently accurate posterior approximation. The greater the $N_{\text{eff}$ the better, yet it’s typically true that the accuracy of a Markov chain approximation is only as good as that of a smaller independent sample. That is, it’s typically true that $N_{\text{eff} < N$, thus the effective sample size ratio is less than 1:
+$$\ds\frac{N_{\text{eff}}{N} < 1 \quad\text{(usually)}$$
+:::
+
+## Guidance
+
+There’s no magic rule for interpreting this ratio, and it should be utilized alongside other diagnostics such as the trace plot. That said, we might be suspicious of a Markov chain for which the effective sample size ratio is less than 0.1, i.e., the effective sample size $N_{\text{eff}$ is less than 10% of the actual sample size N.
+
+## Examples
+
+```{r}
+bayesplot::neff_ratio(good_simulation, pars = "pi") |> round(digits = 4)
+```
+
+```{r}
+bayesplot::neff_ratio(bad_simulation, pars = "pi") |> round(digits = 4)
+```
+
+```{r}
+bayesplot::neff_ratio(thin_simulation, pars = "pi") |> round(digits = 4)
+```
+
+::::
+
+# MCMC Optimized
+
+## Metropolis Algorithm
+
+If we have a *symmetric* proposal model, the probability of accepting a move from a current location $\mu$ to a proposed location $\mu^{′}$ comes down to a comparison of their posterior plausibility: $f(\mu^{'}|y)$ versus $f(\mu|y)$. There are two possible scenarios here:
+
+* Scenario 1: $f(\mu^{'}|y) \geq f(\mu|y)$.  When the posterior plausibility of $\mu^{′}$ is at least as great as that of $\mu$, $\alpha=1$. Thus, we’ll *definitely* move there.
+* Scenario 2: $f(\mu^{'}|y) < f(\mu|y)$.  If the posterior plausibility of $\mu^{′}$ is less than that of $\mu$, then
+
+$$α=\ds\frac{f(\mu^{′}|y)}{f(\mu|y)}<1$$
+
+Thus, we *might* move there.
+
+## Metropolis-Hastings Algorithm
+
+Removing the assumption of a symmetric proposal model, we have to convey $q(\mu^{'}|\mu)$, the probability density function of the proposal model.
+
+Conditioned on data $y$, let parameter $\mu$ have posterior pdf
+$$f(\mu|y)\propto f(\mu) \cdot L(\mu|y)$$ 
+A Metropolis-Hastings Markov chain for $f(\mu|y)$, $\{\mu^{(1)},\mu^{(2)},...,\mu^{(N)}\}$, evolves as follows. Let $\mu^{(i)}=\mu$ be the chain’s location at iteration $i\in\{1,2,...,N−1\}$ and identify the next location $\mu^{(i+1)}$ through a two-step process:
+
+* Step 1: *Propose a new location.* Conditioned on the current location $\mu$, draw a location $\mu^{′}$ from a proposal model with pdf $q(\mu^{′}|\mu)$.
+* Step 2: *Decide whether or not to go there.*
+
+    * Calculate the **acceptance probability** (i.e., the probability of accepting the proposal $\mu^{′}$):
+    $$\alpha = \text{min}\left\{1, \ds\frac{f(\mu^{′}) \cdot L(\mu^{′}|y)}{f(\mu) \cdot L(\mu|y)} \cdot \ds\frac{q(\mu^{′}|\mu)}{q(\mu|\mu^{′})} \right\}$$
+    * Figuratively, flip a weighted coin. If it’s Heads, with probability $\alpha$, go to the proposed location $\mu^{′}$. If it’s Tails, with probability $1−\alpha$, stay at $\mu$:
+    $$\mu^{(i+1)} = \begin{cases}
+      \mu^{'} & \text{with probability } \alpha \\
+      \mu & \text{with probability } 1-\alpha \\
+    \end{cases}$$
+
+## Motivation
+
+Why generalize to a non-symmetric proposal model?
+
+* flexibility to estimate a variety of parameters, such as standard deviations (or other nonnegative values)
+* leads to more clever searches
+
+## Gibbs Sampling
+
+* adaptive algorithm (especially with conjugate pairs)
+* described in 1984 by Stuart Geman and Donald Geman
+* named after Josiah Willard Gibbs (for Gibbs' work in statistical physics)
+* good for conditional distributions and marginal distributions
+
+## Interlude: Mountains of Laos
+
+![Vang Pao](Vang_Pao.png)
+
+## Hamiltonian Monte Carlo
+
+Toward simulating a posterior distribution, **Hamiltonian Monte Carlo** (HMC) uses the topology by seeking out the gradient of maximum ascent
+
+$$\ds\text{max}_{\vec{h}} \lim_{|h| \to 0} \ds\frac{f(\vec{x} + \vec{h}) - f(\vec{x})}{|h|}$$
+
+"Path of least resistance"
+
+
+# Activity
+
+## App
+
+Try out some MCMC simulations!
+
+* link: [MCMC Demo](https://chi-feng.github.io/mcmc-demo/app.html) by Chi Feng
+
+* algorithms: 
+
+    * RandomWalkMH
+    * GibbsSampling
+    * HamiltonianMC
+    * EfficientNUTS
+    
+* Target distributions:
+
+    * standard
+    * banana
+    * donut
+    * multimodal
+
+## Tuning
+
+```{r}
+#| eval: false
+#| message: false
+#| warning: false
+good_simulation <- stan(model_code = bb_model, data = list(Y = 4), 
+                        chains = 4, iter = 5000*2, seed = 84735)
+```
+
+Where did the simulation parameters, such as half-width and step-size, go?
+
+
+# Footnotes
+
+::: {.callout-note collapse="true"}
+## Session Info
+
+```{r}
+sessionInfo()
+```
+:::
+
+
+:::: {.columns}
+
+::: {.column width="50%"}
+	
+:::
+
+::: {.column width="50%"}
+
+:::
+
+::::
+
+:::: {.panel-tabset}
+
+
+
+::::
