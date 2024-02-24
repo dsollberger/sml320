@@ -1,0 +1,462 @@
+---
+title: "ps5_code"
+author: "Derek Sollberger"
+format:
+  html:
+    toc: true
+# format:
+#   pdf:
+#     toc: true
+#     number-sections: true
+#     colorlinks: true
+---
+
+\newcommand{\ds}{\displaystyle}
+
+```{r}
+#| message: false
+#| warning: false
+
+library("patchwork")
+library("tidyverse")
+```
+
+
+# 7.9
+
+```{r}
+one_mh_iteration <- function(current, w, obs_value, tau, sigma){
+  # Step 1: propose next location in chain
+  proposal <- runif(1, min = current - w, current + w)
+  
+  # Step 2: decide whether or not to go there
+  proposal_plausibility <- dnorm(proposal, 3, tau) * dnorm(obs_value, proposal, sigma)
+  current_plausibility <- dnorm(current, 3, tau) * dnorm(obs_value, current, sigma)
+  alpha <- min(1, proposal_plausibility / current_plausibility)
+  next_stop <- sample(c(proposal, current), 
+                      size = 1, prob = c(alpha, 1 - alpha))
+  
+  # Return the results as a data frame
+  return(data.frame(proposal, alpha, next_stop))
+}
+```
+
+## a
+
+```{r}
+set.seed(320)
+one_mh_iteration(w = 0.01, current = 3, 
+                 obs_value = 6.25, tau = 1, sigma = 0.75)
+```
+There was about a 95% acceptance probability, and the proposed location was accepted.
+
+## b
+
+```{r}
+set.seed(320)
+one_mh_iteration(w = 0.5, current = 3, 
+                 obs_value = 6.25, tau = 1, sigma = 0.75)
+```
+
+There was about a 4% acceptance probability, and the proposed location was rejected.
+
+## c
+
+```{r}
+set.seed(320)
+one_mh_iteration(w = 1, current = 3, 
+                 obs_value = 6.25, tau = 1, sigma = 0.75)
+```
+
+There was a virtually zero acceptance probability, and the proposed location was rejected.
+
+## d
+
+```{r}
+set.seed(320)
+one_mh_iteration(w = 3, current = 3, 
+                 obs_value = 6.25, tau = 1, sigma = 0.75)
+```
+
+There was a virtually zero acceptance probability, and the proposed location was rejected.
+
+
+# 7.10
+
+```{r}
+mh_tour <- function(N, current, w, obs_value, tau, sigma){
+  # N: chain length
+  # initialize vector
+  mu <- rep(0, N)
+  
+  # simulate N Markov chain stops
+  for(i in 1:N){
+    # simulate one iteration
+    this_iteration <- one_mh_iteration(current, w, obs_value, tau, sigma)
+    
+    # record next location
+    mu[i] <- this_iteration$next_stop
+    
+    # update current location
+    current <- this_iteration$next_stop
+  }
+  
+  # return the chain locations
+  return(data.frame(iteration = c(1:N), mu))
+}
+
+bayesrules::summarize_normal_normal(
+  # from prior
+  mean = 3, sd = 1,
+  
+  # from observations
+  y_bar = 6.25, sigma = 0.75, n = 1
+) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+## a
+
+```{r}
+set.seed(320)
+our_mh_tour <- mh_tour(N = 50, current = 3, w = 50, 
+                 obs_value = 6.25, tau = 1, sigma = 0.75)
+
+p1 <- ggplot(our_mh_tour, aes(x = iteration, y = mu)) + 
+  geom_line() +
+  labs(title = "Our Metropolis-Hastings Tour",
+       subtitle = "Posterior: N(5.08, 0.6^2)",
+       caption = "SML 320") +
+  theme_minimal()
+
+p2 <- ggplot(our_mh_tour, aes(x = mu)) + 
+  geom_histogram(aes(y = after_stat(density)), 
+                 binwidth = 0.1,
+                 color = "black", fill = "gray50") + 
+  stat_function(fun = dnorm, args = list(5.08, 0.36), 
+                color = "#E77500",
+                linewidth = 2) +
+  theme_minimal()
+
+# patchwork
+p1 + p2
+```
+
+## b
+
+```{r}
+set.seed(320)
+our_mh_tour <- mh_tour(N = 50, current = 3, w = 0.01, 
+                 obs_value = 6.25, tau = 1, sigma = 0.75)
+
+p1 <- ggplot(our_mh_tour, aes(x = iteration, y = mu)) + 
+  geom_line() +
+  labs(title = "Our Metropolis-Hastings Tour",
+       subtitle = "Posterior: N(5.08, 0.6^2)",
+       caption = "SML 320") +
+  theme_minimal()
+
+p2 <- ggplot(our_mh_tour, aes(x = mu)) + 
+  geom_histogram(aes(y = after_stat(density)), 
+                 binwidth = 0.1,
+                 color = "black", fill = "gray50") + 
+  stat_function(fun = dnorm, args = list(5.08, 0.36), 
+                color = "#E77500",
+                linewidth = 2) +
+  theme_minimal()
+
+# patchwork
+p1 + p2
+```
+
+## c
+
+```{r}
+set.seed(320)
+our_mh_tour <- mh_tour(N = 1000, current = 3, w = 50, 
+                 obs_value = 6.25, tau = 1, sigma = 0.75)
+
+p1 <- ggplot(our_mh_tour, aes(x = iteration, y = mu)) + 
+  geom_line() +
+  labs(title = "Our Metropolis-Hastings Tour",
+       subtitle = "Posterior: N(5.08, 0.6^2)",
+       caption = "SML 320") +
+  theme_minimal()
+
+p2 <- ggplot(our_mh_tour, aes(x = mu)) + 
+  geom_histogram(aes(y = after_stat(density)), 
+                 binwidth = 0.1,
+                 color = "black", fill = "gray50") + 
+  stat_function(fun = dnorm, args = list(5.08, 0.36), 
+                color = "#E77500",
+                linewidth = 2) +
+  theme_minimal()
+
+# patchwork
+p1 + p2
+```
+
+## d
+
+```{r}
+set.seed(320)
+our_mh_tour <- mh_tour(N = 1000, current = 3, w = 1000, 
+                 obs_value = 6.25, tau = 1, sigma = 0.75)
+
+p1 <- ggplot(our_mh_tour, aes(x = iteration, y = mu)) + 
+  geom_line() +
+  labs(title = "Our Metropolis-Hastings Tour",
+       subtitle = "Posterior: N(5.08, 0.6^2)",
+       caption = "SML 320") +
+  theme_minimal()
+
+p2 <- ggplot(our_mh_tour, aes(x = mu)) + 
+  geom_histogram(aes(y = after_stat(density)), 
+                 binwidth = 0.1,
+                 color = "black", fill = "gray50") + 
+  stat_function(fun = dnorm, args = list(5.08, 0.36), 
+                color = "#E77500",
+                linewidth = 2) +
+  theme_minimal()
+
+# patchwork
+p1 + p2
+```
+
+## e
+
+Comparing the results from parts (a) and (b), we observe that having a half-width $w$ that is too large can create a situation that is nearly constant because of the very low acceptance probabilities.
+
+## f
+
+Comparing the results from parts (a) and (b), we observe that having a half-width $w$ that is too large can create situation that are nearly constant for several iterations because of the very low acceptance probabilities.
+
+
+# 7.11
+
+```{r}
+one_mh_iteration_normal <- function(current, s, obs_value, tau, sigma){
+  # Step 1: propose next location in chain
+  proposal <- current + rnorm(1, mean = 0, sd = s)
+  
+  # Step 2: decide whether or not to go there
+  proposal_plausibility <- dnorm(proposal, 3, tau) * dnorm(obs_value, proposal, sigma)
+  current_plausibility <- dnorm(current, 3, tau) * dnorm(obs_value, current, sigma)
+  alpha <- min(1, proposal_plausibility / current_plausibility)
+  next_stop <- sample(c(proposal, current), 
+                      size = 1, prob = c(alpha, 1 - alpha))
+  
+  # Return the results as a data frame
+  return(data.frame(proposal, alpha, next_stop))
+}
+```
+
+## a
+
+```{r}
+set.seed(320)
+one_mh_iteration_normal(s = 0.01, current = 3, 
+                        obs_value = 6.25, tau = 1, sigma = 0.75)
+```
+
+The acceptance probability was about 87%, and the proposed location was accepted.
+
+## b
+
+```{r}
+set.seed(320)
+one_mh_iteration_normal(s = 0.5, current = 3, 
+                        obs_value = 6.25, tau = 1, sigma = 0.75)
+```
+
+There was a virtually zero acceptance probability, and the proposed location was rejected.
+
+## c
+
+```{r}
+set.seed(320)
+one_mh_iteration_normal(s = 1, current = 3, 
+                        obs_value = 6.25, tau = 1, sigma = 0.75)
+```
+
+There was a virtually zero acceptance probability, and the proposed location was rejected.
+
+## d
+
+```{r}
+set.seed(320)
+one_mh_iteration_normal(s = 3, current = 3, 
+                        obs_value = 6.25, tau = 1, sigma = 0.75)
+```
+
+There was a virtually zero acceptance probability, and the proposed location was rejected.
+
+
+# 7.12
+
+```{r}
+mh_tour_normal <- function(N, current, s, obs_value, tau, sigma){
+  # N: chain length
+  # initialize vector
+  mu <- rep(0, N)
+  
+  # simulate N Markov chain stops
+  for(i in 1:N){
+    # simulate one iteration
+    this_iteration <- one_mh_iteration_normal(current, s, 
+                                              obs_value, tau, sigma)
+    
+    # record next location
+    mu[i] <- this_iteration$next_stop
+    
+    # update current location
+    current <- this_iteration$next_stop
+  }
+  
+  # return the chain locations
+  return(data.frame(iteration = c(1:N), mu))
+}
+```
+
+## a
+
+```{r}
+set.seed(320)
+our_mh_tour <- mh_tour_normal(N = 20, current = 3, s = 0.01, 
+                 obs_value = 6.25, tau = 1, sigma = 0.75)
+
+p1 <- ggplot(our_mh_tour, aes(x = iteration, y = mu)) + 
+  geom_line() +
+  labs(title = "Our Metropolis-Hastings Tour",
+       subtitle = "Posterior: N(5.08, 0.6^2)",
+       caption = "SML 320") +
+  theme_minimal()
+
+p2 <- ggplot(our_mh_tour, aes(x = mu)) + 
+  geom_histogram(aes(y = after_stat(density)), 
+                 binwidth = 0.1,
+                 color = "black", fill = "gray50") + 
+  stat_function(fun = dnorm, args = list(5.08, 0.36), 
+                color = "#E77500",
+                linewidth = 2) +
+  theme_minimal()
+
+# patchwork
+p1 + p2
+```
+
+## b
+
+```{r}
+set.seed(320)
+our_mh_tour <- mh_tour_normal(N = 20, current = 3, s = 10, 
+                 obs_value = 6.25, tau = 1, sigma = 0.75)
+
+p1 <- ggplot(our_mh_tour, aes(x = iteration, y = mu)) + 
+  geom_line() +
+  labs(title = "Our Metropolis-Hastings Tour",
+       subtitle = "Posterior: N(5.08, 0.6^2)",
+       caption = "SML 320") +
+  theme_minimal()
+
+p2 <- ggplot(our_mh_tour, aes(x = mu)) + 
+  geom_histogram(aes(y = after_stat(density)), 
+                 binwidth = 0.1,
+                 color = "black", fill = "gray50") + 
+  stat_function(fun = dnorm, args = list(5.08, 0.36), 
+                color = "#E77500",
+                linewidth = 2) +
+  theme_minimal()
+
+# patchwork
+p1 + p2
+```
+
+
+## c
+
+```{r}
+set.seed(320)
+our_mh_tour <- mh_tour_normal(N = 1000, current = 3, s = 0.01, 
+                 obs_value = 6.25, tau = 1, sigma = 0.75)
+
+p1 <- ggplot(our_mh_tour, aes(x = iteration, y = mu)) + 
+  geom_line() +
+  labs(title = "Our Metropolis-Hastings Tour",
+       subtitle = "Posterior: N(5.08, 0.6^2)",
+       caption = "SML 320") +
+  theme_minimal()
+
+p2 <- ggplot(our_mh_tour, aes(x = mu)) + 
+  geom_histogram(aes(y = after_stat(density)), 
+                 binwidth = 0.1,
+                 color = "black", fill = "gray50") + 
+  stat_function(fun = dnorm, args = list(5.08, 0.36), 
+                color = "#E77500",
+                linewidth = 2) +
+  theme_minimal()
+
+# patchwork
+p1 + p2
+```
+
+## d
+
+```{r}
+set.seed(320)
+our_mh_tour <- mh_tour_normal(N = 1000, current = 3, s = 10, 
+                 obs_value = 6.25, tau = 1, sigma = 0.75)
+
+p1 <- ggplot(our_mh_tour, aes(x = iteration, y = mu)) + 
+  geom_line() +
+  labs(title = "Our Metropolis-Hastings Tour",
+       subtitle = "Posterior: N(5.08, 0.6^2)",
+       caption = "SML 320") +
+  theme_minimal()
+
+p2 <- ggplot(our_mh_tour, aes(x = mu)) + 
+  geom_histogram(aes(y = after_stat(density)), 
+                 binwidth = 0.1,
+                 color = "black", fill = "gray50") + 
+  stat_function(fun = dnorm, args = list(5.08, 0.36), 
+                color = "#E77500",
+                linewidth = 2) +
+  theme_minimal()
+
+# patchwork
+p1 + p2
+```
+
+## e
+
+Comparing the results from parts (a) and (b), we observe that having a standard deviation $s$ that is too large can create a situation that is nearly constant because of the very low acceptance probabilities.
+
+## f
+
+Perhaps we should try a standard deviation that is closer to those in the prior and likelihood models.  Here, with $s = 0.8$,
+
+```{r}
+set.seed(320)
+our_mh_tour <- mh_tour_normal(N = 1000, current = 3, s = 0.8, 
+                 obs_value = 6.25, tau = 1, sigma = 0.75)
+
+p1 <- ggplot(our_mh_tour, aes(x = iteration, y = mu)) + 
+  geom_line() +
+  labs(title = "Our Metropolis-Hastings Tour",
+       subtitle = "Posterior: N(5.08, 0.6^2)",
+       caption = "SML 320") +
+  theme_minimal()
+
+p2 <- ggplot(our_mh_tour, aes(x = mu)) + 
+  geom_histogram(aes(y = after_stat(density)), 
+                 binwidth = 0.1,
+                 color = "black", fill = "gray50") + 
+  stat_function(fun = dnorm, args = list(5.08, 0.36), 
+                color = "#E77500",
+                linewidth = 2) +
+  theme_minimal()
+
+# patchwork
+p1 + p2
+```
+
