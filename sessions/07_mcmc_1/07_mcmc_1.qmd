@@ -424,10 +424,9 @@ Image Source: [Nuclear Museum](https://ahf.nuclearmuseum.org/voices/oral-histori
 
 ::::
 
-:::: {.columns}
-
-
 ## Wilfred Hastings
+
+:::: {.columns}
 
 ::: {.column width="50%"}
 * PhD: University of Toronto
@@ -443,10 +442,9 @@ Image Source: [McCall Gardens](https://www.mccallgardens.com/obituaries/wilfred-
 
 ::::
 
-:::: {.columns}
-
 ## Rosenbluths
 
+:::: {.columns}
 
 ::: {.column width="50%"}
 ### Arianna Rosenbluth
@@ -469,10 +467,6 @@ Image Source: [Los Alamos National Laboratories](https://discover.lanl.gov/publi
 :::
 
 ::::
-
-
-
-
 
 
 
