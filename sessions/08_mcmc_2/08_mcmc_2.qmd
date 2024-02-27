@@ -28,6 +28,11 @@ library("patchwork")
 library("tidyverse")
 
 knitr::opts_chunk$set(echo = TRUE)
+<<<<<<< HEAD
+=======
+
+# tips_df <- readr::read_csv("tips.csv")
+>>>>>>> f77b15cda3a6150685482e61a1affc0d588e1b11
 ```
 
 # A Good Example
@@ -191,6 +196,7 @@ bayesplot::mcmc_trace(bad_simulation, pars = "pi") +
 
 ::::
 
+<<<<<<< HEAD
 
 # A Thin Example
 
@@ -436,6 +442,15 @@ bayesplot::neff_ratio(thin_simulation, pars = "pi") |> round(digits = 4)
 ## Metropolis Algorithm
 
 If we have a *symmetric* proposal model, the probability of accepting a move from a current location $\mu$ to a proposed location $\mu^{′}$ comes down to a comparison of their posterior plausibility: $f(\mu^{'}|y)$ versus $f(\mu|y)$. There are two possible scenarios here:
+=======
+# Metropolis Algorithm
+
+With a *symmetric* proposal model
+
+$$q(\mu^{′}|\mu) = q(\mu|\mu^{′})$$
+
+the probability of accepting a move from a current location $\mu$ to a proposed location $\mu^{′}$ comes down to a comparison of their posterior plausibility: $f(\mu^{'}|y)$ versus $f(\mu|y)$. There are two possible scenarios here:
+>>>>>>> f77b15cda3a6150685482e61a1affc0d588e1b11
 
 * Scenario 1: $f(\mu^{'}|y) \geq f(\mu|y)$.  When the posterior plausibility of $\mu^{′}$ is at least as great as that of $\mu$, $\alpha=1$. Thus, we’ll *definitely* move there.
 * Scenario 2: $f(\mu^{'}|y) < f(\mu|y)$.  If the posterior plausibility of $\mu^{′}$ is less than that of $\mu$, then
@@ -444,6 +459,7 @@ $$α=\ds\frac{f(\mu^{′}|y)}{f(\mu|y)}<1$$
 
 Thus, we *might* move there.
 
+<<<<<<< HEAD
 ## Metropolis-Hastings Algorithm
 
 Removing the assumption of a symmetric proposal model, we have to convey $q(\mu^{'}|\mu)$, the probability density function of the proposal model.
@@ -451,6 +467,11 @@ Removing the assumption of a symmetric proposal model, we have to convey $q(\mu^
 Conditioned on data $y$, let parameter $\mu$ have posterior pdf
 $$f(\mu|y)\propto f(\mu) \cdot L(\mu|y)$$ 
 A Metropolis-Hastings Markov chain for $f(\mu|y)$, $\{\mu^{(1)},\mu^{(2)},...,\mu^{(N)}\}$, evolves as follows. Let $\mu^{(i)}=\mu$ be the chain’s location at iteration $i\in\{1,2,...,N−1\}$ and identify the next location $\mu^{(i+1)}$ through a two-step process:
+=======
+# Gibbs Sampling
+
+When Hastings generalized the Metropolis Algorithm, the need for a symmetric proposal model was removed.
+>>>>>>> f77b15cda3a6150685482e61a1affc0d588e1b11
 
 * Step 1: *Propose a new location.* Conditioned on the current location $\mu$, draw a location $\mu^{′}$ from a proposal model with pdf $q(\mu^{′}|\mu)$.
 * Step 2: *Decide whether or not to go there.*
@@ -462,6 +483,7 @@ A Metropolis-Hastings Markov chain for $f(\mu|y)$, $\{\mu^{(1)},\mu^{(2)},...,\m
       \mu^{'} & \text{with probability } \alpha \\
       \mu & \text{with probability } 1-\alpha \\
     \end{cases}$$
+<<<<<<< HEAD
 
 ## Motivation
 
@@ -523,6 +545,13 @@ good_simulation <- stan(model_code = bb_model, data = list(Y = 4),
 ```
 
 Where did the simulation parameters, such as half-width and step-size, go?
+=======
+:::
+
+# Hamiltonian Monte Carlo
+
+
+>>>>>>> f77b15cda3a6150685482e61a1affc0d588e1b11
 
 
 # Footnotes

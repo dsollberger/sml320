@@ -1,0 +1,445 @@
+---
+title: "9: Posterior Inference"
+author: "Derek Sollberger"
+date: "2024-02-27"
+# execute:
+#   cache: true
+# format:
+#   revealjs:
+#     scrollable: true
+format:
+  html:
+    toc: true
+# params:
+#   heavy_chunks: "true"
+  # heavy_chunks: "false"
+---
+
+\newcommand{\ds}{\displaystyle}
+
+```{r}
+#| message: false
+#| warning: false
+
+library("bayesrules")
+library("infer") #for frequentist approaches
+library("patchwork")
+library("tidyverse")
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Data
+
+## NEON
+
+"The National Science Foundation's National Ecological Observatory Network ([NEON](https://www.neonscience.org/about)) is a continental-scale observation facility operated by Battelle and designed to collect long-term **open access ecological data** to better understand how U.S. ecosystems are changing."
+
+## NEON Field Sites
+
+"NEON's aquatic and terrestrial sites are [strategically located](https://www.neonscience.org/field-sites/explore-field-sites) across the U.S. within 20 ecoclimatic Domains that represent regions of distinct landforms, vegetation, climate and ecosystem dynamics."
+
+![NEON Field Sites](neon_site_map.png)
+
+## NEON Forecasts Challenge
+
+:::: {.columns}
+
+::: {.column width="67%"}
+"The National Science Foundation funded Ecological Forecasting Initiative Research Coordination Network (EFI-RCN) is hosting a NEON Ecological Forecast Challenge with the goal to create a community of practice that builds capacity for ecological forecasting by leveraging NEON data products. The Challenge revolves around the five theme areas listed below that span aquatic and terrestrial systems, and population, community, and ecosystem processes across a broad range of ecoregions that uses data collected by NEON."	
+:::
+
+::: {.column width="33%"}
+![NEON Forecasts Themes](neon_forecasts_challenge.png)
+:::
+
+::::
+
+## neon4casts package
+
+The `neon4cast` [package](https://github.com/eco4cast/neon4cast) "provides a collection of convenient helper utilities for anyone entering the EFI NEON Forecasting Challenge."
+
+* real-world data
+* updated nearly daily
+* very easy API access
+
+```{r}
+#| message: false
+#| warning: false
+raw_df <- readr::read_csv("https://data.ecoforecast.org/neon4cast-targets/aquatics/aquatics-targets.csv.gz")
+```
+
+## Alternative Data Source: AQICN
+
+* [World Air Quality Index Project](https://aqicn.org/station/@402871/#/z/12)
+* API: [Purple Air](https://community.purpleair.com/t/making-api-calls-with-the-purpleair-api/180)
+
+## Data Product
+
+```{r}
+head(raw_df)
+```
+
+
+## Data Wrangling
+
+```{r}
+aquatic_df <- raw_df %>% 
+    pivot_wider(names_from = "variable", values_from = "observation")
+
+head(aquatic_df)
+```
+
+```{r}
+colnames(aquatic_df)
+```
+
+
+# Exploratory Data Analyses
+
+## Variables
+
+:::: {.panel-tabset}
+
+## Timeframe
+
+We have about 7 years of daily data.
+
+```{r}
+aquatic_df |> select(datetime) |> slice(1, n())
+```
+
+## Field Sites
+
+* [https://www.neonscience.org/field-sites/about-field-sites](https://www.neonscience.org/field-sites/about-field-sites)
+
+```{r}
+aquatic_df |> select(site_id) |> distinct() |> as.vector()
+```
+
+```{r}
+aquatic_df |> group_by(site_id) |> count() |> select(site_id, n)
+```
+
+## Chlorophyll-a
+
+* non-wadeable river sites ("lakes")
+* "Phytoplankton biomass are the base of the aquatic food-web and an important indicator of water quality for managers."
+
+```{r}
+#| message: false
+#| warning: false
+aquatic_df |>
+  ggplot(aes(x = chla)) +
+  geom_density(color = "darkgreen", linewidth = 3) +
+  labs(title = "Chlorophyll-a Concentration",
+       subtitle = "Data Source: NEON Forecasts",
+       caption = "SML 320") +
+  theme_minimal() +
+  xlim(0, 50)
+```
+
+
+## Focus: Lewis Run
+
+The [Lewis Run NEON station](https://www.neonscience.org/field-sites/lewi) is located 60 miles west of Washingon DC.  It is in the "Mid-Atlantic" region of the NEON stations, and it is perhaps the closest in climate to Princeton, New Jersey.
+
+```{r}
+aquatic_df |> filter(site_id == "LEWI") |> tail()
+```
+
+## Oxygen versus Temperature
+
+* dissolved oxygen concentrations less than 2 mg/L are considered **hypoxic**.
+
+```{r}
+#| message: false
+#| warning: false
+
+lewi_df <- aquatic_df |> 
+  filter(site_id == "LEWI") |>
+  filter(!is.na(oxygen)) |>
+  mutate(hypoxic = oxygen < 2)
+
+aquatic_df |>
+  ggplot() +
+  geom_point(aes(x = temperature, y = oxygen),
+             color = "gray50") +
+  geom_point(aes(x = temperature, y = oxygen, color = hypoxic),
+             data = lewi_df, size = 3) +
+  labs(title = "Hypoxia in Lewis Run?",
+       subtitle = "Data Source: NEON Forecasts",
+       caption = "SML 320") +
+  scale_color_manual(values = c("blue", "red")) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+  
+```
+
+::::
+
+
+# Credible Intervals
+
+## Frequentist Approach: Confidence Interval
+
+:::: {.panel-tabset}
+
+## Definition
+
+A **confidence interval** records percentile endpoints of a sampling distribution that was made by resampling the data *with replacement*.
+
+## Code
+
+Using code from the `infer` package, as seen in the [ModernDive textbook](https://moderndive.com/)
+
+```{r}
+bootstrap_distribution <- aquatic_df %>% 
+  specify(response = oxygen) %>% 
+  generate(reps = 1000) %>% 
+  calculate(stat = "mean")
+
+percentile_ci <- bootstrap_distribution %>% 
+  get_confidence_interval(level = 0.95, type = "percentile")
+```
+
+## Visualization
+
+```{r}
+visualize(bootstrap_distribution) + 
+  shade_confidence_interval(endpoints = percentile_ci)
+```
+
+## Inference
+
+```{r}
+percentile_ci
+```
+
+*We are 95% confident* that the true average concentration level in American bodies of water is between `r round(percentile_ci[1], 2)` and `r round(percentile_ci[2], 2)` mg/L.
+
+::::
+
+## Prior
+
+Considering the oxygen concentration levels, we will model both the prior and observed data as continuous variables, which lends itself to a *normal-normal conjugate pair*.
+
+For a rather informative prior (perhaps too restrictive), let us get the oxygen concentrations from the year 2023 data.
+
+```{r}
+aquatic_df |>
+  filter(between(datetime,
+                 as_date("2023-01-01"), 
+                 as_date("2023-12-31"))) |>
+  summarise(mean = mean(oxygen, na.rm = TRUE),
+            sd = sd(oxygen, na.rm = TRUE),
+            n_prior = n())
+```
+
+## Observed Data
+
+Then, let us focus on the year 2024 data (before today).
+
+```{r}
+aquatic_df |>
+  filter(datetime >as_date("2024-01-01")) |>
+  summarise(y_bar = mean(oxygen, na.rm = TRUE),
+            sigma = sd(oxygen, na.rm = TRUE),
+            n_obs = n())
+```
+
+## Posterior Distribution
+
+```{r}
+bayesrules::summarize_normal_normal(
+  #from prior
+  mean = 9.202716, sd = 2.162342,
+  
+  # from observed data
+  sigma = 1.768468, y_bar = 10.83557, n = 1462
+) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+## Credible Interval
+
+To get a 95 percent credible interval, retrieve the locations of the 2.5 and 97.5 percentiles from the posterior distribution.
+
+```{r}
+qnorm(c(0.025, 0.975), mean = 10.8348, sd = 0.0462)
+```
+
+## Inference and Commentary
+
+The posterior oxygen concentration levels are between 10.74 and 10.93 mg/L.
+
+* So far, it appears that credible intervals are smaller than confidence intervals (partly because of noting sample sizes)
+* We did not have to aim for 95% credibility
+* We did not have to retrieve the "middle" 95%
+* Do we have "recency bias"?
+
+
+# NHST: One-Sided
+
+## Frequentist Approach
+
+:::: {.panel-tabset}
+
+## Null Hypothesis
+
+Recall that hypoxia is classified as having dissolved oxygen concentration levels under 2 mg/L.
+
+$$\text{H}_{o}: \mu = 2$$
+$$\text{H}_{a}: \mu < 2$$
+
+## Definition
+
+In frequentist null hypothesis significance testing (NHST), the **p-value** is the probability of encountering results that are at least as extreme as the observed results under the assumption that the null hypothesis is true.
+
+* p-value < 0.05: *reject* the null hypothesis
+* p-value >= 0.05: *fail to reject* the null hypothesis
+
+## Code
+
+```{r}
+obs_mean <- aquatic_df |>
+  specify(response = oxygen) |>
+  calculate(stat = "mean")
+
+null_distribution <- aquatic_df |>
+  specify(response = oxygen) |>
+  hypothesize(null = "point", mu = 2) |>
+  generate(reps = 1000, type = "bootstrap") |>
+  calculate(stat = "mean")
+```
+
+## Visualization
+
+```{r}
+null_distribution |>
+  visualise() +
+  shade_p_value(obs_stat = obs_mean, direction = "less")
+```
+
+
+## Inference
+
+```{r}
+null_distribution |>
+  get_p_value(obs_stat = obs_mean, direction = "less")
+```
+
+Since the p-value > 0.05, we *fail to reject* the claim that the dissolved oxygen concentration level in American bodies of water is 2 mg/L.
+
+::::
+
+## Prior and Posterior Probabilities
+
+```{r}
+#| echo: false
+bayesrules::summarize_normal_normal(
+  #from prior
+  mean = 9.202716, sd = 2.162342,
+  
+  # from observed data
+  sigma = 1.768468, y_bar = 10.83557, n = 1462
+) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+
+```{r}
+prior_prob <- pnorm(2, mean = 9.2027, sd = 2.1623)
+
+posterior_prob <- pnorm(2, mean = 10.8348, sd = 0.0462)
+```
+
+## Prior and Posterior Odds
+
+```{r}
+prior_odds <- prior_prob / (1 - prior_prob)
+
+posterior_odds <- posterior_prob / (1 - posterior_prob)
+```
+
+
+
+## Bayes Factor
+
+$$\text{Bayes Factor} = \ds\frac{\text{posterior odds}}{\text{prior odds}}$$
+
+* $BF = 1$: the **plausibility** of $H_{a}$ *did not change* with the observed data
+* $BF > 1$: the **plausibility** of $H_{a}$ *increased* with the observed data
+* $BF < 1$: the **plausibility** of $H_{a}$ *decreased* with the observed data
+
+## Inference
+
+```{r}
+# Bayes factor
+BF <- posterior_odds / prior_odds
+BF
+```
+
+The plausibility of observing hypoxic conditions *decreased* with the inclusion of the year 2024 data.
+
+
+# NHST: Two-Sided
+
+## Null Hypothesis
+
+For this example, let us claim that the dissolved oxygen concentration level is "close" to 10.7 mg/L
+
+$$\text{H}_{o}: \mu \in (10.6, 10.8)$$
+$$\text{H}_{a}: \mu \notin (10.6, 10.8)$$
+
+## Prior and Posterior Probabilities
+
+```{r}
+prior_prob <- diff(pnorm(c(10.6, 10.8),
+                         mean = 9.2027, sd = 2.1623))
+
+posterior_prob <- diff(pnorm(c(10.6, 10.8),
+                             mean = 10.8348, sd = 0.0462))
+```
+
+## Bayes Factor
+
+```{r}
+prior_odds <- prior_prob / (1 - prior_prob)
+posterior_odds <- posterior_prob / (1 - posterior_prob)
+BF <- posterior_odds / prior_odds
+BF
+```
+
+The plausibility of observing dissolved oxygen concentration level "near" 10.7 mg/L *increased* with the inclusion of the year 2024 data.
+
+
+# Footnotes
+
+::: {.callout-note collapse="true"}
+## Session Info
+
+```{r}
+sessionInfo()
+```
+:::
+
+
+:::: {.columns}
+
+::: {.column width="50%"}
+	
+:::
+
+::: {.column width="50%"}
+
+:::
+
+::::
+
+:::: {.panel-tabset}
+
+
+
+::::

@@ -2,7 +2,11 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
+<<<<<<< HEAD
 <meta name="generator" content="quarto-1.3.450">
+=======
+<meta name="generator" content="quarto-1.3.353">
+>>>>>>> f77b15cda3a6150685482e61a1affc0d588e1b11
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -85,6 +89,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul>
   <li><a href="#a-good-example" id="toc-a-good-example" class="nav-link active" data-scroll-target="#a-good-example">A Good Example</a></li>
   <li><a href="#a-bad-example" id="toc-a-bad-example" class="nav-link" data-scroll-target="#a-bad-example">A Bad Example</a></li>
+<<<<<<< HEAD
   <li><a href="#a-thin-example" id="toc-a-thin-example" class="nav-link" data-scroll-target="#a-thin-example">A Thin Example</a></li>
   <li><a href="#metrics" id="toc-metrics" class="nav-link" data-scroll-target="#metrics">Metrics</a>
   <ul class="collapse">
@@ -106,6 +111,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#app" id="toc-app" class="nav-link" data-scroll-target="#app">App</a></li>
   <li><a href="#tuning" id="toc-tuning" class="nav-link" data-scroll-target="#tuning">Tuning</a></li>
   </ul></li>
+=======
+  <li><a href="#metropolis-algorithm" id="toc-metropolis-algorithm" class="nav-link" data-scroll-target="#metropolis-algorithm">Metropolis Algorithm</a></li>
+  <li><a href="#gibbs-sampling" id="toc-gibbs-sampling" class="nav-link" data-scroll-target="#gibbs-sampling">Gibbs Sampling</a></li>
+  <li><a href="#hamiltonian-monte-carlo" id="toc-hamiltonian-monte-carlo" class="nav-link" data-scroll-target="#hamiltonian-monte-carlo">Hamiltonian Monte Carlo</a></li>
+>>>>>>> f77b15cda3a6150685482e61a1affc0d588e1b11
   <li><a href="#footnotes" id="toc-footnotes" class="nav-link" data-scroll-target="#footnotes">Footnotes</a></li>
   </ul>
 </nav>
@@ -148,7 +158,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"patchwork"</span>)</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"tidyverse"</span>)</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<<<<<<< HEAD
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span>opts_chunk<span class="sc">$</span><span class="fu">set</span>(<span class="at">echo =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+=======
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span>opts_chunk<span class="sc">$</span><span class="fu">set</span>(<span class="at">echo =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># tips_df &lt;- readr::read_csv("tips.csv")</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+>>>>>>> f77b15cda3a6150685482e61a1affc0d588e1b11
 </div>
 <section id="a-good-example" class="level1">
 <h1>A Good Example</h1>
@@ -201,15 +217,26 @@ Chain 1: Iteration: 8000 / 10000 [ 80%]  (Sampling)
 Chain 1: Iteration: 9000 / 10000 [ 90%]  (Sampling)
 Chain 1: Iteration: 10000 / 10000 [100%]  (Sampling)
 Chain 1: 
+<<<<<<< HEAD
 Chain 1:  Elapsed Time: 0.028 seconds (Warm-up)
 Chain 1:                0.033 seconds (Sampling)
 Chain 1:                0.061 seconds (Total)
+=======
+Chain 1:  Elapsed Time: 0.032 seconds (Warm-up)
+Chain 1:                0.032 seconds (Sampling)
+Chain 1:                0.064 seconds (Total)
+>>>>>>> f77b15cda3a6150685482e61a1affc0d588e1b11
 Chain 1: 
 
 SAMPLING FOR MODEL 'anon_model' NOW (CHAIN 2).
 Chain 2: 
+<<<<<<< HEAD
 Chain 2: Gradient evaluation took 9e-06 seconds
 Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.09 seconds.
+=======
+Chain 2: Gradient evaluation took 1e-06 seconds
+Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.01 seconds.
+>>>>>>> f77b15cda3a6150685482e61a1affc0d588e1b11
 Chain 2: Adjust your expectations accordingly!
 Chain 2: 
 Chain 2: 
@@ -226,15 +253,26 @@ Chain 2: Iteration: 8000 / 10000 [ 80%]  (Sampling)
 Chain 2: Iteration: 9000 / 10000 [ 90%]  (Sampling)
 Chain 2: Iteration: 10000 / 10000 [100%]  (Sampling)
 Chain 2: 
+<<<<<<< HEAD
 Chain 2:  Elapsed Time: 0.028 seconds (Warm-up)
 Chain 2:                0.031 seconds (Sampling)
 Chain 2:                0.059 seconds (Total)
+=======
+Chain 2:  Elapsed Time: 0.031 seconds (Warm-up)
+Chain 2:                0.033 seconds (Sampling)
+Chain 2:                0.064 seconds (Total)
+>>>>>>> f77b15cda3a6150685482e61a1affc0d588e1b11
 Chain 2: 
 
 SAMPLING FOR MODEL 'anon_model' NOW (CHAIN 3).
 Chain 3: 
+<<<<<<< HEAD
 Chain 3: Gradient evaluation took 2e-06 seconds
 Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.02 seconds.
+=======
+Chain 3: Gradient evaluation took 1e-06 seconds
+Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.01 seconds.
+>>>>>>> f77b15cda3a6150685482e61a1affc0d588e1b11
 Chain 3: Adjust your expectations accordingly!
 Chain 3: 
 Chain 3: 
@@ -251,15 +289,26 @@ Chain 3: Iteration: 8000 / 10000 [ 80%]  (Sampling)
 Chain 3: Iteration: 9000 / 10000 [ 90%]  (Sampling)
 Chain 3: Iteration: 10000 / 10000 [100%]  (Sampling)
 Chain 3: 
+<<<<<<< HEAD
 Chain 3:  Elapsed Time: 0.028 seconds (Warm-up)
 Chain 3:                0.03 seconds (Sampling)
 Chain 3:                0.058 seconds (Total)
+=======
+Chain 3:  Elapsed Time: 0.03 seconds (Warm-up)
+Chain 3:                0.032 seconds (Sampling)
+Chain 3:                0.062 seconds (Total)
+>>>>>>> f77b15cda3a6150685482e61a1affc0d588e1b11
 Chain 3: 
 
 SAMPLING FOR MODEL 'anon_model' NOW (CHAIN 4).
 Chain 4: 
+<<<<<<< HEAD
 Chain 4: Gradient evaluation took 2e-06 seconds
 Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.02 seconds.
+=======
+Chain 4: Gradient evaluation took 1e-06 seconds
+Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.01 seconds.
+>>>>>>> f77b15cda3a6150685482e61a1affc0d588e1b11
 Chain 4: Adjust your expectations accordingly!
 Chain 4: 
 Chain 4: 
@@ -276,15 +325,25 @@ Chain 4: Iteration: 8000 / 10000 [ 80%]  (Sampling)
 Chain 4: Iteration: 9000 / 10000 [ 90%]  (Sampling)
 Chain 4: Iteration: 10000 / 10000 [100%]  (Sampling)
 Chain 4: 
+<<<<<<< HEAD
 Chain 4:  Elapsed Time: 0.028 seconds (Warm-up)
 Chain 4:                0.03 seconds (Sampling)
 Chain 4:                0.058 seconds (Total)
+=======
+Chain 4:  Elapsed Time: 0.029 seconds (Warm-up)
+Chain 4:                0.032 seconds (Sampling)
+Chain 4:                0.061 seconds (Total)
+>>>>>>> f77b15cda3a6150685482e61a1affc0d588e1b11
 Chain 4: </code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>end_time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">round</span>(end_time<span class="sc">-</span> start_time))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
+<<<<<<< HEAD
 <pre><code>Time difference of 40 secs</code></pre>
+=======
+<pre><code>Time difference of 54 secs</code></pre>
+>>>>>>> f77b15cda3a6150685482e61a1affc0d588e1b11
 </div>
 </div>
 </div>
@@ -536,6 +595,7 @@ Chain 4: </code></pre>
 </div>
 </div>
 </section>
+<<<<<<< HEAD
 <section id="a-thin-example" class="level1">
 <h1>A Thin Example</h1>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
@@ -881,6 +941,13 @@ Effective Sample Size Ratio
 <section id="metropolis-algorithm" class="level2">
 <h2 class="anchored" data-anchor-id="metropolis-algorithm">Metropolis Algorithm</h2>
 <p>If we have a <em>symmetric</em> proposal model, the probability of accepting a move from a current location <span class="math inline">\(\mu\)</span> to a proposed location <span class="math inline">\(\mu^{′}\)</span> comes down to a comparison of their posterior plausibility: <span class="math inline">\(f(\mu^{'}|y)\)</span> versus <span class="math inline">\(f(\mu|y)\)</span>. There are two possible scenarios here:</p>
+=======
+<section id="metropolis-algorithm" class="level1">
+<h1>Metropolis Algorithm</h1>
+<p>With a <em>symmetric</em> proposal model</p>
+<p><span class="math display">\[q(\mu^{′}|\mu) = q(\mu|\mu^{′})\]</span></p>
+<p>the probability of accepting a move from a current location <span class="math inline">\(\mu\)</span> to a proposed location <span class="math inline">\(\mu^{′}\)</span> comes down to a comparison of their posterior plausibility: <span class="math inline">\(f(\mu^{'}|y)\)</span> versus <span class="math inline">\(f(\mu|y)\)</span>. There are two possible scenarios here:</p>
+>>>>>>> f77b15cda3a6150685482e61a1affc0d588e1b11
 <ul>
 <li>Scenario 1: <span class="math inline">\(f(\mu^{'}|y) \geq f(\mu|y)\)</span>. When the posterior plausibility of <span class="math inline">\(\mu^{′}\)</span> is at least as great as that of <span class="math inline">\(\mu\)</span>, <span class="math inline">\(\alpha=1\)</span>. Thus, we’ll <em>definitely</em> move there.</li>
 <li>Scenario 2: <span class="math inline">\(f(\mu^{'}|y) &lt; f(\mu|y)\)</span>. If the posterior plausibility of <span class="math inline">\(\mu^{′}\)</span> is less than that of <span class="math inline">\(\mu\)</span>, then</li>
@@ -888,10 +955,16 @@ Effective Sample Size Ratio
 <p><span class="math display">\[α=\displaystyle\frac{f(\mu^{′}|y)}{f(\mu|y)}&lt;1\]</span></p>
 <p>Thus, we <em>might</em> move there.</p>
 </section>
+<<<<<<< HEAD
 <section id="metropolis-hastings-algorithm" class="level2">
 <h2 class="anchored" data-anchor-id="metropolis-hastings-algorithm">Metropolis-Hastings Algorithm</h2>
 <p>Removing the assumption of a symmetric proposal model, we have to convey <span class="math inline">\(q(\mu^{'}|\mu)\)</span>, the probability density function of the proposal model.</p>
 <p>Conditioned on data <span class="math inline">\(y\)</span>, let parameter <span class="math inline">\(\mu\)</span> have posterior pdf <span class="math display">\[f(\mu|y)\propto f(\mu) \cdot L(\mu|y)\]</span> A Metropolis-Hastings Markov chain for <span class="math inline">\(f(\mu|y)\)</span>, <span class="math inline">\(\{\mu^{(1)},\mu^{(2)},...,\mu^{(N)}\}\)</span>, evolves as follows. Let <span class="math inline">\(\mu^{(i)}=\mu\)</span> be the chain’s location at iteration <span class="math inline">\(i\in\{1,2,...,N−1\}\)</span> and identify the next location <span class="math inline">\(\mu^{(i+1)}\)</span> through a two-step process:</p>
+=======
+<section id="gibbs-sampling" class="level1">
+<h1>Gibbs Sampling</h1>
+<p>When Hastings generalized the Metropolis Algorithm, the need for a symmetric proposal model was removed.</p>
+>>>>>>> f77b15cda3a6150685482e61a1affc0d588e1b11
 <ul>
 <li><p>Step 1: <em>Propose a new location.</em> Conditioned on the current location <span class="math inline">\(\mu\)</span>, draw a location <span class="math inline">\(\mu^{′}\)</span> from a proposal model with pdf <span class="math inline">\(q(\mu^{′}|\mu)\)</span>.</p></li>
 <li><p>Step 2: <em>Decide whether or not to go there.</em></p>
@@ -900,6 +973,7 @@ Effective Sample Size Ratio
 <li>Figuratively, flip a weighted coin. If it’s Heads, with probability <span class="math inline">\(\alpha\)</span>, go to the proposed location <span class="math inline">\(\mu^{′}\)</span>. If it’s Tails, with probability <span class="math inline">\(1−\alpha\)</span>, stay at <span class="math inline">\(\mu\)</span>: <span class="math display">\[\mu^{(i+1)} = \begin{cases}
 \mu^{'} &amp; \text{with probability } \alpha \\
 \mu &amp; \text{with probability } 1-\alpha \\
+<<<<<<< HEAD
   \end{cases}\]</span></li>
 </ul></li>
 </ul>
@@ -968,11 +1042,23 @@ Effective Sample Size Ratio
 </div>
 <p>Where did the simulation parameters, such as half-width and step-size, go?</p>
 </section>
+=======
+  \end{cases}\]</span> :::</li>
+</ul></li>
+</ul>
+</section>
+<section id="hamiltonian-monte-carlo" class="level1">
+<h1>Hamiltonian Monte Carlo</h1>
+>>>>>>> f77b15cda3a6150685482e61a1affc0d588e1b11
 </section>
 <section id="footnotes" class="level1">
 <h1>Footnotes</h1>
 <div class="callout callout-style-default callout-note callout-titled">
+<<<<<<< HEAD
 <div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+=======
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+>>>>>>> f77b15cda3a6150685482e61a1affc0d588e1b11
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
@@ -981,12 +1067,21 @@ Session Info
 </div>
 <div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
 </div>
+<<<<<<< HEAD
 <div id="callout-3" class="callout-3-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
 <div class="cell">
 <div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.3.0 (2023-04-21 ucrt)
+=======
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>R version 4.3.1 (2023-06-16 ucrt)
+>>>>>>> f77b15cda3a6150685482e61a1affc0d588e1b11
 Platform: x86_64-w64-mingw32/x64 (64-bit)
 Running under: Windows 10 x64 (build 19045)
 
@@ -1007,6 +1102,7 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
+<<<<<<< HEAD
  [1] lubridate_1.9.2    forcats_1.0.0      stringr_1.5.0      dplyr_1.1.3       
  [5] purrr_1.0.2        readr_2.1.4        tidyr_1.3.0        tibble_3.2.1      
  [9] ggplot2_3.4.3      tidyverse_2.0.0    patchwork_1.1.2    rstan_2.32.5      
@@ -1036,6 +1132,35 @@ loaded via a namespace (and not attached):
 [61] gridtext_0.1.5       Rcpp_1.0.11          glue_1.6.2          
 [64] xml2_1.3.5           rstudioapi_0.15.0    jsonlite_1.8.7      
 [67] plyr_1.8.8           R6_2.5.1            </code></pre>
+=======
+ [1] lubridate_1.9.2    forcats_1.0.0      stringr_1.5.0      dplyr_1.1.2       
+ [5] purrr_1.0.1        readr_2.1.4        tidyr_1.3.0        tibble_3.2.1      
+ [9] ggplot2_3.4.2      tidyverse_2.0.0    patchwork_1.1.2    rstan_2.32.5      
+[13] StanHeaders_2.32.5 ggtext_0.1.2       bayesplot_1.11.0  
+
+loaded via a namespace (and not attached):
+ [1] tensorA_0.36.2.1     gtable_0.3.3         xfun_0.39           
+ [4] QuickJSR_1.1.3       htmlwidgets_1.6.2    inline_0.3.19       
+ [7] tzdb_0.4.0           vctrs_0.6.3          tools_4.3.1         
+[10] generics_0.1.3       stats4_4.3.1         curl_5.0.1          
+[13] parallel_4.3.1       fansi_1.0.4          pkgconfig_2.0.3     
+[16] checkmate_2.3.1      distributional_0.3.2 RcppParallel_5.1.7  
+[19] lifecycle_1.0.3      compiler_4.3.1       farver_2.1.1        
+[22] munsell_0.5.0        codetools_0.2-19     htmltools_0.5.5     
+[25] yaml_2.3.7           pillar_1.9.0         abind_1.4-5         
+[28] posterior_1.5.0      commonmark_1.9.0     tidyselect_1.2.0    
+[31] digest_0.6.34        stringi_1.7.12       reshape2_1.4.4      
+[34] labeling_0.4.2       fastmap_1.1.1        grid_4.3.1          
+[37] colorspace_2.1-0     cli_3.6.1            magrittr_2.0.3      
+[40] loo_2.6.0            pkgbuild_1.4.3       utf8_1.2.3          
+[43] withr_2.5.0          scales_1.2.1         backports_1.4.1     
+[46] timechange_0.2.0     rmarkdown_2.23       matrixStats_1.2.0   
+[49] gridExtra_2.3        hms_1.1.3            evaluate_0.21       
+[52] knitr_1.43           V8_4.3.2             markdown_1.7        
+[55] rlang_1.1.1          gridtext_0.1.5       Rcpp_1.0.11         
+[58] glue_1.6.2           xml2_1.3.4           rstudioapi_0.15.0   
+[61] jsonlite_1.8.8       plyr_1.8.8           R6_2.5.1            </code></pre>
+>>>>>>> f77b15cda3a6150685482e61a1affc0d588e1b11
 </div>
 </div>
 </div>
