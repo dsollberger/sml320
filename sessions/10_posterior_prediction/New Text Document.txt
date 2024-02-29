@@ -1,0 +1,33 @@
+# Frameworks
+
+Let us one again consider the different notions in frequentist versus Bayesian approaches.
+
+## Inverse
+
+* Frequentist:
+
+:::: {.panel-tabset}
+
+
+
+::::
+
+## p-value
+
+```{r}
+obs_mean <- y2022_data |>
+  specify(response = oxygen) |>
+  calculate(stat = "mean")
+
+null_distribution <- y2023_data |>
+  specify(response = oxygen) |>
+  hypothesize(null = "point", mu = 6) |>
+  generate(reps = 1000, type = "bootstrap") |>
+  calculate(stat = "mean")
+
+null_distribution |>
+  get_p_value(obs_stat = obs_mean, direction = "less")
+```
+
+
+$$P(\bar{Y} > 6.7269 | \mu = 6) = 0$$

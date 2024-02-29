@@ -1,0 +1,643 @@
+---
+title: "10: Posterior Prediction"
+author: "Derek Sollberger"
+date: "2024-02-29"
+execute:
+  cache: true
+# format:
+#   revealjs:
+#     scrollable: true
+format:
+  html:
+    toc: true
+# params:
+#   heavy_chunks: "true"
+  # heavy_chunks: "false"
+---
+
+\newcommand{\ds}{\displaystyle}
+
+```{r}
+#| message: false
+#| warning: false
+
+library("bayesrules")
+library("bayesplot")
+library("DiagrammeR")
+library("infer")
+library("janitor")
+library("patchwork")
+library("rstan")
+library("tidyverse")
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Data
+
+::::: {.panel-tabset}
+
+## neon4casts
+
+The `neon4cast` [package](https://github.com/eco4cast/neon4cast) "provides a collection of convenient helper utilities for anyone entering the EFI NEON Forecasting Challenge."
+
+```{r}
+#| message: false
+#| warning: false
+raw_df <- readr::read_csv("https://data.ecoforecast.org/neon4cast-targets/aquatics/aquatics-targets.csv.gz")
+```
+
+## hypoxia
+
+```{r}
+aquatic_df <- raw_df |>
+  pivot_wider(names_from = "variable", values_from = "observation") |>
+  filter(!is.na(oxygen)) |>
+  mutate(hypoxic = oxygen < 3)
+```
+
+* For today's lecture, I am classifying "hypoxic" as dissolved oxygen concentration levels below 3 mg/L (rather than 2 mg/L).
+
+## ARIK Site
+
+:::: {.columns}
+
+::: {.column width="50%"}
+* Northeastern Colorado
+* Site type: stream
+* Region: Southern Rockies
+:::
+
+::: {.column width="50%"}
+![ARIK field site](ARIK.png)
+:::
+
+::::
+
+## Year 2022
+
+```{r}
+y2022_data <- aquatic_df |>
+  filter(site_id == "ARIK") |>
+  filter(between(datetime,
+                 as_date("2022-01-01"), 
+                 as_date("2022-12-31")))
+```
+
+## Year 2023
+
+```{r}
+y2023_data <- aquatic_df |>
+  filter(site_id == "ARIK") |>
+  filter(between(datetime,
+                 as_date("2023-01-01"), 
+                 as_date("2023-12-31")))
+```
+
+:::::
+
+# Gamma-Poisson
+
+## Scenario 1
+
+How many days per year did we observe hypoxic conditions?  
+
+```{r}
+y2022_data |> count(hypoxic)
+```
+
+In the year 2022, there were 3 days with hypoxic conditions.
+
+## Gamma Prior
+
+We can tune a vague gamma prior with a mean of 3 days and a variance of 1 day:
+
+$$\text{E}(\lambda) = \ds\frac{s}{r} = 3 \text{ and } \text{Var}(\lambda) = \ds\frac{s}{r^{2}} = 1$$
+
+and obtain
+
+* shape parameter: $s = 9$
+* rate parameter: $r = 3$
+
+## Observed Data
+
+```{r}
+y2023_data |> count(hypoxic)
+```
+
+In the year 2022, there were 27 days with hypoxic conditions.
+
+## Stan
+
+:::: {.panel-tabset}
+
+## Model
+
+```{r}
+gp_model <- "
+  data {
+    int<lower = 0> Y;
+  }
+  parameters {
+    real<lower = 0> lambda;
+  }
+  model {
+    Y ~ poisson(lambda);
+    lambda ~ gamma(9, 3);
+  }
+"
+```
+
+## Simulation
+
+```{r}
+#| results: hide
+gp_sim <- stan(model_code = gp_model, 
+               data = list(Y = 27), 
+               chains = 4, iter = 5000*2, 
+               refresh = 0, seed = 320)
+```
+
+## Metrics
+
+```{r}
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+p1 <- bayesplot::mcmc_trace(gp_sim, pars = "lambda", size = 0.1) +
+  labs(title = "MCMC Trace")
+p2 <- bayesplot::mcmc_dens_overlay(gp_sim, pars = "lambda") +
+  labs(title = "Density Plots")
+p3 <- bayesplot::mcmc_acf(gp_sim, pars = "lambda") +
+  labs(title = "Autocorrelation")
+
+n_eff <- bayesplot::neff_ratio(gp_sim, pars = "lambda")
+
+p4 <- data.frame(x = 0, y = n_eff) |>
+  ggplot(aes(x = x, y = y)) +
+  geom_bar(fill = "#E77500", stat = "identity") +
+  geom_hline(yintercept = 0.10, color = "red", 
+             linetype = 2, linewidth = 2) +
+  labs(title = "Effective Sample Size Ratio") +
+  theme_minimal()
+
+# patchwork
+(p1 + p2) / (p3 + p4)
+```
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+#| message: false
+#| warning: false
+p1 <- bayesplot::mcmc_trace(gp_sim, pars = "lambda", size = 0.1) +
+  labs(title = "MCMC Trace")
+p2 <- bayesplot::mcmc_dens_overlay(gp_sim, pars = "lambda") +
+  labs(title = "Density Plots")
+p3 <- bayesplot::mcmc_acf(gp_sim, pars = "lambda") +
+  labs(title = "Autocorrelation")
+
+n_eff <- bayesplot::neff_ratio(gp_sim, pars = "lambda")
+
+p4 <- data.frame(x = 0, y = n_eff) |>
+  ggplot(aes(x = x, y = y)) +
+  geom_bar(fill = "#E77500", stat = "identity") +
+  geom_hline(yintercept = 0.10, color = "red", 
+             linetype = 2, linewidth = 2) +
+  labs(title = "Effective Sample Size Ratio") +
+  theme_minimal()
+
+# patchwork
+(p1 + p2) / (p3 + p4)
+```
+
+::::
+
+## Retrieving Posterior
+
+We can perform later calculations with the simulated posterior distribution if we first recast the information into an `R` data frame.
+
+```{r}
+gp_df <- as.data.frame(gp_sim, pars = "lambda")
+
+head(gp_df)
+```
+
+## Sample Statistics
+
+```{r}
+gp_df |>
+  summarize(post_mean = round(mean(lambda), 4),
+            post_median = round(median(lambda), 4),
+            post_sd = round(sd(lambda), 4),
+            lower_95 = round(quantile(lambda, 0.025), 2),
+            upper_95 = round(quantile(lambda, 0.975), 2))
+```
+
+## Theoretical Statistics
+
+```{r}
+bayesrules::summarize_gamma_poisson(shape = 9, rate = 3,
+                                    sum_y = 27, n = 1) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+```{r}
+# credible interval
+qgamma(c(0.025, 0.975), shape = 36, rate = 4)
+```
+
+## NHST
+
+Claim: There are 7 days of hypoxic conditions per year at the ARIK NEON site.
+
+We can express this two-sided hypothesis test as
+
+$$H_{o}: \lambda \in (6,8)$$
+$$H_{a}: \lambda \notin (6,8)$$
+
+## Probabilities
+
+```{r}
+prior_prob <- diff(pgamma(c(6,8), shape = 9, rate = 3))
+posterior_prob <- gp_df |> 
+  mutate(in_interval = lambda > 6 & lambda < 8) |> 
+  pull(in_interval) |>
+  mean()
+```
+
+## Bayes Factor
+
+```{r}
+prior_odds <- prior_prob / (1 - prior_prob)
+posterior_odds <- posterior_prob / (1 - posterior_prob)
+BF <- posterior_odds / prior_odds
+BF
+```
+
+Since the Bayes factor is greater than one, we have found *some evidence* that it is *more plausible* that the number of days per year of hypoxic conditions at the ARIK NEON site is between 6 and 8 days.
+
+
+# Normal-Normal
+
+## Scenario 2
+
+How much dissolved oxygen concentration do we find at the ARIK NEON site?
+
+```{r}
+y2022_data |>
+  summarize(prior_mean = round(mean(oxygen), 4),
+            prior_median = round(median(oxygen), 4),
+            prior_sd = round(sd(oxygen), 4),
+            lower_95 = round(quantile(oxygen, 0.025), 2),
+            upper_95 = round(quantile(oxygen, 0.975), 2))
+```
+
+
+## Observed Data
+
+```{r}
+y2023_data |>
+  summarize(obs_mean = round(mean(oxygen), 4),
+            obs_median = round(median(oxygen), 4),
+            obs_sd = round(sd(oxygen), 4),
+            lower_95 = round(quantile(oxygen, 0.025), 2),
+            upper_95 = round(quantile(oxygen, 0.975), 2),
+            count = n())
+```
+
+
+## Stan
+
+:::: {.panel-tabset}
+
+## Model
+
+In this example, we are estimating the parameter $\mu$ and assuming a constant standard deviation from the prior.
+
+```{r}
+nn_model <- "
+  data {
+    real Y[287];
+  }
+  parameters {
+    real mu;
+  }
+  model {
+    Y ~ normal(mu, 2.2375^2);
+    mu ~ normal(7.7274, 2.2375^2);
+  }
+"
+```
+
+## Simulation
+
+```{r}
+#| results: hide
+nn_sim <- stan(model_code = nn_model, 
+               data = list(Y = y2023_data$oxygen), 
+               chains = 4, iter = 5000*2, 
+               refresh = 0, seed = 320)
+```
+
+## Metrics
+
+```{r}
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+p1 <- bayesplot::mcmc_trace(nn_sim, pars = "mu", size = 0.1) +
+  labs(title = "MCMC Trace")
+p2 <- bayesplot::mcmc_dens_overlay(nn_sim, pars = "mu") +
+  labs(title = "Density Plots")
+p3 <- bayesplot::mcmc_acf(nn_sim, pars = "mu") +
+  labs(title = "Autocorrelation")
+
+n_eff <- bayesplot::neff_ratio(nn_sim, pars = "mu")
+
+p4 <- data.frame(x = 0, y = n_eff) |>
+  ggplot(aes(x = x, y = y)) +
+  geom_bar(fill = "#E77500", stat = "identity") +
+  geom_hline(yintercept = 0.10, color = "red", 
+             linetype = 2, linewidth = 2) +
+  labs(title = "Effective Sample Size Ratio") +
+  theme_minimal()
+
+# patchwork
+(p1 + p2) / (p3 + p4)
+```
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+#| message: false
+#| warning: false
+p1 <- bayesplot::mcmc_trace(nn_sim, pars = "mu", size = 0.1) +
+  labs(title = "MCMC Trace")
+p2 <- bayesplot::mcmc_dens_overlay(nn_sim, pars = "mu") +
+  labs(title = "Density Plots")
+p3 <- bayesplot::mcmc_acf(nn_sim, pars = "mu") +
+  labs(title = "Autocorrelation")
+
+n_eff <- bayesplot::neff_ratio(nn_sim, pars = "mu")
+
+p4 <- data.frame(x = 0, y = n_eff) |>
+  ggplot(aes(x = x, y = y)) +
+  geom_bar(fill = "#E77500", stat = "identity") +
+  geom_hline(yintercept = 0.10, color = "red", 
+             linetype = 2, linewidth = 2) +
+  labs(title = "Effective Sample Size Ratio") +
+  theme_minimal()
+
+# patchwork
+(p1 + p2) / (p3 + p4)
+```
+
+::::
+
+## Retrieving Posterior
+
+We can perform later calculations with the simulated posterior distribution if we first recast the information into an `R` data frame.
+
+```{r}
+nn_df <- as.data.frame(nn_sim, pars = "mu")
+
+head(nn_df)
+```
+
+## Sample Statistics
+
+```{r}
+nn_df |>
+  summarize(post_mean = round(mean(mu), 4),
+            post_median = round(median(mu), 4),
+            post_sd = round(sd(mu), 4),
+            lower_95 = round(quantile(mu, 0.025), 2),
+            upper_95 = round(quantile(mu, 0.975), 2))
+```
+
+## NHST
+
+Claim: At the ARIK NEON site, the average dissolved oxygen concentration level is less than 6 mg/L.
+
+We can express this one-sided hypothesis test as
+
+$$H_{o}: \mu < 6.0$$
+$$H_{a}: \mu \geq 6.0$$
+
+## Probabilities
+
+```{r}
+prior_prob <- pnorm(6, mean = 7.7274, sd = 2.2375)
+posterior_prob <- nn_df |> 
+  mutate(in_interval = mu < 6) |> 
+  pull(in_interval) |>
+  mean()
+```
+
+## Bayes Factor
+
+```{r}
+prior_odds <- prior_prob / (1 - prior_prob)
+posterior_odds <- posterior_prob / (1 - posterior_prob)
+BF <- posterior_odds / prior_odds
+BF
+```
+
+Since the Bayes factor is less than one, we have found *some evidence* that it is *less plausible* that the average dissolved oxygen concentration level at the ARIK NEON site is less than 6 mg/L.
+
+# Future Directions
+
+## Objectives
+
+In the second half of the semester, we may revisit this data set to
+
+* use **normal regression** to predict dissolved oxygen levels
+* use **Poisson regression** to predict chlorophyll-a levels
+* use **logistic regression** and **Naive Bayes** for classification tasks
+* use **hierarchical models**
+
+## Pooling
+
+::: {.panel-tabset}
+
+## Flowchart
+
+```{r}
+#| echo: false
+#| eval: true
+tri_state_sites_tree <- DiagrammeR::mermaid("
+  graph TD
+  
+  oxygen1[oxygen]
+  oxygen2[oxygen]
+  oxygen3[oxygen]
+  oxygen4[oxygen]
+  oxygen5[oxygen]
+  oxygen6[oxygen]
+  temp1[temperature]
+  temp2[temperature]
+  temp3[temperature]
+  temp4[temperature]
+  temp5[temperature]
+  temp6[temperature]
+  
+  walk[WALK]
+  neco[NECO]
+  lewi[LEWI]
+  serc[SERC]
+  hopb[HOPB]
+  harv[HARV]
+  
+  appalachians[Appalachians]
+  mid_atlantic[Mid-Atlantic]
+  northeast[Northeast]
+  
+  response[Response Variable]
+  
+  oxygen1 --> walk
+  temp1   --> walk
+  oxygen2 --> neco
+  temp2   --> neco
+  oxygen3 --> lewi
+  temp3   --> lewi
+  oxygen4 --> serc
+  temp4   --> serc
+  oxygen5 --> hopb
+  temp5   --> hopb
+  oxygen6 --> harv
+  temp6   --> harv
+  
+  walk --> appalachians
+  neco --> appalachians
+  lewi --> mid_atlantic
+  serc --> mid_atlantic
+  hopb --> northeast
+  harv --> northeast
+  
+  appalachians --> response
+  mid_atlantic --> response
+  northeast    --> response
+")
+
+# print
+tri_state_sites_tree
+```
+
+## Mermaid Code
+
+```{r}
+#| echo: true
+#| eval: false
+tri_state_sites_tree <- DiagrammeR::mermaid("
+  graph TD
+  
+  oxygen1[oxygen]
+  oxygen2[oxygen]
+  oxygen3[oxygen]
+  oxygen4[oxygen]
+  oxygen5[oxygen]
+  oxygen6[oxygen]
+  temp1[temperature]
+  temp2[temperature]
+  temp3[temperature]
+  temp4[temperature]
+  temp5[temperature]
+  temp6[temperature]
+  
+  walk[WALK]
+  neco[NECO]
+  lewi[LEWI]
+  serc[SERC]
+  hopb[HOPB]
+  harv[HARV]
+  
+  appalachians[Appalachians]
+  mid_atlantic[Mid-Atlantic]
+  northeast[Northeast]
+  
+  response[Response Variable]
+  
+  oxygen1 --> walk
+  temp1   --> walk
+  oxygen2 --> neco
+  temp2   --> neco
+  oxygen3 --> lewi
+  temp3   --> lewi
+  oxygen4 --> serc
+  temp4   --> serc
+  oxygen5 --> hopb
+  temp5   --> hopb
+  oxygen6 --> harv
+  temp6   --> harv
+  
+  walk --> appalachians
+  neco --> appalachians
+  lewi --> mid_atlantic
+  serc --> mid_atlantic
+  hopb --> northeast
+  harv --> northeast
+  
+  appalachians --> response
+  mid_atlantic --> response
+  northeast    --> response
+")
+
+# print
+tri_state_sites_tree
+```
+
+:::
+
+# Frameworks
+
+Suppose that there is a classroom with 6 students.  Two of them happen to have twin siblings.
+
+* Frequentist: The probability that at least 2 out of 6 students have twin siblings is very small
+
+* Bayesian: Given that 2 out of 6 students have twin siblings, what is the probability of having a twin?
+
+
+
+
+
+
+
+
+
+
+# Footnotes
+
+::: {.callout-note collapse="true"}
+## Session Info
+
+```{r}
+sessionInfo()
+```
+:::
+
+
+:::: {.columns}
+
+::: {.column width="50%"}
+	
+:::
+
+::: {.column width="50%"}
+
+:::
+
+::::
+
+:::: {.panel-tabset}
+
+
+
+::::
