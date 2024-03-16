@@ -615,6 +615,8 @@ Suppose that there is a classroom with 6 students.  Two of them happen to have t
 
 # Footnotes
 
+![uno meme](uno_meme.png)
+
 ::: {.callout-note collapse="true"}
 ## Session Info
 

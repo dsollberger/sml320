@@ -2,12 +2,12 @@
 title: "1: Conditional Probability"
 author: "Derek Sollberger"
 date: "2024-01-30"
+# format:
+#   revealjs:
+#     scrollable: true
 format:
-  revealjs:
-    scrollable: true
-# format: 
-#   html:
-#     toc: true
+  html:
+    toc: true
 ---
 
 ```{r}
@@ -19,6 +19,22 @@ library("tidyverse")
 ```
 
 # SML 320
+
+## Start
+
+:::: {.columns}
+
+::: {.column width="60%"}
+* **Goal**: Motivate the Bayesian inversion of events
+
+* **Objective**: Review conditional probability and metrics
+:::
+
+::: {.column width="40%"}
+![Bayes Rules](Bayes_Rules_textbook_cover.png)
+:::
+
+::::
 
 ## Bayesian Analysis
 
@@ -628,10 +644,43 @@ $$P(A|B) \neq P(B|A)$$
 
 :::
 
+
+
+
+# Footnotes
+
 ::: {.callout-note collapse="true"}
 
 ## (optional) Additional Resources
 
 * [Classical vs Frequentist vs Bayesian Probability](https://www.youtube.com/watch?v=dejy4PPCFHY) by Trefor Bazett
+* [Creating a Syllabus with Quarto](https://www.youtube.com/watch?v=bKXaaVaBaT0) by Data and Design
 
 :::
+
+::: {.callout-note collapse="true"}
+## Session Info
+
+```{r}
+sessionInfo()
+```
+:::
+
+
+:::: {.columns}
+
+::: {.column width="50%"}
+	
+:::
+
+::: {.column width="50%"}
+
+:::
+
+::::
+
+:::: {.panel-tabset}
+
+
+
+::::

@@ -773,7 +773,17 @@ bayesrules::summarize_beta_binomial(alpha, beta, y_all, n_all) |>
 ::::
 
 
+# Footnotes
 
+![discrete versus continuous](discrete_continuous_steps.png)
+
+::: {.callout-note collapse="true"}
+## Session Info
+
+```{r}
+sessionInfo()
+```
+:::
 
 
 ```{r}

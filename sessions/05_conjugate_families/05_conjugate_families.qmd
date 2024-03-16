@@ -861,13 +861,19 @@ We looked at 3 conjugate families.
 
 # Footnotes
 
+![Gemma](Gemma.png)
+
 ## (Optional) Additional Resources
 
 * [Tips received during my 10 Months as a Server](https://old.reddit.com/r/dataisbeautiful/comments/1ajfe7j/tips_received_during_my_10_months_as_a_serveroc/)
 
+::: {.callout-note collapse="true"}
+## Session Info
+
 ```{r}
 sessionInfo()
 ```
+:::
 
 :::: {.columns}
 

@@ -1,0 +1,1498 @@
+---
+title: "11: Normal Regression"
+author: "Derek Sollberger"
+date: "2024-03-19"
+execute:
+  cache: true
+# format:
+#   revealjs:
+#     scrollable: true
+format:
+  html:
+    toc: true
+# params:
+#   heavy_chunks: "true"
+  # heavy_chunks: "false"
+---
+
+\newcommand{\ds}{\displaystyle}
+
+```{r}
+#| message: false
+#| warning: false
+
+library("bayesrules")
+library("bayesplot")
+library("broom.mixed")
+library("patchwork")
+library("rstan")
+library("rstanarm")
+library("tidyverse")
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Data
+## San Francisco Rental Market
+
+:::: {.columns}
+
+::: {.column width="45%"}
+* source: [TidyTuesday](https://github.com/rfordatascience/tidytuesday/tree/master/data/2022/2022-07-05)
+* 2022-07-05
+* [Pennington, Kate](https://matrix.berkeley.edu/research-article/kate-pennington-on-gentrification-and-displacement-in-san-francisco/) (2018). *Bay Area Craigslist Rental Housing Posts, 2000-2018*. Retrieved from https://github.com/katepennington/historic_bay_area_craigslist_housing_posts/blob/master/clean_2000_2018.csv.zip.
+
+    * Craigslist listings
+:::
+
+::: {.column width="10%"}
+
+:::
+
+::: {.column width="45%"}
+![SF Counties](sf_counties.png)
+:::
+
+::::
+
+## SF Rent Dataset
+
+:::: {.columns}
+
+::: {.column width="45%"}
+### Response Variable
+
+* Y: price (in US dollars)
+:::
+
+::: {.column width="10%"}
+
+:::
+
+::: {.column width="45%"}
+### Predictor Variables
+
+Some possible predictable variables include
+
+* area (sq feet of rental)
+* number of bedrooms
+* number of bathrooms
+* county
+* year
+* latitude/longitude
+:::
+
+::::
+
+## Loading
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+rent_raw <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-07-05/rent.csv')
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+rent_raw <- readr::read_csv("rent.csv")
+```
+
+## Wrangling
+
+* filtered out lowest 5 percent and largest 5 percent of rentals (by price)
+* filtered out lowest 5 percent and largest 5 percent of rentals (by area)
+* at least year 2009 (i.e. decade from 2009 to 2018)
+* 55143 observations
+
+```{r}
+rent_df <- rent_raw |>
+  filter(price >= 800 & price <= 5000) |>
+  filter(sqft >= 500 & sqft <= 2500) |>
+  filter(year >= 2009)
+```
+
+
+# EDA
+
+::::: {.panel-tabset}
+
+## Price
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+
+rent_df |>
+  ggplot(aes(x = price)) +
+  geom_density(fill = "purple") +
+  labs(title = "SF Rent: Monthly Rent",
+       subtitle = "2000 to 2018",
+       caption = "Source: Tidy Tuesday",
+       x = "price (USD)") +
+  theme_minimal()
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+
+rent_df |>
+  ggplot(aes(x = price)) +
+  geom_density(fill = "purple") +
+  labs(title = "SF Rent: Monthly Rent",
+       subtitle = "2000 to 2018",
+       caption = "Source: Tidy Tuesday",
+       x = "price (USD)") +
+  theme_minimal()
+```
+
+## Area
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+
+rent_df |>
+  ggplot(aes(x = sqft)) +
+  geom_density(fill = "blue") +
+  labs(title = "SF Rent: Area",
+       subtitle = "2000 to 2018",
+       caption = "Source: Tidy Tuesday",
+       x = "area (square feet)") +
+  theme_minimal()
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+
+rent_df |>
+  ggplot(aes(x = sqft)) +
+  geom_density(fill = "blue") +
+  labs(title = "SF Rent: Area",
+       subtitle = "2000 to 2018",
+       caption = "Source: Tidy Tuesday",
+       x = "area (square feet)") +
+  theme_minimal()
+```
+
+## Bedrooms
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+
+rent_df |>
+  ggplot(aes(x = beds)) +
+  geom_bar(fill = "red", stat = "count") +
+  labs(title = "SF Rent: Bedrooms",
+       subtitle = "2000 to 2018",
+       caption = "Source: Tidy Tuesday",
+       x = "number of bedrooms") +
+  theme_minimal()
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+
+rent_df |>
+  ggplot(aes(x = beds)) +
+  geom_bar(fill = "red", stat = "count") +
+  labs(title = "SF Rent: Bedrooms",
+       subtitle = "2000 to 2018",
+       caption = "Source: Tidy Tuesday",
+       x = "number of bedrooms") +
+  theme_minimal()
+```
+
+## Bathrooms
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+
+rent_df |>
+  ggplot(aes(x = baths)) +
+  geom_bar(fill = "orange", stat = "count") +
+  labs(title = "SF Rent: Bathrooms",
+       subtitle = "2000 to 2018",
+       caption = "Source: Tidy Tuesday",
+       x = "number of bathrooms") +
+  theme_minimal()
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+
+rent_df |>
+  ggplot(aes(x = baths)) +
+  geom_bar(fill = "orange", stat = "count") +
+  labs(title = "SF Rent: Bathrooms",
+       subtitle = "2000 to 2018",
+       caption = "Source: Tidy Tuesday",
+       x = "number of bathrooms") +
+  theme_minimal()
+```
+
+## Year
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+
+rent_df |>
+  ggplot(aes(x = year)) +
+  geom_bar(fill = "gray50", stat = "count") +
+  labs(title = "SF Rent Dataset",
+       subtitle = "2000 to 2018",
+       caption = "Source: Tidy Tuesday",
+       x = "year") +
+  scale_x_continuous(name = "year", 
+                   breaks = 2009:2018, 
+                   labels = as.character(2009:2018)) +
+  theme_minimal()
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+
+rent_df |>
+  ggplot(aes(x = year)) +
+  geom_bar(fill = "gray50", stat = "count") +
+  labs(title = "SF Rent Dataset",
+       subtitle = "2000 to 2018",
+       caption = "Source: Tidy Tuesday",
+       x = "year") +
+  scale_x_continuous(name = "year", 
+                   breaks = 2009:2018, 
+                   labels = as.character(2009:2018)) +
+  theme_minimal()
+```
+
+:::::
+
+
+# Linear Regression
+
+::::: {.panel-tabset}
+
+## Objective
+
+:::: {.columns}
+
+::: {.column width="45%"}
+What is the expected monthly rent for a property of 1500 square feet in size?	
+:::
+
+::: {.column width="10%"}
+
+:::
+
+::: {.column width="45%"}
+![as seen on Full(er) House](full_house_exterior.png)
+:::
+
+::::
+
+## Scatterplot
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+
+rent_df |>
+  ggplot(aes(x = sqft, y = price)) +
+  geom_point(color = "gray75") +
+  labs(title = "SF Rent Dataset",
+       subtitle = "2000 to 2018",
+       caption = "Source: Tidy Tuesday",
+       x = "area (square feet)",
+       y = "price (USD)") +
+  theme_minimal()
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+
+rent_df |>
+  ggplot(aes(x = sqft, y = price)) +
+  geom_point(color = "gray75") +
+  labs(title = "SF Rent Dataset",
+       subtitle = "2000 to 2018",
+       caption = "Source: Tidy Tuesday",
+       x = "area (square feet)",
+       y = "price (USD)") +
+  theme_minimal()
+```
+
+## Model
+
+$$y = a + bx$$
+
+* y: response variable (price, in USD)
+* x: area (in square feet)
+* a: intercept
+* b: slope coefficient
+
+## Hypotheses
+
+Where does the line go?
+
+![](lin_reg_lines.gif)
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+for(i in 1:25){
+  this_plot <- rent_df |>
+    ggplot(aes(x = sqft, y = price)) +
+    geom_point(color = "gray75") +
+    geom_abline(intercept = rnorm(1, 1500, 500),
+                slope = rnorm(1, 0.90, 0.25),
+                color = "red") +
+    labs(title = "Linear Regression",
+         subtitle = "Where does the line go?",
+         caption = "Source: Tidy Tuesday",
+         x = "area (square feet)",
+         y = "price (USD)") +
+    theme_minimal()
+  
+  ggsave(filename = paste0("for_animations/lin_reg_plot_", i, ".png"),
+         plot = this_plot)
+}
+
+# then combined using the website https://ezgif.com/
+```
+
+## MLS
+
+### Method of Least Squares
+
+Like our derivation of formulas for variance and standard deviation, scientists decided to square the residuals (focus on size of residuals, avoid positive versus negative signs).  Let the *total error* be
+
+$$E(a,b) = \ds\sum_{i = 1}^{n} (y_{i} - \hat{y}_{i})^{2} = \ds\sum_{i = 1}^{n} (y_{i} - a - bx_{i})^{2} $$
+
+- The ``best-fit line'' minimizes the error.
+- To minimize the error, start by setting the partial derivatives equal to zero:
+
+$$\ds\frac{\partial E}{\partial a} = 0, \quad \ds\frac{\partial E}{\partial b} = 0$$
+
+Thankfully, the function $E(a,b)$ is an elliptical paraboloid, so there is a global minimum at the critical point, and that minimum is found where
+
+$$a = \ds\frac{ (\sum y_{i})(\sum x_{i}^{2}) - (\sum x_{i})(\sum x_{i}y_{i}) }{ n\sum x_{i}^{2} - (\sum x_{i})^{2} }, \quad b = \ds\frac{ n\sum x_{i}y_{i} - (\sum x_{i})(\sum y_{i}) }{ n\sum x_{i}^{2} - (\sum x_{i})^{2} }$$
+
+## Best-Fit Line
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+
+lin_fit <- lm(price ~ sqft, data = rent_df)
+a <- lin_fit$coefficients[1]
+b <- lin_fit$coefficients[2]
+
+rent_df |>
+  ggplot(aes(x = sqft, y = price)) +
+  geom_point(color = "gray75") +
+  geom_smooth(method = "lm", color = "red") +
+  labs(title = "Linear Regression",
+       subtitle = paste0("y = ", round(a,4), " + ", round(b,4), "x"),
+       caption = "Source: Tidy Tuesday",
+       x = "area (square feet)",
+       y = "price (USD)") +
+  theme_minimal()
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+
+lin_fit <- lm(price ~ sqft, data = rent_df)
+a <- lin_fit$coefficients[1]
+b <- lin_fit$coefficients[2]
+
+rent_df |>
+  ggplot(aes(x = sqft, y = price)) +
+  geom_point(color = "gray75") +
+  geom_smooth(method = "lm", color = "red") +
+  labs(title = "Linear Regression",
+       subtitle = paste0("y = ", round(a,4), " + ", round(b,4), "x"),
+       caption = "Source: Tidy Tuesday",
+       x = "area (square feet)",
+       y = "price (USD)") +
+  theme_minimal()
+```
+
+## Inference
+
+:::: {.columns}
+
+::: {.column width="45%"}
+As a rate of change, the coefficient $b$ is interpretable.
+
+$$b \approx 0.8992$$
+
+For every one unit increase in square feet, the monthly rent increases by about 90 cents.
+	
+:::
+
+::: {.column width="10%"}
+
+:::
+
+::: {.column width="45%"}
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+
+lin_fit <- lm(price ~ sqft, data = rent_df)
+a <- lin_fit$coefficients[1]
+b <- lin_fit$coefficients[2]
+
+rent_df |>
+  ggplot(aes(x = sqft, y = price)) +
+  geom_point(color = "gray75") +
+  geom_smooth(method = "lm", color = "red") +
+  labs(title = "Linear Regression",
+       subtitle = paste0("y = ", round(a,4), " + ", round(b,4), "x"),
+       caption = "Source: Tidy Tuesday",
+       x = "area (square feet)",
+       y = "price (USD)") +
+  theme_minimal()
+```
+:::
+
+::::
+
+
+
+## Prediction
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+
+y_hat <- predict(lin_fit, newdata = data.frame(sqft = 1500))
+
+rent_df |>
+  ggplot(aes(x = sqft, y = price)) +
+  geom_point(color = "gray75") +
+  geom_vline(xintercept = 1500, color = "blue", linewidth = 1) +
+  geom_smooth(method = "lm", color = "red", linewidth = 2) +
+  geom_hline(yintercept = y_hat, color = "purple", linewidth = 1) +
+  geom_point(x = 1500, y = y_hat, color = "purple", size = 5) +
+  labs(title = paste0("A 1500 sq ft house has an expected rent of $",
+                      round(y_hat), " per month"),
+       subtitle = paste0("y = ", round(a,4), " + ", round(b,4), "(1500)"),
+       caption = "Source: Tidy Tuesday",
+       x = "area (square feet)",
+       y = "price (USD)") +
+  theme_minimal()
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+
+y_hat <- predict(lin_fit, newdata = data.frame(sqft = 1500))
+
+rent_df |>
+  ggplot(aes(x = sqft, y = price)) +
+  geom_point(color = "gray75") +
+  geom_vline(xintercept = 1500, color = "blue", linewidth = 1) +
+  geom_smooth(method = "lm", color = "red", linewidth = 2) +
+  geom_hline(yintercept = y_hat, color = "purple", linewidth = 1) +
+  geom_point(x = 1500, y = y_hat, color = "purple", size = 5) +
+  labs(title = paste0("A 1500 sq ft house has an expected rent of $",
+                      round(y_hat), "per month"),
+       subtitle = paste0("y = ", round(a,4), " + ", round(b,4), "(1500)"),
+       caption = "Source: Tidy Tuesday",
+       x = "area (square feet)",
+       y = "price (USD)") +
+  theme_minimal()
+```
+
+## Adapt
+
+:::: {.columns}
+
+::: {.column width="40%"}
+* We produced a *point estimate*
+* Can we obtain more predictive information?
+
+    * variability
+    * confidence
+:::
+
+::: {.column width="10%"}
+
+:::
+
+::: {.column width="50%"}
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+
+y_hat <- predict(lin_fit, newdata = data.frame(sqft = 1500))
+
+rent_df |>
+  ggplot(aes(x = sqft, y = price)) +
+  geom_point(color = "gray75") +
+  geom_vline(xintercept = 1500, color = "blue", linewidth = 1) +
+  geom_smooth(method = "lm", color = "red", linewidth = 2) +
+  geom_hline(yintercept = y_hat, color = "purple", linewidth = 1) +
+  geom_point(x = 1500, y = y_hat, color = "purple", size = 5) +
+  labs(title = paste0("A 1500 sq ft house has an expected rent of $",
+                      round(y_hat), "per month"),
+       subtitle = paste0("y = ", round(a,4), " + ", round(b,4), "(1500)"),
+       caption = "Source: Tidy Tuesday",
+       x = "area (square feet)",
+       y = "price (USD)") +
+  theme_minimal()
+```
+:::
+
+::::
+
+:::::
+
+
+# Normal Regression
+
+## Normal Normal
+
+At first
+
+$$\begin{array}{rcl}
+  Y|\mu & \sim & N(\mu, \sigma^{2}) \\
+  \mu & \sim & N(\theta, \tau^{2}) \\
+\end{array}$$
+
+assumed known variability $\sigma^{2}$
+
+## Sigma
+
+Standard deviation $\sigma$ is another *unknown parameter*
+
+$$\begin{array}{rcl}
+  Y|\mu & \sim & N(\mu, \sigma^{2}) \\
+  \mu & \sim & N(\theta, \tau^{2}) \\
+  \sigma & \sim & \text{[some other model]}
+\end{array}$$
+
+## Local Mean
+
+Instead of estimating a **global mean**
+
+* $\mu$: average price across all rental sizes
+
+we can refine the models with a **local mean**
+
+* $\mu_{i} = \beta_{0} + \beta_{1}x_{i}$
+* specific to the rental size
+
+## Capturing Variability
+
+::::: {.panel-tabset}
+
+## Variability
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+
+p1 <- rent_df |>
+  mutate(nearby = abs(price - (1439 + 0.899*sqft)) < 1000) |>
+  filter(nearby) |>
+  ggplot(aes(x = sqft, y = price)) +
+  geom_point(color = "gray75") +
+  geom_smooth(method = "lm", color = "red") +
+  labs(title = "High Variability",
+       x = "area (square feet)",
+       y = "price (USD)") +
+  theme_minimal() +
+  ylim(0, 5000)
+
+p2 <- rent_df |>
+  mutate(nearby = abs(price - (1439 + 0.899*sqft)) < 250) |>
+  filter(nearby) |>
+  ggplot(aes(x = sqft, y = price)) +
+  geom_point(color = "gray75") +
+  geom_smooth(method = "lm", color = "red") +
+  labs(title = "Low Variability",
+       caption = "SML 320",
+       x = "area (square feet)",
+       y = "price (USD)") +
+  theme_minimal() +
+  ylim(0, 5000)
+
+# patchwork
+p1 + p2
+```
+
+## Code
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+
+p1 <- rent_df |>
+  mutate(nearby = abs(price - (1439 + 0.899*sqft)) < 1000) |>
+  filter(nearby) |>
+  ggplot(aes(x = sqft, y = price)) +
+  geom_point(color = "gray75") +
+  geom_smooth(method = "lm", color = "red") +
+  labs(title = "High Variability",
+       x = "area (square feet)",
+       y = "price (USD)") +
+  theme_minimal() +
+  ylim(0, 5000)
+
+p2 <- rent_df |>
+  mutate(nearby = abs(price - (1439 + 0.899*sqft)) < 250) |>
+  filter(nearby) |>
+  ggplot(aes(x = sqft, y = price)) +
+  geom_point(color = "gray75") +
+  geom_smooth(method = "lm", color = "red") +
+  labs(title = "Low Variability",
+       caption = "SML 320",
+       x = "area (square feet)",
+       y = "price (USD)") +
+  theme_minimal() +
+  ylim(0, 5000)
+
+# patchwork
+p1 + p2
+```
+
+## Local
+
+Parameter $\sigma$ now represents variability *from the local mean*
+
+$$\mu_{i} = \beta_{0} + \beta_{1}x_{i}$$
+:::::
+
+## Normal Data Model Assumptions
+
+$$Y|\beta_{0}, \beta_{1}, \sigma \sim \mu_{i} = \beta_{0} + \beta_{1}X_{i}$$
+
+* **Structure of the data**: Accounting for predictor $X$, the observed data $Y_i$ on case $i$ is *independent* of the observed data on any other case $j$.
+* **Structure of the relationship**: The typical $Y$ outcome can be written as a *linear* function of predictor $X$, $\mu=\beta_{0} + \beta_{1}X$.
+* **Structure of the variability**: At any value of predictor $X$, the observed values of $Y$ will vary normally around their average $\mu$ with *consistent* standard deviation $\sigma$.
+
+
+# Bayesian Linear Regression
+
+$$\begin{array}{rcl}
+  Y_{i}|\beta_{0}, \beta_{1}, \sigma & \sim & N(\mu_{i}, \sigma^{2}) \text{ with } \mu_{i} = \beta_{0} + \beta_{1}X_{1} \\
+  \beta_{0} & \sim & N(m_{0}, s_{0}^{2}) \\
+  \beta_{1} & \sim & N(m_{1}, s_{1}^{2}) \\
+  \sigma & \sim & \text{Exp}(\ell) \\
+\end{array}$$
+
+## Tuning Priors
+
+::::: {.panel-tabset}
+
+## Intuition
+
+Domain expertise would help an analyst create some informative priors for the parameters.  Otherwise, I will temporarily use haphazard code (below) to ascertain that
+
+* rental prices tend to be between 900 and 1200 dollars per month
+* for every one square foot increase in area, the rental price tends to increase between -5 and 47 cents
+* rental prices tend to vary with a standard deviation of about 90 dollars
+
+```{r}
+set.seed(320)
+N <- 1000 # sample size
+
+slopes <- rep(NA, N)
+intercepts <- rep(NA, N)
+ranges <- rep(NA, N)
+centers <- rep(NA,N)
+
+for(i in 1:N){
+  two_houses <- rent_df |>
+    slice_sample(n = 2) |>
+    select(price, sqft)
+  
+  x1 <- two_houses[1,1] |> unlist()
+  x2 <- two_houses[2,1] |> unlist()
+  y1 <- two_houses[1,2] |> unlist()
+  y2 <- two_houses[2,2] |> unlist()
+  
+  if(x1 == x2){
+    slopes[i] <- NA
+    intercepts[i] <- NA
+  }else{
+    slopes[i] <- (y2 - y1) / (x2 - x1)
+    intercepts[i] <- y1 - slopes[i]*x1
+  }
+  
+  ranges[i] <- abs(y2 - y1)
+  centers[i] <- (y1 + y2) / 2
+}
+
+print("Intercept estimates")
+print(round(quantile(intercepts, c(0.3, 0.5, 0.7), na.rm = TRUE)))
+
+print("Slope estimates")
+print(quantile(slopes, c(0.3, 0.5, 0.7), na.rm = TRUE))
+
+print("Deviation estimates")
+print(round(quantile(ranges/4, c(0.3, 0.5, 0.7), na.rm = TRUE)))
+
+print("Centered intercept estimates")
+print(round(quantile(centers, c(0.3, 0.5, 0.7), na.rm = TRUE)))
+```
+
+## Prior Dists
+
+```{r}
+p1 <- bayesrules::plot_normal(mean = 547, sd = 1142-547) + 
+  labs(title = "intercept", x = "beta_0", y = "") +
+  theme_minimal()
+p2 <- bayesrules::plot_normal(mean = 0.16, sd = 0.47-0.16) + 
+  labs(title = "slope", x = "beta_1", y = "") +
+  theme_minimal()
+p3 <- bayesrules::plot_gamma(shape = 1, rate = 1/88) + 
+  labs(title = "deviation", x = "sigma", y = "") +
+  theme_minimal()
+
+# patchwork
+p1 + p2 + p3
+```
+
+## Prior Model
+
+$$\begin{array}{rcl}
+  Y_{i}|\beta_{0}, \beta_{1}, \sigma & \sim & N(\mu_{i}, \sigma^{2}) \text{ with } \mu_{i} = \beta_{0} + \beta_{1}X_{1} \\
+  \beta_{0} & \sim & N(547, 597^{2}) \\
+  \beta_{1} & \sim & N(0.16, 0.31^{2}) \\
+  \sigma & \sim & \text{Exp}(1/88) \\
+\end{array}$$
+
+## Simulation Space
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+for(i in 1:25){
+  this_plot <- rent_df |>
+    ggplot(aes(x = sqft, y = price)) +
+    geom_point(color = "white") +
+    geom_abline(intercept = rnorm(1, 547, 597),
+                slope = rnorm(1, 0.16, 0.31),
+                color = "red") +
+    labs(title = "Prior Models",
+         subtitle = "Simulation Space",
+         caption = "SML 320",
+         x = "area (square feet)",
+         y = "price (USD)") +
+    theme_minimal()
+  
+  ggsave(filename = paste0("for_animations/lin_sim_plot_", i, ".png"),
+         plot = this_plot)
+}
+
+# then combined using the website https://ezgif.com/
+```
+
+:::::
+
+## rstan
+
+::::: {.panel-tabset}
+
+## Define Model
+
+```{r}
+#| message: false
+#| warning: false
+rent_stan_model <- "
+  data {
+    int<lower = 0> n;
+    vector[n] Y;
+    vector[n] X;
+  }
+  parameters {
+    real beta0;
+    real beta1;
+    real<lower = 0> sigma;
+  }
+  model {
+    Y ~ normal(beta0 + beta1 * X, sigma);
+    beta0 ~ normal(547, 597);
+    beta1 ~ normal(0.16, 0.31);
+    sigma ~ exponential(0.01136364);
+  }
+"
+```
+
+## Simulation
+
+```{r}
+#| message: false
+#| warning: false
+
+time_start <- Sys.time()
+
+rent_df_for_stan <- rent_df |>
+  slice_sample(prop = 0.05)
+
+rent_stan_sim <- 
+  stan(model_code = rent_stan_model, 
+       data = list(n = nrow(rent_df_for_stan), 
+                   Y = rent_df_for_stan$price, 
+                   X = rent_df_for_stan$sqft), 
+       chains = 4, iter = 5000*2, refresh = 0, seed = 320)
+
+time_end <- Sys.time()
+time_end - time_start
+```
+
+## Metrics
+
+```{r}
+#| message: false
+#| warning: false
+bayesplot::mcmc_trace(rent_stan_sim, 
+                      pars = c("beta0", "beta1", "sigma"), 
+                      size = 0.1) +
+  labs(title = "MCMC Traces")
+```
+
+```{r}
+#| message: false
+#| warning: false
+bayesplot::mcmc_dens_overlay(rent_stan_sim,
+                             pars = c("beta0", "beta1", "sigma")) +
+  labs(title = "Density Plots")
+
+```
+
+```{r}
+#| message: false
+#| warning: false
+bayesplot::mcmc_acf(rent_stan_sim,
+                    pars = c("beta0", "beta1", "sigma")) +
+  labs(title = "Autocorrelations")
+```
+
+
+```{r}
+bayesplot::neff_ratio(rent_stan_sim,
+                      pars = c("beta0", "beta1", "sigma"))
+```
+
+```{r}
+bayesplot::rhat(rent_stan_sim,
+                pars = c("beta0", "beta1", "sigma"))
+```
+
+## Posterior Stats
+
+```{r}
+broom.mixed::tidy(rent_stan_sim,
+                  effects = c("fixed", "aux"),
+                  conf.int = TRUE, conf.level = 0.80) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+:::::
+
+
+# rstanarm
+
+
+
+::::: {.panel-tabset}
+
+## Ready
+
+The `rstanarm` package provides many convenient pre-defined Bayesian models for *applied regression models*.
+
+::: {.callout-note collapse="true"}
+## Centered Intercept
+
+**Caution**: the `rstanarm` package will estimate the *centered intercept* instead of the usual intercept.
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+lin_fit <- lm(price ~ sqft, data = rent_df)
+a <- lin_fit$coefficients[1]
+b <- lin_fit$coefficients[2]
+y_bar <- mean(rent_df$price, na.rm = TRUE)
+
+
+rent_df |>
+  ggplot(aes(x = sqft, y = price)) +
+  geom_point(color = "gray75") +
+  geom_hline(yintercept = y_bar, color = "purple", linewidth = 3) +
+  geom_abline(intercept = a, slope = b, color = "red", linewidth = 2) +
+  labs(title = "Linear Regression",
+       subtitle = paste0("y = ", round(a,4), " + ", round(b,4), "x"),
+       caption = "Source: Tidy Tuesday",
+       x = "area (square feet)",
+       y = "price (USD)") +
+  scale_y_continuous(name = "",
+                     breaks = c(a, y_bar),
+                     labels = c("beta_0", "beta_0c")) +
+  theme_minimal() +
+  
+  xlim(0, 3000)
+```
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+lin_fit <- lm(price ~ sqft, data = rent_df)
+a <- lin_fit$coefficients[1]
+b <- lin_fit$coefficients[2]
+y_bar <- mean(rent_df$price, na.rm = TRUE)
+
+
+rent_df |>
+  ggplot(aes(x = sqft, y = price)) +
+  geom_point(color = "gray75") +
+  geom_hline(yintercept = y_bar, color = "purple", linewidth = 3) +
+  geom_abline(intercept = a, slope = b, color = "red", linewidth = 2) +
+  labs(title = "Linear Regression",
+       subtitle = paste0("y = ", round(a,4), " + ", round(b,4), "x"),
+       caption = "Source: Tidy Tuesday",
+       x = "area (square feet)",
+       y = "price (USD)") +
+  scale_y_continuous(name = "",
+                     breaks = c(a, y_bar),
+                     labels = c("beta_0", "beta_0c")) +
+  theme_minimal() +
+  
+  xlim(0, 3000)
+```
+
+:::
+
+## Simulation
+
+```{r}
+#| message: false
+#| warning: false
+
+time_start <- Sys.time()
+
+rent_df_for_stan <- rent_df |>
+  slice_sample(prop = 0.05)
+
+rent_stanarm_sim <- stan_glm(price ~ sqft, data = rent_df_for_stan,
+                       family = gaussian,
+                       prior_intercept = normal(1041, 162),
+                       prior = normal(547, 597), 
+                       prior_aux = exponential(1/88),
+                       chains = 4, iter = 5000*2, refresh = 0, seed = 84735)
+
+time_end <- Sys.time()
+time_end - time_start
+```
+
+## Metrics
+
+```{r}
+#| message: false
+#| warning: false
+bayesplot::mcmc_trace(rent_stanarm_sim, size = 0.1) +
+  labs(title = "MCMC Traces")
+```
+
+```{r}
+#| message: false
+#| warning: false
+bayesplot::mcmc_dens_overlay(rent_stanarm_sim) +
+  labs(title = "Density Plots")
+
+```
+
+```{r}
+#| message: false
+#| warning: false
+bayesplot::mcmc_acf(rent_stanarm_sim) +
+  labs(title = "Autocorrelations")
+```
+
+
+```{r}
+bayesplot::neff_ratio(rent_stanarm_sim)
+```
+
+```{r}
+bayesplot::rhat(rent_stanarm_sim)
+```
+
+## Posterior Stats
+
+```{r}
+broom.mixed::tidy(rent_stanarm_sim,
+                  effects = c("fixed", "aux"),
+                  conf.int = TRUE, conf.level = 0.80) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+## Comparison
+
+:::: {.columns}
+
+::: {.column width="45%"}
+## rstan
+
+```{r}
+#| echo: false
+broom.mixed::tidy(rent_stan_sim,
+                  effects = c("fixed", "aux")) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+:::
+
+::: {.column width="10%"}
+
+:::
+
+::: {.column width="45%"}
+## rstanarm
+
+```{r}
+#| echo: false
+broom.mixed::tidy(rent_stanarm_sim,
+                  effects = c("fixed", "aux")) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+:::
+
+::::
+
+:::::
+
+
+# Autoscale
+
+::::: {.panel-tabset}
+
+## Update Priors
+
+* In this scaling process, `rstanarm` seeks to identify *weakly informative priors*
+* It does not consider the relationship among these variables.
+
+## Simulation
+
+```{r}
+#| message: false
+#| warning: false
+
+time_start <- Sys.time()
+
+rent_df_for_stan <- rent_df |>
+  slice_sample(prop = 0.05)
+
+rent_autoscale_sim <- stan_glm(price ~ sqft, data = rent_df_for_stan,
+                       family = gaussian,
+                       prior_intercept = normal(1041, 162, autoscale = TRUE),
+                       prior = normal(547, 597, autoscale = TRUE),
+                       prior_aux = exponential(1/88, autoscale = TRUE),
+                       chains = 4, iter = 5000*2, refresh = 0, seed = 84735)
+
+time_end <- Sys.time()
+time_end - time_start
+```
+
+## Metrics
+
+```{r}
+#| message: false
+#| warning: false
+bayesplot::mcmc_trace(rent_autoscale_sim, size = 0.1) +
+  labs(title = "MCMC Traces")
+```
+
+```{r}
+#| message: false
+#| warning: false
+bayesplot::mcmc_dens_overlay(rent_autoscale_sim) +
+  labs(title = "Density Plots")
+
+```
+
+```{r}
+#| message: false
+#| warning: false
+bayesplot::mcmc_acf(rent_autoscale_sim) +
+  labs(title = "Autocorrelations")
+```
+
+
+```{r}
+bayesplot::neff_ratio(rent_autoscale_sim)
+```
+
+```{r}
+bayesplot::rhat(rent_autoscale_sim)
+```
+
+## Updated Priors
+
+```{r}
+rstanarm::prior_summary(rent_autoscale_sim)
+```
+
+
+## Posterior Stats
+
+```{r}
+broom.mixed::tidy(rent_autoscale_sim,
+                  effects = c("fixed", "aux"),
+                  conf.int = TRUE, conf.level = 0.80) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+## Comparison
+
+:::: {.columns}
+
+::: {.column width="45%"}
+## rstanarm
+
+```{r}
+#| echo: false
+broom.mixed::tidy(rent_stanarm_sim,
+                  effects = c("fixed", "aux")) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+:::
+
+::: {.column width="10%"}
+
+:::
+
+::: {.column width="45%"}
+## autoscale
+
+```{r}
+#| echo: false
+broom.mixed::tidy(rent_autoscale_sim,
+                  effects = c("fixed", "aux")) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+:::
+
+::::
+
+:::::
+
+# Posterior Distribution
+
+## Many Models
+
+```{r}
+rent_model_df <- as.data.frame(rent_autoscale_sim)
+
+# nrow(rent_model_df)
+# 20000 models from 20000 chains
+
+head(rent_model_df)
+```
+
+## Many Lines
+
+::::: {.panel-tabset}
+
+## Plot
+
+![](bayes_reg_lines.gif)
+
+## Code 
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+for(i in 1:25){
+  
+  beta_0 <- rent_model_df$`(Intercept)`[i]
+  beta_1 <- rent_model_df$sqft[i]
+  
+  this_plot <- rent_df |>
+    ggplot(aes(x = sqft, y = price)) +
+    geom_point(color = "gray75") +
+    geom_vline(xintercept = 1500, color = "blue", linewidth = 3) +
+    geom_abline(intercept = beta_0, slope = beta_1,
+                color = "red", linewidth = 3) +
+    geom_point(x = 1500, y = beta_0 + beta_1*1500,
+               color = "purple", size = 5) +
+    labs(title = "Bayesian Regression",
+         subtitle = "What is the expected monthly rent for a property of 1500 square feet in size?",
+         caption = "Source: Tidy Tuesday",
+         x = "area (square feet)",
+         y = "price (USD)") +
+    theme_minimal()
+  
+  ggsave(filename = paste0("for_animations/bayes_reg_plot_", i, ".png"),
+         plot = this_plot)
+}
+
+# then combined using the website https://ezgif.com/
+```
+
+:::::
+
+
+
+
+
+## Evidence
+
+::::: {.panel-tabset}
+
+## Objective
+
+Do we have posterior evidence that there is a positive relationship between area and price?
+
+$$\beta_{1} > 0?$$
+
+## Visual
+
+It appears that all of our slopes are positive.
+
+![](bayes_reg_lines.gif)
+
+## Credible Interval
+
+The credible interval does not contain zero.
+
+```{r}
+broom.mixed::tidy(rent_autoscale_sim,
+                  effects = c("fixed", "aux"),
+                  conf.int = TRUE, conf.level = 0.80) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+## Posterior Probability
+
+$$P(\beta_{1} > 0 | \vec{y}) \approx 1$$
+
+```{r}
+rent_model_df |>
+  mutate(slope_exceeds_0 = sqft > 0) |>
+  janitor::tabyl(slope_exceeds_0) |>
+  janitor::adorn_totals()
+```
+
+:::::
+
+# Posterior Prediction
+
+## Posterior Predictive Model
+
+$$Y_{\text{new}} | \beta_{0}, \beta_{1}, \sigma \sim N(\mu, \sigma^{2}) \text{ with } \mu = \beta_{0} + \beta_{1}*1500$$
+
+```{r}
+set.seed(320)
+rent_predict_df <- rent_model_df |>
+  mutate(mu = `(Intercept)` + sqft*1500,
+         y_new = rnorm(20000, mean = mu, sd = sigma))
+```
+
+## Many Models
+
+```{r}
+head(rent_predict_df)
+```
+
+## Intervals
+
+```{r}
+rent_predict_df |>
+  summarize(lower_mu = quantile(mu, 0.025),
+            upper_mu = quantile(mu, 0.975),
+            lower_new = quantile(y_new, 0.025),
+            upper_new = quantile(y_new, 0.975))
+```
+
+* *typical* rent: (2754, 2841)
+* **posterior prediction interval**: (1153, 4437)
+
+## Averaging
+
+```{r}
+rent_predict_df |>
+  ggplot(aes(x = mu)) +
+  geom_density(fill = "purple") +
+  labs(title = "Typical Rent",
+       subtitle = "distribution for mu") +
+  theme_minimal()
+```
+
+
+## Distributions
+
+::::: {.panel-tabset}
+
+## Plots
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+p1 <- rent_predict_df |>
+  ggplot(aes(x = mu)) +
+  geom_density(fill = "purple") +
+  labs(title = "Typical Rent",
+       subtitle = "distribution for mu") +
+  theme_minimal() +
+  xlim(0, 6000)
+p2 <- rent_predict_df |>
+  ggplot(aes(x = y_new)) +
+  geom_density(fill = "green") +
+  labs(title = "Predicted Rent",
+       subtitle = "distribution for y_new") +
+  theme_minimal() +
+  xlim(0, 6000)
+
+# patchwork
+p1 + p2
+```
+## Code
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+p1 <- rent_predict_df |>
+  ggplot(aes(x = mu)) +
+  geom_density(fill = "purple") +
+  labs(title = "Typical Rent",
+       subtitle = "distribution for mu") +
+  theme_minimal() +
+  xlim(0, 6000)
+p2 <- rent_predict_df |>
+  ggplot(aes(x = y_new)) +
+  geom_density(fill = "green") +
+  labs(title = "Predicted Rent",
+       subtitle = "distribution for y_new") +
+  theme_minimal() +
+  xlim(0, 6000)
+
+# patchwork
+p1 + p2
+```
+
+:::::
+
+# Credible Prediction
+
+```{r}
+quantile(rent_predict_df$y_new, c(0.025, 0.975))
+```
+
+* The rent for a 1500 sq ft property will probably be in between 1153 and 4438 dollars per month.
+* We can get Bayesian regression models running quickly with the `rstanarm` package and its `autoscale` capabilities
+* The posterior predictive model accounts not only for the *average* rent on a 1500 sq ft property, but also the *individual variability* from that average.
+
+
+
+
+# Footnotes
+
+* [brms](https://www.andrewheiss.com/blog/2022/09/26/guide-visualizing-types-posteriors/) guide to visualizing posterior distributions by Andrew Heiss
+
+![Incomplete Data](incomplete_data.png)
+
+::: {.callout-note collapse="true"}
+## Session Info
+
+```{r}
+sessionInfo()
+```
+:::
+
+
+:::: {.columns}
+
+::: {.column width="45%"}
+	
+:::
+
+::: {.column width="10%"}
+
+:::
+
+::: {.column width="45%"}
+
+:::
+
+::::
+
+
+
+::::: {.panel-tabset}
+
+
+
+:::::
