@@ -1,0 +1,688 @@
+---
+title: "12: Evaluating Regression Models"
+author: "Derek Sollberger"
+date: "2024-03-21"
+execute:
+  cache: true
+# format:
+#   revealjs:
+#     scrollable: true
+format:
+  html:
+    toc: true
+# params:
+#   heavy_chunks: "true"
+  # heavy_chunks: "false"
+---
+
+\newcommand{\ds}{\displaystyle}
+
+# Evaluating Regression Models
+
+:::: {.columns}
+
+::: {.column width="45%"}
+**Goal:** Discuss the fairness and accuracy of Bayesian regression models	
+:::
+
+::: {.column width="10%"}
+
+:::
+
+::: {.column width="45%"}
+
+:::
+
+::::
+
+# Data
+
+:::: {.columns}
+
+::: {.column width="45%"}
+* source: [TidyTuesday](https://github.com/rfordatascience/tidytuesday/tree/master/data/2022/2022-07-05)
+* 2022-07-05
+* [Pennington, Kate](https://matrix.berkeley.edu/research-article/kate-pennington-on-gentrification-and-displacement-in-san-francisco/) (2018). *Bay Area Craigslist Rental Housing Posts, 2000-2018*. Retrieved from [this site](https://github.com/katepennington/historic_bay_area_craigslist_housing_posts/blob/master/clean_2000_2018.csv.zip).
+
+    * Craigslist listings	
+:::
+
+::: {.column width="10%"}
+
+:::
+
+::: {.column width="45%"}
+```{r}
+#| message: false
+#| warning: false
+
+library("bayesrules")
+library("bayesplot")
+library("ggtext")
+library("rsample")
+library("rstan")
+library("rstanarm")
+library("tidyverse")
+
+knitr::opts_chunk$set(echo = TRUE)
+
+rent_raw <- rent_raw <- readr::read_csv("rent.csv")
+rent_df <- rent_raw |>
+  filter(price >= 800 & price <= 5000) |>
+  filter(sqft >= 500 & sqft <= 2500) |>
+  filter(year >= 2009)
+```
+:::
+
+::::
+
+
+# Fairness
+
+## How was the data collected?
+
+* Thousands of listings scraped from [Craiglist](https://www.craigslist.org/about/sites)---a freely available retail message board.
+
+* some lack of confidentiality:
+
+    * user names removed
+    * addresses could be scraped
+    
+## By whom and for what purpose was the data collected?
+
+* collected by [Dr Kate Pennington](https://www.katepennington.org/), research economist at the US Census Bureau in the Center for Economic Studies
+
+* [on Gentrification and Displacement in San Francisco](https://matrix.berkeley.edu/research-article/kate-pennington-on-gentrification-and-displacement-in-san-francisco/)
+
+## How might the results of the analysis, or the data collection itself, impact individuals and society?
+
+* research investigation, publication, and communication may affect rental market; but probably differently than other media
+
+## What biases might be baked into this analysis?
+
+* While [Craiglist](https://www.craigslist.org/about/sites) webscraping produced a sizeable data set, lack of information from other rental market communications may detract from diagnosing trends in market behavior.
+
+## Model Assumptions
+
+* rentals are *independent* observations (not true in reality)
+* linear model between predictor $X$ and price $Y$
+
+    * last time: $\beta_{1} > 0$
+
+* At any $X$ value, $Y$ varies normally around $\mu$ with consistent variability $\sigma$.
+
+    * if these assumptions are valid, then the simulated posterior distribution should model the data well
+
+# Case Study: Price versus Time
+
+## Exploratory Data Analysis
+
+::::: {.panel-tabset}
+
+## Variables
+
+* response: `price` (monthly rent in USD)
+* predictor: `year` (discrete, 2009 to 2018)
+* commentary: the dataset allows a refined investigation of a time series, but we are going for an intentionally flawed analysis for this lecture session
+
+## Visualization
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+
+rent_df$year_fac <- factor(rent_df$year)
+
+rent_df |>
+  ggplot(aes(x = year_fac, y = price, color = year_fac)) +
+  ggbeeswarm::geom_quasirandom() +
+  labs(title = "SF Rental Market",
+       subtitle = "2009 to 2018",
+       caption = "Source: TidyTuesday",
+       x = "year",
+       y = "monthly rent (USD)") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+## Code
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+
+rent_df$year_fac <- factor(rent_df$year)
+
+rent_df |>
+  ggplot(aes(x = year_fac, y = price, color = year_fac)) +
+  ggbeeswarm::geom_quasirandom() +
+  labs(title = "SF Rental Market",
+       subtitle = "2009 to 2018",
+       caption = "Source: TidyTuesday",
+       x = "year",
+       y = "monthly rent (USD)") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+## MLS
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+
+rent_df |>
+  ggplot(aes(x = year, y = price)) +
+  geom_point(color = "gray75") +
+  geom_smooth(method = "lm", color = "red", linewidth = 3) +
+  labs(title = "Linear Regression",
+       subtitle = "Method of Least Squares",
+       caption = "Source: TidyTuesday",
+       x = "year",
+       y = "monthly rent (USD)") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+:::::
+
+
+# rstanarm
+
+For each parameter set $j\in\{1,2,...,20000\}$, we predict the rent on property $i\in\{1,2,...,500\}$ by drawing from the Normal data model evaluated at the observed year $X_i$:
+
+$$Y_{i}^{(j)} | \beta_{0}, \beta_{1}, \sigma \sim N\left( \mu^{(j)}, (\sigma^{(j)})^{2}\right) \text{ with } \mu^{(j)} = \beta_{0}^{(j)} + \beta_{1}^{(j)}X_{i}$$
+
+## MCMC
+
+* If the priors are not specified, `rstanarm` will create weakly informative [priors](https://cran.r-project.org/web/packages/rstanarm/vignettes/priors.html) through its `autoscale` process
+
+```{r}
+set.seed(320)
+rent_df_for_stan <- rent_df |>
+  slice_sample(prop = 0.10)
+
+model_area <- stan_glm(price ~ sqft, data = rent_df_for_stan,
+                       chains = 4, iter = 5000*2, refresh = 0, seed = 320)
+model_year <- stan_glm(price ~ year, data = rent_df_for_stan,
+                       chains = 4, iter = 5000*2, refresh = 0, seed = 320)
+```
+
+## Priors
+
+::::: {.panel-tabset}
+
+## area model
+
+```{r}
+rstanarm::prior_summary(model_area)
+```
+
+
+## year model
+
+```{r}
+rstanarm::prior_summary(model_year)
+```
+
+:::::
+
+# Reality Check
+
+## Area Model
+
+::::: {.panel-tabset}
+
+## One Model
+
+```{r}
+model_area_df <- data.frame(model_area)
+first_set <- head(model_area_df, 1)
+first_set
+```
+
+## Simulation
+
+```{r}
+beta_0 <- first_set$`X.Intercept.`
+beta_1 <- first_set$sqft
+sigma  <- first_set$sigma
+set.seed(320)
+one_simulation <- rent_df_for_stan |>
+  mutate(mu = beta_0 + beta_1 * sqft,
+         simulated_price = rnorm(nrow(rent_df_for_stan), 
+                                 mean = mu, sd = sigma)) |>
+  select(sqft, price, simulated_price)
+```
+
+## One Simulation
+
+```{r}
+head(one_simulation, 5)
+```
+
+## Density
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+subtitle_string <- "<span style='color:#BF40BF'>Real rents</span> versus <span style='color:#7f7f7f'>simulated rents</span>"
+
+one_simulation |>
+  ggplot() +
+  geom_density(aes(x = price), color = "#BF40BF", linewidth = 3) +
+  geom_density(aes(x = simulated_price), color = "#7f7f7f", linewidth = 2) +
+  labs(title = "Model: price versus area",
+       subtitle = subtitle_string,
+       caption = "SML 320") +
+  theme_minimal() +
+  theme(axis.title.y = element_blank(),
+        axis.text.y  = element_blank(),
+        axis.ticks.y = element_blank(),
+        plot.subtitle = element_markdown()) #use ggtext package
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+subtitle_string <- "<span style='color:#BF40BF'>Real rents</span> versus <span style='color:#7f7f7f'>simulated rents</span>"
+
+one_simulation |>
+  ggplot() +
+  geom_density(aes(x = price), color = "#BF40BF", linewidth = 3) +
+  geom_density(aes(x = simulated_price), color = "#7f7f7f", linewidth = 2) +
+  labs(title = "Model: price versus area",
+       subtitle = subtitle_string,
+       caption = "SML 320") +
+  theme_minimal() +
+  theme(axis.title.y = element_blank(),
+        axis.text.y  = element_blank(),
+        axis.ticks.y = element_blank(),
+        plot.subtitle = element_markdown()) #use ggtext package
+```
+
+:::::
+
+## Year Model
+
+::::: {.panel-tabset}
+
+## One Model
+
+```{r}
+model_year_df <- data.frame(model_year)
+first_set <- head(model_year_df, 1)
+first_set
+```
+
+## Simulation
+
+```{r}
+beta_0 <- first_set$`X.Intercept.`
+beta_1 <- first_set$year
+sigma  <- first_set$sigma
+set.seed(320)
+one_simulation <- rent_df_for_stan |>
+  mutate(mu = beta_0 + beta_1 * year,
+         simulated_price = rnorm(nrow(rent_df_for_stan), 
+                                 mean = mu, sd = sigma)) |>
+  select(year, price, simulated_price)
+```
+
+## One Simulation
+
+```{r}
+head(one_simulation, 5)
+```
+
+## Density
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+subtitle_string <- "<span style='color:#BF40BF'>Real rents</span> versus <span style='color:#7f7f7f'>simulated rents</span>"
+
+one_simulation |>
+  ggplot() +
+  geom_density(aes(x = price), color = "#BF40BF", linewidth = 3) +
+  geom_density(aes(x = simulated_price), color = "#7f7f7f", linewidth = 2) +
+  labs(title = "Model: price versus year",
+       subtitle = subtitle_string,
+       caption = "SML 320") +
+  theme_minimal() +
+  theme(axis.title.y = element_blank(),
+        axis.text.y  = element_blank(),
+        axis.ticks.y = element_blank(),
+        plot.subtitle = element_markdown()) #use ggtext package
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+subtitle_string <- "<span style='color:#BF40BF'>Real rents</span> versus <span style='color:#7f7f7f'>simulated rents</span>"
+
+one_simulation |>
+  ggplot() +
+  geom_density(aes(x = price), color = "#BF40BF", linewidth = 3) +
+  geom_density(aes(x = simulated_price), color = "#7f7f7f", linewidth = 2) +
+  labs(title = "Model: price versus year",
+       subtitle = subtitle_string,
+       caption = "SML 320") +
+  theme_minimal() +
+  theme(axis.title.y = element_blank(),
+        axis.text.y  = element_blank(),
+        axis.ticks.y = element_blank(),
+        plot.subtitle = element_markdown()) #use ggtext package
+```
+
+:::::
+
+
+# PPC
+
+The `ppcheck()` command in the `bayesplot` package allows us to visually perform a **posterior predictive check**
+
+::::: {.panel-tabset}
+
+## Area Model
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+bayesplot::pp_check(model_area, nreps = 50) +
+  labs(title = "Posterior Predictive Check",
+       subtitle = "Model: price versus area",
+       caption = "SML 320")
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+bayesplot::pp_check(model_area, nreps = 50) +
+  labs(title = "Posterior Predictive Check",
+       subtitle = "Model: price versus area",
+       caption = "SML 320")
+```
+
+## Year Model
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+bayesplot::pp_check(model_year, nreps = 50) +
+  labs(title = "Posterior Predictive Check",
+       subtitle = "Model: price versus year",
+       caption = "SML 320")
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+bayesplot::pp_check(model_year, nreps = 50) +
+  labs(title = "Posterior Predictive Check",
+       subtitle = "Model: price versus year",
+       caption = "SML 320")
+```
+
+:::::
+
+# Adjustments
+
+## Different Data Structure
+
+* Normal
+* Poisson
+* Negative Binomial
+* Binomial
+* etc.
+
+## Transformations
+
+* transform $Y$:
+$$g(Y_{i}) | \beta_{0}, \beta_{1}, \sigma \sim N(\mu, \sigma^{2}) \text{ with } \mu_{i} = \beta_{0} + \beta_{1}X_{i}$$
+* transform $X$:
+$$Y_{i} | \beta_{0}, \beta_{1}, \sigma \sim N(\mu, \sigma^{2}) \text{ with } \mu_{i} = \beta_{0} + \beta_{1}h(X_{i})$$
+* transform both $X$ and $Y$:
+$$g(Y_{i}) | \beta_{0}, \beta_{1}, \sigma \sim N(\mu, \sigma^{2}) \text{ with } \mu_{i} = \beta_{0} + \beta_{1}h(X_{i})$$
+
+where functions $g,h$ might take forms like $\log(X), \sqrt{X}, X^{2}, X^{3},$ etc.
+
+# Accuracy
+
+## Predictions
+
+Similar to the `predict` command in base-R, the `posterior_predict` command in `rstanarm` takes a model and a data frame.
+
+```{r}
+model_area_predictions <- rstanarm::posterior_predict(
+  model_area, newdata = rent_df_for_stan
+)
+```
+
+```{r}
+model_year_predictions <- rstanarm::posterior_predict(
+  model_year, newdata = rent_df_for_stan
+)
+```
+
+```{r}
+dim(model_area_predictions)
+```
+
+## Metrics
+
+* **median absolute error**
+
+$$\text{MAE} = \text{median}|Y_{i} - Y_{i}^{'}|$$
+
+* **scaled median absolute error**
+
+$$\text{MAE scaled} = \text{median}\frac{|Y_{i} - Y_{i}^{'}|}{\text{sd}_{i}}$$
+
+* **within 50**: proportion of observed values $Y_{i}$ that fall within their 50\% posterior prediction interval
+* **within 95**: proportion of observed values $Y_{i}$ that fall within their 95\% posterior prediction interval
+
+## Posterior Predictive Summaries
+
+The textbook authors made another helper function in their `bayesrules` package called `prediction_summary`
+
+```{r}
+set.seed(320)
+rent_df_for_ML <- rent_df |>
+  slice_sample(prop = 0.01)
+bayesrules::prediction_summary(model_area, 
+                               data = rent_df_for_ML)
+```
+
+```{r}
+bayesrules::prediction_summary(model_year, 
+                               data = rent_df_for_ML)
+```
+
+
+# Machine Learning
+
+## Training and Testing Sets
+
+* allocate about 75\% of observations into a **training set**
+
+    * build models from the training set
+    
+* allocate other 25\% of observations into a **testing set**
+
+    * measure error on the testing set
+
+```{r}
+rent_split <- rsample::initial_split(rent_df_for_ML)
+rent_train <- rsample::training(rent_split) #about 75% of observations
+rent_test  <- rsample::testing(rent_split)  #about 25% of observations
+```
+
+```{r}
+#| message: false
+#| warning: false
+subtitle_string <- "<span style='color:#7f7f7f'>Training data</span> and <span style='color:#FF0000'>testing data</span>"
+
+rent_train |>
+    ggplot(aes(x = sqft, y = price)) +
+    geom_point(color = "#7f7f7f") +
+    geom_smooth(method = "lm", color = "black", se = FALSE) +
+    geom_point(aes(x = sqft, y = price),
+               color = "#FF0000", data = rent_test, size = 4) +
+    labs(title = "Machine Learning on SF Rent Data",
+         subtitle = subtitle_string,
+         caption = "Source: Tidy Tuesday",
+         x = "area (square feet)",
+         y = "price (USD)") +
+    theme_minimal() +
+    theme(plot.subtitle = element_markdown())
+```
+
+## Bias Variance Trade-Off
+
+![bias-variance trade-off](bias_variance.png)
+
+[image source](https://towardsdatascience.com/bias-variance-dilemma-74e5f1f52b12)
+
+## Cross Validation
+
+Better measurement of errors comes from **cross-validation**
+
+![cross validation](cross_validation.png)
+
+[image source](https://towardsdatascience.com/bias-variance-dilemma-74e5f1f52b12)
+
+## Training and Testing Data
+
+![training and testing sets](ML_reg_lines.gif)
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+subtitle_string <- "<span style='color:#7f7f7f'>Training data</span> and <span style='color:#FF0000'>testing data</span>"
+
+for(i in 1:25){
+  
+  rent_split <- rsample::initial_split(rent_df_for_ML)
+  rent_train <- rsample::training(rent_split) #about 75% of observations
+  rent_test  <- rsample::testing(rent_split)  #about 25% of observations
+  
+  this_plot <- rent_train |>
+    ggplot(aes(x = sqft, y = price)) +
+    geom_point(color = "#7f7f7f") +
+    geom_smooth(method = "lm", color = "black", se = FALSE) +
+    geom_point(aes(x = sqft, y = price),
+               color = "#FF0000", data = rent_test, size = 4) +
+    labs(title = "Machine Learning on SF Rent Data",
+         subtitle = subtitle_string,
+         caption = "Source: Tidy Tuesday",
+         x = "area (square feet)",
+         y = "price (USD)") +
+    theme_minimal() +
+    theme(plot.subtitle = element_markdown()) #use ggtext package
+  
+  ggsave(filename = paste0("for_animations/ML_reg_plot_", i, ".png"),
+         plot = this_plot)
+}
+
+# then combined using the website https://ezgif.com/
+```
+
+## Cross Validation through bayesrules
+
+```{r}
+set.seed(320)
+
+model_area_cv <- bayesrules::prediction_summary_cv(
+  model = model_area, data = rent_df_for_ML, k = 10
+)
+
+model_year_cv <- bayesrules::prediction_summary_cv(
+  model = model_year, data = rent_df_for_ML, k = 10
+)
+
+model_year_cv$folds
+```
+
+## Cross-Validated
+
+The `prediction_summary_cv` function in the `bayesrules` package will also average the results across all $k$ folds and store that information into `cv`.
+
+```{r}
+model_area_cv$cv
+```
+
+```{r}
+model_year_cv$cv
+```
+
+# Quo Vadimus
+
+So far, according to the median absolute errors, `year` is a worse predictor variable than `sqft`.
+
+* multivariate models and interaction terms
+* Poisson regression, negative binomial
+* logistic regression, naive Bayes
+
+
+# Footnotes
+
+* [Bias Variance Dilemma](https://towardsdatascience.com/bias-variance-dilemma-74e5f1f52b12) by Zaid Alissa Almaliki
+* more about `rstanarm` [priors](https://cran.r-project.org/web/packages/rstanarm/vignettes/priors.html)
+
+::: {.callout-note collapse="true"}
+## Session Info
+
+```{r}
+sessionInfo()
+```
+:::
+
+
+:::: {.columns}
+
+::: {.column width="45%"}
+	
+:::
+
+::: {.column width="10%"}
+
+:::
+
+::: {.column width="45%"}
+
+:::
+
+::::
+
+
+
+::::: {.panel-tabset}
+
+
+
+:::::
