@@ -1,0 +1,1111 @@
+---
+title: "13: Extending Regression Models"
+author: "Derek Sollberger"
+date: "2024-03-26"
+execute:
+  cache: true
+# format:
+#   revealjs:
+#     scrollable: true
+format:
+  html:
+    toc: true
+---
+
+\newcommand{\ds}{\displaystyle}
+
+# Extending Regression Models
+
+:::: {.columns}
+
+::: {.column width="45%"}
+**Goal:** Explore categorical variables, multivariate models, and interaction terms.
+:::
+
+::: {.column width="10%"}
+
+:::
+
+::: {.column width="45%"}
+
+:::
+
+::::
+
+## Data
+
+:::: {.columns}
+
+::: {.column width="45%"}
+* source: [TidyTuesday](https://github.com/rfordatascience/tidytuesday/tree/master/data/2022/2022-07-05)
+* 2022-07-05
+* [Pennington, Kate](https://matrix.berkeley.edu/research-article/kate-pennington-on-gentrification-and-displacement-in-san-francisco/) (2018). *Bay Area Craigslist Rental Housing Posts, 2000-2018*. Retrieved from [this site](https://github.com/katepennington/historic_bay_area_craigslist_housing_posts/blob/master/clean_2000_2018.csv.zip).
+
+    * Craigslist listings	
+:::
+
+::: {.column width="10%"}
+
+:::
+
+::: {.column width="45%"}
+```{r}
+#| message: false
+#| warning: false
+
+library("bayesrules")
+library("bayesplot")
+library("gt")
+library("patchwork")
+library("rstan")
+library("rstanarm")
+library("tidyverse")
+
+knitr::opts_chunk$set(echo = TRUE)
+
+rent_raw <- rent_raw <- readr::read_csv("rent.csv")
+rent_df <- rent_raw |>
+  filter(price >= 800 & price <= 5000) |>
+  filter(sqft >= 500 & sqft <= 2500) |>
+  filter(year >= 2009) |>
+  filter(county %in% c("alameda", "contra costa"))
+
+rent_df$county <- factor(rent_df$county,
+                         levels = c("alameda", "contra costa"))
+
+set.seed(320)
+rent_df_for_stan <- rent_df |>
+  slice_sample(prop = 0.05)
+```
+:::
+
+::::
+
+## Variables
+
+:::: {.columns}
+
+::: {.column width="40%"}
+### Response Variable
+
+$Y$: price (monthly rent in USD)
+
+### Prediction
+
+What is the monthly rent for a property that is about 1500 square feet in size?
+:::
+
+::: {.column width="10%"}
+
+:::
+
+::: {.column width="50%"}
+### Predictor Variables
+
+* $X_{1}$: area (in square feet)
+* $X_{2}$: year (discrete, numerical)
+* $X_{3}$: county
+* $X_{4}$: number of bedrooms
+* $X_{5}$: number of bathrooms
+:::
+
+::::
+
+# Recap: Area
+
+::::: {.panel-tabset}
+
+## Model: Price versus Area
+
+$$Y = \beta_{0} + \beta_{1}X_{1}$$
+
+* $Y$: price (monthly rent in USD)
+* $X_{1}$: area (in square feet)
+
+## Viz
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+
+rent_df |>
+  ggplot(aes(x = sqft)) +
+  geom_density(fill = "blue") +
+  labs(title = "SF Rent: Area",
+       subtitle = "2009 to 2018",
+       caption = "Source: Tidy Tuesday",
+       x = "area (square feet)") +
+  theme_minimal()
+```
+
+## Stan
+
+```{r}
+mod1 <- stan_glm(price ~ sqft,
+                 data = rent_df_for_stan,
+                 family = gaussian,
+                 chains = 4, iter = 5000*2, 
+                 refresh = 0, seed = 320)
+```
+
+## Diagnostics
+
+::: {.callout-note collapse="true"}
+## Function
+
+```{r}
+model_diagnostics <- function(the_stan_model){
+  p1 <- bayesplot::mcmc_trace(the_stan_model, size = 0.1) +
+  labs(title = "MCMC Traces")
+  print(p1)
+  
+  p2 <- bayesplot::mcmc_dens_overlay(the_stan_model) +
+  labs(title = "Density Plots")
+  print(p2)
+  
+  p3 <- bayesplot::mcmc_acf(the_stan_model) +
+  labs(title = "Autocorrelations")
+  print(p3)
+  
+  # effective sample size
+  print("Effective Sample Size:")
+  print(bayesplot::neff_ratio(the_stan_model))
+  
+  # split-R metric
+  print("R-Hat")
+  print(bayesplot::rhat(the_stan_model))
+}
+```
+
+:::
+
+```{r}
+#| message: false
+#| warning: false
+model_diagnostics(mod1)
+```
+
+## PPC
+
+```{r}
+bayesplot::pp_check(mod1, nreps = 50) +
+  labs(title = "Posterior Predictive Check",
+       subtitle = "Model: price versus area",
+       caption = "SML 320")
+```
+
+## Model Stats
+
+```{r}
+broom.mixed::tidy(mod1,
+                  effects = c("fixed", "aux"),
+                  conf.int = TRUE, conf.level = 0.90) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+In context, the intercept term somewhat implies that the fixed costs (e.g. taxes, insurance) are about $1350/month before the predictor variables.
+
+:::::
+
+
+# Recap: Year
+
+::::: {.panel-tabset}
+
+## Model: Price versus Year
+
+$$Y = \beta_{0} + \beta_{2}X_{2}$$
+
+* $Y$: price (monthly rent in USD)
+* $X_{2}$: year (discrete, numerical)
+
+## Viz
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+
+rent_df$year_fac <- factor(rent_df$year)
+
+rent_df |>
+  ggplot(aes(x = year_fac, y = price, color = year_fac)) +
+  ggbeeswarm::geom_quasirandom() +
+  labs(title = "SF Rental Market",
+       subtitle = "2009 to 2018",
+       caption = "Source: TidyTuesday",
+       x = "year",
+       y = "monthly rent (USD)") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+## Stan
+
+```{r}
+mod2 <- stan_glm(price ~ year,
+                 data = rent_df_for_stan,
+                 family = gaussian,
+                 chains = 4, iter = 5000*2, 
+                 refresh = 0, seed = 320)
+```
+
+## Diagnostics
+
+```{r}
+#| message: false
+#| warning: false
+model_diagnostics(mod2)
+```
+
+## PPC
+
+```{r}
+bayesplot::pp_check(mod2, nreps = 50) +
+  labs(title = "Posterior Predictive Check",
+       subtitle = "Model: price versus year",
+       caption = "SML 320")
+```
+
+## Model Stats
+
+```{r}
+broom.mixed::tidy(mod2,
+                  effects = c("fixed", "aux"),
+                  conf.int = TRUE, conf.level = 0.90) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+Since zero in not in the credible interval for $\beta_{2}$, we have some evidence of a positive relationship between `year` and the monthly `price`.
+
+:::::
+
+
+# Categorical Variables
+
+## Indicator Variable
+
+:::: {.columns}
+
+::: {.column width="45%"}
+$$X_{3} = \begin{cases}
+  1, & \text{Contra Costa County} \\ 0, & \text{Alameda County}
+\end{cases}$$	
+:::
+
+::: {.column width="10%"}
+
+:::
+
+::: {.column width="45%"}
+![SF Bay Area counties](sf_counties.png)
+:::
+
+::::
+
+
+
+## Local Mean
+
+$$\mu_{i} = \beta_{0} + \beta_{1}X_{3} \quad\text{with}\quad X_{3} = \begin{cases}
+  1, & \text{Contra Costa County} \\ 0, & \text{Alameda County}
+\end{cases}$$
+
+* Alameda: $\beta_{0} + \beta_{1}(0) = \beta_{0}$
+* Contra Costa: $\beta_{0} + \beta_{1}(1) = \beta_{0} + \beta_{1}$
+* standard deviation $\sigma$ still represents variability at a given $X_{3}$ value.
+
+
+# County
+
+::::: {.panel-tabset}
+
+## Model: Price versus County
+
+$$Y = \beta_{0} + \beta_{3}X_{3}$$
+
+* $Y$: price (monthly rent in USD)
+* $X_{3}$: county
+
+## Viz
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+
+rent_df |>
+  ggplot(aes(x = sqft)) +
+  geom_density(aes(fill = county),
+               alpha = 0.5) +
+  labs(title = "SF Rent: Area",
+       subtitle = "2009 to 2018",
+       caption = "Source: Tidy Tuesday",
+       x = "area (square feet)") +
+  theme_minimal()
+```
+
+## Stan
+
+```{r}
+mod3 <- stan_glm(price ~ county,
+                 data = rent_df_for_stan,
+                 family = gaussian,
+                 chains = 4, iter = 5000*2, 
+                 refresh = 0, seed = 320)
+```
+
+## Diagnostics
+
+```{r}
+#| message: false
+#| warning: false
+model_diagnostics(mod3)
+```
+
+## PPC
+
+```{r}
+bayesplot::pp_check(mod3, nreps = 50) +
+  labs(title = "Posterior Predictive Check",
+       subtitle = "Model: price versus county",
+       caption = "SML 320")
+```
+
+## Model Stats
+
+```{r}
+broom.mixed::tidy(mod3,
+                  effects = c("fixed", "aux"),
+                  conf.int = TRUE, conf.level = 0.90) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+This model placed properties in Alameda County as the baseline for analyses.  The coefficient on our categorical variable, $\beta_{3}$, indicates that rents are about $350/month less in Contra Costa country (on average) by comparison.
+
+:::::
+
+
+# Multivariate Regression
+
+$$Y = \beta_{0} + \beta_{1}X_{1} + \beta_{2}X_{2} + \beta_{3}X_{3} + ...$$
+
+# Bed and Bath
+
+::::: {.panel-tabset}
+
+## Model
+
+$$Y = \beta_{0} + \beta_{1}X_{1} + \beta_{4}X_{4} + \beta_{5}X_{5}$$
+
+* $X_{1}$: area (in square feet)
+* $X_{4}$: number of bedrooms
+* $X_{5}$: number of bathrooms
+
+## Viz
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+
+rent_df$beds_fac <- factor(rent_df$beds)
+
+rent_df |>
+  ggplot(aes(x = beds_fac, y = price, color = beds_fac)) +
+  ggbeeswarm::geom_quasirandom() +
+  labs(title = "SF Rental Market",
+       subtitle = "2009 to 2018",
+       caption = "Source: TidyTuesday",
+       x = "number of bedrooms",
+       y = "monthly rent (USD)") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+
+rent_df$baths_fac <- factor(rent_df$baths)
+
+rent_df |>
+  ggplot(aes(x = baths_fac, y = price, color = baths_fac)) +
+  ggbeeswarm::geom_quasirandom() +
+  labs(title = "SF Rental Market",
+       subtitle = "2009 to 2018",
+       caption = "Source: TidyTuesday",
+       x = "number of bathrooms",
+       y = "monthly rent (USD)") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+## Stan
+
+```{r}
+mod4 <- stan_glm(price ~ sqft + beds + baths,
+                 data = rent_df_for_stan,
+                 family = gaussian,
+                 chains = 4, iter = 5000*2, 
+                 refresh = 0, seed = 320)
+```
+
+## Diagnostics
+
+```{r}
+#| message: false
+#| warning: false
+model_diagnostics(mod4)
+```
+
+## PPC
+
+```{r}
+bayesplot::pp_check(mod4, nreps = 50) +
+  labs(title = "Posterior Predictive Check",
+       subtitle = "Model: price versus beds and baths",
+       caption = "SML 320")
+```
+
+## Model Stats
+
+```{r}
+broom.mixed::tidy(mod4,
+                  effects = c("fixed", "aux"),
+                  conf.int = TRUE, conf.level = 0.90) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+Commentary: the negative coefficient (and credible interval values) for the number of `beds` predictor variable is quite curious. Does rent decrease as the number of beds increases?
+
+:::::
+
+
+# Interaction Terms
+
+::::: {.panel-tabset}
+
+## Slopes
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+
+p1 <- rent_df |>
+  ggplot(aes(x = baths, y = price, color = county, group = county)) +
+  geom_point(alpha = 0.10) +
+  geom_smooth(method = "lm", formula = "y~x", 
+              linewidth = 3, se =FALSE) +
+  labs(title = "East Bay Rental Market",
+       subtitle = "Parallel Slopes",
+       x = "number of bathrooms") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+p2 <- rent_df |>
+  ggplot(aes(x = beds, y = price, color = county, group = county)) +
+  geom_point(alpha = 0.10) +
+  geom_smooth(method = "lm", formula = "y~x", 
+              linewidth = 3, se =FALSE) +
+  labs(title = "East Bay Rental Market",
+       subtitle = "Possible Interaction",
+       caption = "Source: Tidy Tuesday",
+       x = "number of bedrooms") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+# patchwork
+p1 + p2
+```
+
+## Code
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+
+p1 <- rent_df |>
+  ggplot(aes(x = baths, y = price, color = county, group = county)) +
+  geom_point(alpha = 0.10) +
+  geom_smooth(method = "lm", formula = "y~x", 
+              linewidth = 3, se =FALSE) +
+  labs(title = "East Bay Rental Market",
+       subtitle = "Parallel Slopes",
+       x = "number of bathrooms") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+p2 <- rent_df |>
+  ggplot(aes(x = beds, y = price, color = county, group = county)) +
+  geom_point(alpha = 0.10) +
+  geom_smooth(method = "lm", formula = "y~x", 
+              linewidth = 3, se =FALSE) +
+  labs(title = "East Bay Rental Market",
+       subtitle = "Possible Interaction",
+       caption = "Source: Tidy Tuesday",
+       x = "number of bedrooms") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+# patchwork
+p1 + p2
+```
+
+:::::
+
+
+# County Beds
+
+::::: {.panel-tabset}
+
+## Model
+
+$$Y = \beta_{0} + \beta_{3}X_{3} + \beta_{5}X_{5} + \beta_{6}X_{3}X_{5}$$
+
+* $X_{3}$: county
+* $X_{5}$: number of bathrooms
+
+
+
+## Stan
+
+```{r}
+mod5 <- stan_glm(price ~ county + beds + county:beds,
+                 data = rent_df_for_stan,
+                 family = gaussian,
+                 chains = 4, iter = 5000*2, 
+                 refresh = 0, seed = 320)
+```
+
+## Diagnostics
+
+```{r}
+#| message: false
+#| warning: false
+model_diagnostics(mod5)
+```
+
+## PPC
+
+```{r}
+bayesplot::pp_check(mod5, nreps = 50) +
+  labs(title = "Posterior Predictive Check",
+       subtitle = "Model: interation between county and beds",
+       caption = "SML 320")
+```
+
+## Model Stats
+
+```{r}
+broom.mixed::tidy(mod5,
+                  effects = c("fixed", "aux"),
+                  conf.int = TRUE, conf.level = 0.90) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+Since zero is in the credible interval for the interaction term, it might be the case that the interaction between those two variables are not important.
+
+:::::
+
+# All Predictors
+
+::::: {.panel-tabset}
+
+## Model
+
+$$Y = \beta_{0} + \beta_{1}X_{1} + \beta_{2}X_{2} + \beta_{3}X_{3} + \beta_{4}X_{4} + \beta_{5}X_{5}$$
+
+* $X_{1}$: area (in square feet)
+* $X_{2}$: year (discrete, numerical)
+* $X_{3}$: county
+* $X_{4}$: number of bedrooms
+* $X_{5}$: number of bathrooms
+
+```{r}
+rent_df_for_all <- rent_df_for_stan |>
+  select(price, sqft, year, county, beds, baths)
+```
+
+
+## Stan
+
+```{r}
+mod6 <- stan_glm(price ~ ., # price explained by all predictor vars
+                 data = rent_df_for_all,
+                 family = gaussian,
+                 chains = 4, iter = 5000*2, 
+                 refresh = 0, seed = 320)
+```
+
+## Diagnostics
+
+```{r}
+#| message: false
+#| warning: false
+model_diagnostics(mod6)
+```
+
+## PPC
+
+```{r}
+bayesplot::pp_check(mod6, nreps = 50) +
+  labs(title = "Posterior Predictive Check",
+       subtitle = "Model: all predictor variables",
+       caption = "SML 320")
+```
+
+## Model Stats
+
+```{r}
+broom.mixed::tidy(mod6,
+                  effects = c("fixed", "aux"),
+                  conf.int = TRUE, conf.level = 0.90) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+As these models become more complex, observe that the coefficients---and their interpretations---change.
+
+:::::
+
+
+# Model Selection
+
+::::: {.panel-tabset}
+
+## Cross Validation
+
+```{r}
+rent_df_for_ML <- rent_df |>
+  select(price, sqft, year, county, beds, baths)|>
+  filter(!is.na(sqft)) |>
+  filter(!is.na(beds)) |>
+  filter(!is.na(baths)) |>
+  slice_sample(prop = 0.05)
+
+mod1_cv <- bayesrules::prediction_summary_cv(
+  model = mod1, data = rent_df_for_ML, k = 10)
+
+mod2_cv <- bayesrules::prediction_summary_cv(
+  model = mod2, data = rent_df_for_ML, k = 10)
+
+mod3_cv <- bayesrules::prediction_summary_cv(
+  model = mod3, data = rent_df_for_ML, k = 10)
+
+mod4_cv <- bayesrules::prediction_summary_cv(
+  model = mod4, data = rent_df_for_ML, k = 10)
+
+mod5_cv <- bayesrules::prediction_summary_cv(
+  model = mod5, data = rent_df_for_ML, k = 10)
+
+mod6_cv <- bayesrules::prediction_summary_cv(
+  model = mod6, data = rent_df_for_ML, k = 10)
+```
+
+## Metrics
+
+```{r}
+#| echo: false
+#| eval: true
+df_for_metrics <- rbind(mod1_cv$cv, mod2_cv$cv, mod3_cv$cv, 
+                        mod4_cv$cv, mod5_cv$cv, mod6_cv$cv)
+
+df_for_metrics |>
+  mutate(model = 1:6, .before = "mae") |>
+  gt() |>
+  cols_align(align = "center", columns = everything()) |>
+  fmt_number(columns = -model,
+             decimals = 2) |>
+  tab_header(
+    title = md("**ML on East Bay Rental Markets**"),
+    subtitle = "Cross validation metrics"
+  ) |>
+  tab_style(
+    style = list(
+      cell_fill(color = "yellow"),
+      cell_text(weight = "bold")
+    ),
+    locations = cells_body(
+      columns = everything(),
+      rows = mae == min(mae)
+    )
+  ) |>
+  tab_style(
+    style = list(
+      cell_fill(color = "lightblue")
+    ),
+    locations = cells_body(
+      columns = model,
+      rows = everything()
+    )
+  )
+```
+
+## Code
+
+```{r}
+#| echo: true
+#| eval: false
+df_for_metrics <- rbind(mod1_cv$cv, mod2_cv$cv, mod3_cv$cv, 
+                        mod4_cv$cv, mod5_cv$cv, mod6_cv$cv)
+
+df_for_metrics |>
+  mutate(model = 1:6, .before = "mae") |>
+  gt() |>
+  cols_align(align = "center", columns = everything()) |>
+  fmt_number(columns = -model,
+             decimals = 2) |>
+  tab_header(
+    title = md("**ML on East Bay Rental Markets**"),
+    subtitle = "Cross validation metrics"
+  ) |>
+  tab_style(
+    style = list(
+      cell_fill(color = "yellow"),
+      cell_text(weight = "bold")
+    ),
+    locations = cells_body(
+      columns = everything(),
+      rows = mae == min(mae)
+    )
+  ) |>
+  tab_style(
+    style = list(
+      cell_fill(color = "lightblue")
+    ),
+    locations = cells_body(
+      columns = model,
+      rows = everything()
+    )
+  )
+```
+
+:::::
+
+# Prediction
+
+Since the median absolute error (scaled or unscaled) was the lowest for `mod6` (out of the models that we looked at today), we will proceed with this choice as the best model.
+
+::::: {.panel-tabset}
+
+## Posterior Prediction Interval
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+these_predictions <- rstanarm::posterior_predict(
+  mod6, newdata = data.frame(sqft = 1500,
+                             year = 2016,
+                             county = "contra costa",
+                             beds = 3,
+                             baths = 1.5))
+credible_interval <- round(quantile(these_predictions, c(0.05, 0.95)))
+subtitle_string <- paste0("90 Percent Credible Interval: (",
+                          credible_interval[1], ", ",
+                          credible_interval[2], ")")
+bayesplot::mcmc_areas(these_predictions) +
+  labs(title = "Predictions for 1500 sqft, 3 beds, 1.5 baths in Contra Costa county (2016)",
+       subtitle = subtitle_string,
+       caption = "SML 320",
+       x = "monthly rent (USD)")
+```
+
+## Code
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+these_predictions <- rstanarm::posterior_predict(
+  mod6, newdata = data.frame(sqft = 1500,
+                             year = 2016,
+                             county = "contra costa",
+                             beds = 3,
+                             baths = 1.5))
+credible_interval <- round(quantile(these_predictions, c(0.05, 0.95)))
+subtitle_string <- paste0("90 Percent Credible Interval: (",
+                          credible_interval[1], ", ",
+                          credible_interval[2], ")")
+bayesplot::mcmc_areas(these_predictions) +
+  labs(title = "Predictions for 1500 sqft, 3 beds, 1.5 baths in Contra Costa county (2016)",
+       subtitle = subtitle_string,
+       caption = "SML 320",
+       x = "monthly rent (USD)")
+```
+
+:::::
+
+
+# Time Series
+
+## SF Rental Market
+
+::::: {.panel-tabset}
+
+## Data
+
+* average rent by day
+* one average price per day
+* $n = 399$ data points
+
+```{r}
+rent_df <- rent_raw |>
+  filter(price >= 800 & price <= 5000) |>
+  filter(sqft >= 500 & sqft <= 2500) |>
+  filter(year >= 2009)
+
+rent_ts <- rent_df |>
+  select(year, date, price) |>
+  group_by(date) |>
+  mutate(avg_price = mean(price, na.rm = TRUE)) |>
+  ungroup() |>
+  select(year, date, avg_price) |>
+  distinct() |>
+  arrange(date)
+
+# convert string to YYYY/MM/DD date format
+rent_ts$date <- lubridate::ymd(rent_ts$date) 
+```
+
+## Plot
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+rent_ts |>
+  ggplot(aes(x = date, y = avg_price)) +
+  geom_line() +
+  labs(title = "SF Bay Area Rental Market",
+       subtitle = "2009 to 2018",
+       caption = "SML 320",
+       x = "date", y = "average monthly rent (USD)") +
+  theme_minimal()
+```
+
+## Code
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+rent_ts |>
+  ggplot(aes(x = date, y = avg_price)) +
+  geom_line() +
+  labs(title = "SF Bay Area Rental Market",
+       subtitle = "2009 to 2018",
+       caption = "SML 320",
+       x = "date", y = "average monthly rent (USD)") +
+  theme_minimal()
+```
+
+:::::
+
+## Causal Impact
+
+* training over *pre-intervention period*
+* testing over *post-intervention period*
+* the `CausalImpact` function
+
+    * assembles structural time-series model
+    * performs posterior inference
+    * computes estimates for casual effect
+
+## Claim 1: Change in Market in 2016
+
+::::: {.panel-tabset}
+
+## Viz
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+rent_ts |>
+  ggplot(aes(x = date, y = avg_price)) +
+  geom_line() +
+  geom_vline(xintercept = lubridate::ymd("20160101"),
+             color = "red", linetype = 2, linewidth = 3) +
+  labs(title = "Was there a market intervention in 2016?",
+       caption = "SML 320",
+       x = "date", y = "average monthly rent (USD)") +
+  theme_minimal()
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+rent_ts |>
+  ggplot(aes(x = date, y = avg_price)) +
+  geom_line() +
+  geom_vline(xintercept = lubridate::ymd("20160101"),
+             color = "red", linetype = 2, linewidth = 3) +
+  labs(title = "Was there a market intervention in 2016?",
+       caption = "SML 320",
+       x = "date", y = "average monthly rent (USD)") +
+  theme_minimal()
+```
+
+## R Code
+
+```{r}
+intervention_index <- which.max(rent_ts$year >= 2016)
+pre_intervention <- c(1, intervention_index-1)
+post_intervention <- c(intervention_index, nrow(rent_ts))
+
+ts_impact <- CausalImpact::CausalImpact(rent_ts$avg_price,
+                                        pre_intervention,
+                                        post_intervention)
+```
+
+## Model Stats
+
+```{r}
+summary(ts_impact)
+```
+
+## Viz
+
+The `plot` of an "impact" object returns a `ggplot` object!
+
+```{r}
+plot(ts_impact)
+```
+
+## Inference
+
+```{r}
+summary(ts_impact, "report")
+```
+
+:::::
+
+
+## Claim 2: Change in Market in 2014
+
+::::: {.panel-tabset}
+
+## Viz
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+rent_ts |>
+  ggplot(aes(x = date, y = avg_price)) +
+  geom_line() +
+  geom_vline(xintercept = lubridate::ymd("20140101"),
+             color = "red", linetype = 2, linewidth = 3) +
+  labs(title = "Was there a market intervention in 2014?",
+       caption = "SML 320",
+       x = "date", y = "average monthly rent (USD)") +
+  theme_minimal()
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+rent_ts |>
+  ggplot(aes(x = date, y = avg_price)) +
+  geom_line() +
+  geom_vline(xintercept = lubridate::ymd("20140101"),
+             color = "red", linetype = 2, linewidth = 3) +
+  labs(title = "Was there a market intervention in 2014?",
+       caption = "SML 320",
+       x = "date", y = "average monthly rent (USD)") +
+  theme_minimal()
+```
+
+## R Code
+
+```{r}
+intervention_index <- which.max(rent_ts$year >= 2014)
+pre_intervention <- c(1, intervention_index-1)
+post_intervention <- c(intervention_index, nrow(rent_ts))
+
+ts_impact <- CausalImpact::CausalImpact(rent_ts$avg_price,
+                                        pre_intervention,
+                                        post_intervention)
+```
+
+## Model Stats
+
+```{r}
+summary(ts_impact)
+```
+
+## Viz
+
+The `plot` of an "impact" object returns a `ggplot` object!
+
+```{r}
+plot(ts_impact)
+```
+
+## Inference
+
+```{r}
+summary(ts_impact, "report")
+```
+
+:::::
+
+
+# Footnotes
+
+* [CausalImpact vignette](https://cran.r-project.org/web/packages/CausalImpact/vignettes/CausalImpact.html)
+
+::: {.callout-note collapse="true"}
+## Session Info
+
+```{r}
+sessionInfo()
+```
+:::
+
+
+:::: {.columns}
+
+::: {.column width="45%"}
+	
+:::
+
+::: {.column width="10%"}
+
+:::
+
+::: {.column width="45%"}
+
+:::
+
+::::
+
+
+
+::::: {.panel-tabset}
+
+
+
+:::::

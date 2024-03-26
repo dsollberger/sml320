@@ -1,0 +1,8 @@
+N/A (I am Viki)
+Great job! I am very interested in this data as I study the animal agriculture industry's impact on the environment. I liked how you clearly explained the reasoning behind the choice of each model and provided future direction for the project. Looking forward to seeing the results!
+"The graphics were really well made!
+
+I enjoyed the explanation of 'quirks' in the data, such as the negative emissions data in a few countries."
+I thought your presentation was easy to follow, and you did an excellent job providing background information. The conjugate models were easy to follow, and I felt that the visuals enhanced the watching experience without detracting from your presentation. I think your future directions are compelling, and I am excited to see your final presentation.
+The presentation is very detailed. Viki clearly has significant domain knowledge on the topic. The conjugate priors work well with the project. The visuals in the project (particularly the graphs) are very helpful to the viewer in understanding the content. The only feedback I have is I would have liked to see a longer EDA section.Â 
+I was really impressed by the fact that Viki managed to use all three conjugate priors really effectively and creatively. I was convinced that her methods were both appropriate and informative. I would have loved to see more by-region analyses. I'm excited to see what her final ML model results look like!

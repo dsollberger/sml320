@@ -1,0 +1,14 @@
+I am not at all familiar with baseball statistics so I appreciated the introduction. The motivating example was very helpful to understand the why behind the analysis. The home vs away team data was interesting too. The hitting characteristics matrix plot looked nice visually. Good job.
+"I liked the motivating example because I had little context for the analysis before the presentation.
+
+The explanation of the WAR statistic was done very well!"
+"Positive praise:
+
+The motivation was really well done- I understood why you want a distribution rather just a single point statistic. For the ""next steps"" part, it was great that you've already been looking into the literature!Â 
+
+Feedbacks:
+
+The matrix plots were a bit confusing because there were a lot of graphs. Maybe pick+choose relevant subgraphs and just display those?"
+N/A
+Tucker presented on a really specific and interesting question I would never have considered. He used lots of various kinds of data, and I really appreciated being able to see all of the data visually before starting the Bayesian portion of the talk. He spoke quite quickly, so I didnâ€™t always feel I was able to digest all the information, but that also might be okay! Excited to hear more at the end of the semester!
+Good job providing background information on the baseball aspect. The goal of the project seems like it provides value. The visualizations are very well done in the plot. The only feedback I have is that there could have been a more in-depth explanation of the datasets.

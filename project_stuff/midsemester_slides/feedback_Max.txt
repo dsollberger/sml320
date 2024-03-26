@@ -1,0 +1,20 @@
+"I enjoyed the concentration on a specific trend in certain corals, which allows for concentrated results. The presentation of the variables used was super in-depth and very well explained.
+
+Â 
+
+I was really impressed by the initiative taken to find a model that fits the data."
+"Positive praise:
+
+The background is really strong/well thought out. And the special model that you've made seems very rooted in your previous scientific knowledge, which is great.
+
+Feedback:
+
+Think about how other Bayesian conjugate prior pairs can fit in
+
+Why do you think the initial percent-change in cover priors failed? Maybe explain a bit more.
+
+And try to get your model to solve a simpler problem first (e.g. pool species into different buckets)"
+I thought the presentation was incredibly informative and well-paced. As someone without background knowledge, I thought your presentation was easy to follow. I also loved the visuals and how you clearly justified all of your modeling decisions.
+I like the storytelling you did to introduce the data! I'm not so familiar with reefs so it was helpful. I appreciate the honesty and explanation of what parts of the analysis you will continue to work towards for your final project. Looking forward to seeing the final presentation.
+â€”
+Max clearly has strong domain knowledge on his presentation topic. The visualizations are very well done, especially the ones which include images. The presentation does well explaining the important terms to the listeners. One area of improvement could be to present the question to the listeners sooner in the presentation. In general, the presentation is very verbose and could potentially benefit from more of an emphasis on brevity.Â  That being said, the details, visuals, and overall viewing experience was excellent for the presentation.Â 
