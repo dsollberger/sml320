@@ -1,0 +1,806 @@
+---
+title: "14: Poisson Regression Models"
+author: "Derek Sollberger"
+date: "2024-03-28"
+execute:
+  cache: true
+# format:
+#   revealjs:
+#     scrollable: true
+format:
+  html:
+    toc: true
+---
+
+\newcommand{\ds}{\displaystyle}
+
+# Poisson Regression Models
+
+:::: {.columns}
+
+::: {.column width="45%"}
+**Goal:** Explore Poisson and Negative Binomial Regression Models
+:::
+
+::: {.column width="10%"}
+
+:::
+
+::: {.column width="45%"}
+
+:::
+
+::::
+
+## Data
+
+:::: {.columns}
+
+::: {.column width="45%"}
+* source: [TidyTuesday](https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-12-03)
+* 2019-12-03 edition
+* [Open Data Philly](https://opendataphilly.org/datasets/parking-violations/)
+
+    * filtered to year 2017 data that had latitude/longitude
+:::
+
+::: {.column width="10%"}
+
+:::
+
+::: {.column width="45%"}
+```{r}
+#| message: false
+#| warning: false
+
+library("bayesrules")
+library("bayesplot")
+library("gt")
+library("patchwork")
+library("rstan")
+library("rstanarm")
+library("tidyverse")
+
+knitr::opts_chunk$set(echo = TRUE)
+
+# tickets_raw <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-12-03/tickets.csv")
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+tickets_raw <- readr::read_csv("street_cleaning_violations.csv")
+```
+
+:::
+
+::::
+
+## Data Wrangling
+
+::::: {.panel-tabset}
+
+## Ideas
+
+* extract `month` and `day` from `datetime`
+* compute number of street sweeping violations per day
+* make categorical variable `weekend`
+
+## Code
+
+```{r}
+tickets_df <- tickets_raw |>
+  separate(issue_datetime, into = c("date", "time"), sep = " ") |>
+  separate(date, into = c("year", "month", "day"), 
+           sep = "-", remove = FALSE) |>
+  select(date, month, day, lat, lon) |>
+  group_by(month, day) |>
+  mutate(violations = n(), .before = date) |>
+  ungroup()
+
+tickets_df$day_of_week <- lubridate::wday(tickets_df$date, label = TRUE)
+
+tickets_df <- tickets_df |>
+  mutate(weekend = day_of_week %in% c("Sat", "Sun")) |>
+  select(violations, month, day, weekend, lat, lon)
+
+tickets_df$month <- as.numeric(tickets_df$month)
+tickets_df$day <- as.numeric(tickets_df$day)
+
+set.seed(320)
+tickets_df_for_stan <- tickets_df |>
+  slice_sample(prop = 0.05)
+```
+
+:::::
+
+
+## Variables
+
+:::: {.columns}
+
+::: {.column width="40%"}
+### Response Variable
+
+$Y$: violations 
+
+* *count variable*: number of street sweeping violations per day
+
+### Prediction
+
+How many street sweeping violations will there be on March 28?
+:::
+
+::: {.column width="10%"}
+
+:::
+
+::: {.column width="50%"}
+### Predictor Variables
+
+* $X_{1}$: month (1, 2, 3, etc.)
+* $X_{2}$: day (of month)
+* $X_{3}$: weekend (boolean)
+* $X_{4}$: latitude
+* $X_{5}$: longitude
+:::
+
+::::
+
+# Recap: Normal Model
+
+::::: {.panel-tabset}
+
+## Model: Violations versus month and day
+
+$$Y = \beta_{0} + \beta_{1}X_{1} + \beta_{2}X_{2}$$
+
+* $Y$: number of street sweeping violations per day
+* $X_{1}$: month (1, 2, 3, etc.)
+* $X_{2}$: day (of month)
+
+## Viz
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+
+tickets_df$month_fac <- factor(tickets_df$month)
+
+tickets_df |>
+  ggplot(aes(x = month_fac, y = violations, color = month_fac)) +
+  ggbeeswarm::geom_quasirandom() +
+  labs(title = "Philadelphia Parking Tickets",
+       subtitle = "Year 2017, street sweeping violations",
+       caption = "Source: TidyTuesday",
+       x = "month",
+       y = "violations per day") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+## Stan
+
+```{r}
+mod_normal <- stan_glm(violations ~ month + day,
+                       data = tickets_df_for_stan,
+                       family = gaussian,
+                       chains = 4, iter = 5000*2, 
+                       refresh = 0, seed = 320)
+```
+
+## Diagnostics
+
+::: {.callout-note collapse="true"}
+## Function
+
+```{r}
+model_diagnostics <- function(the_stan_model){
+  p1 <- bayesplot::mcmc_trace(the_stan_model, size = 0.1) +
+  labs(title = "MCMC Traces")
+  print(p1)
+  
+  p2 <- bayesplot::mcmc_dens_overlay(the_stan_model) +
+  labs(title = "Density Plots")
+  print(p2)
+  
+  p3 <- bayesplot::mcmc_acf(the_stan_model) +
+  labs(title = "Autocorrelations")
+  print(p3)
+  
+  # effective sample size
+  print("Effective Sample Size:")
+  print(bayesplot::neff_ratio(the_stan_model))
+  
+  # split-R metric
+  print("R-Hat")
+  print(bayesplot::rhat(the_stan_model))
+}
+```
+
+:::
+
+```{r}
+#| message: false
+#| warning: false
+model_diagnostics(mod_normal)
+```
+
+## PPC
+
+```{r}
+bayesplot::pp_check(mod_normal, nreps = 50) +
+  labs(title = "Posterior Predictive Check",
+       subtitle = "Normal Regression, but should we allow for negative values?",
+       caption = "SML 320")
+```
+
+## Model Stats
+
+```{r}
+broom.mixed::tidy(mod_normal,
+                  effects = c("fixed", "aux"),
+                  conf.int = TRUE, conf.level = 0.90) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+:::::
+
+# Poisson Model
+
+::::: {.panel-tabset}
+
+## Model: Violations versus month and day
+
+$$\ln(\lambda) = \beta_{0} + \beta_{1}X_{1} + \beta_{2}X_{2}$$
+
+* $Y$: number of street sweeping violations per day
+* $X_{1}$: month (1, 2, 3, etc.)
+* $X_{2}$: day (of month)
+
+## Viz
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+
+tickets_df |>
+  ggplot(aes(x = day, y = violations)) +
+  geom_point() +
+  labs(title = "Philadelphia Parking Tickets",
+       subtitle = "Year 2017, street sweeping violations",
+       caption = "Source: TidyTuesday",
+       x = "day",
+       y = "violations per day") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+## Stan
+
+```{r}
+mod_pois <- stan_glm(violations ~ month + day,
+                     data = tickets_df_for_stan,
+                     family = poisson, # changed here
+                     chains = 4, iter = 5000*2, 
+                     refresh = 0, seed = 320)
+```
+
+## Diagnostics
+
+```{r}
+#| message: false
+#| warning: false
+model_diagnostics(mod_pois)
+```
+
+## PPC
+
+```{r}
+bayesplot::pp_check(mod_pois, nreps = 50) +
+  labs(title = "Posterior Predictive Check",
+       subtitle = "Poisson Regression, nonnegative values",
+       caption = "SML 320")
+```
+
+## Model Stats
+
+```{r}
+broom.mixed::tidy(mod_pois,
+                  effects = c("fixed", "aux"),
+                  conf.int = TRUE, conf.level = 0.90) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+:::::
+
+
+# Poisson Regression
+
+## Poisson Data Model
+
+* count response variable $Y_{i}$ (per unit of time)
+* rate parameter $\lambda_{i}$
+* likelihood
+
+$$Y_{i} | \lambda_{i} \sim \text{Pois}(\lambda_{i})$$
+
+## Expectation
+
+The expected number $Y_{i}$ predicted by values $X_{ij}$ (over $j$ predictor variables) captured by parameter $\lambda_{i}$ is
+
+$$\text{E}(Y_{i} | \lambda_{i}) = \lambda_{i}$$
+
+## Log_Link Function
+
+$$Y_{i} | \beta_{0}, \beta_{1}, \beta_{2} \sim \text{Pois}(\lambda_{i}) \quad\text{with}\quad \ln(\lambda_{i}) = \beta_{0} + \beta_{1}X_{i1} + \beta_{2}X_{i2}$$
+$$\text{OR}$$
+$$Y_{i} | \beta_{0}, \beta_{1}, \beta_{2} \sim \text{Pois}(\lambda_{i}) \quad\text{with}\quad \lambda_{i} = e^{\beta_{0} + \beta_{1}X_{i1} + \beta_{2}X_{i2}}$$
+
+## Model Assumptions
+
+* **Structure of the data**: observed data are independent
+* **Structure of the response variable**: $Y$ has a Poisson structure that seeks a discrete *count* of events (per unit time)
+* **Structure of the relationship**: the *logged* average $Y$ can be written as a linear combination of the predictors
+
+$$\lambda_{i} = e^{\beta_{0} + \beta_{1}X_{i1} + \beta_{2}X_{i2}}$$
+
+* **Structure of the variability in $Y$**:
+
+$$\text{E}(Y) = \text{Var}(Y) = \lambda$$
+
+editor's note: [better visuals](https://bookdown.org/roback/bookdown-BeyondMLR/ch-poissonreg.html#introduction-to-poisson-regression) by Professors Roback and Legler at St Olaf College
+
+
+## Interpreting Coefficients
+
+### Intercept
+
+When $X_{1} = 0, X_{2} = 0, ...$
+
+$$\text{E}(Y) = \lambda = e^{\beta_{0}} \quad\rightarrow\quad \beta_{0} = \ln(\lambda)$$
+
+* $\beta_{0}$: logged average
+* $e^{\beta_{0}}$: average value
+
+### Rates
+
+When we control other predictors and increase $X_{i}$ by one unit,
+
+$$\beta_{i} = \ln(\lambda_{x+1}) - \ln(\lambda_{x}) \quad\rightarrow\quad e^{\beta_{i}} = \ds\frac{\lambda_{x+1}}{\lambda_{x}}$$
+
+* $\beta_{i}$: change in logged average
+* $e^{\beta_{i}}$: multiplicative change in average value
+
+# Poisson Model Usage
+
+## Coefficients
+
+```{r}
+broom.mixed::tidy(mod_pois, effects = c("fixed", "aux")) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+$$e^{\beta_{1}} = e^{0.0357} \approx 1.0363$$
+
+As we go from one month to the next, the number of street sweeping violations increases by about 3.6 percent.
+
+$$e^{\beta_{2}} = e^{-0.0087} \approx 0.9913$$
+
+As we go from one day to the next, the number of street sweeping violations decreases by about 0.9 percent.
+
+## Prior Distributions
+
+::::: {.panel-tabset}
+
+## Code
+
+```{r}
+rstanarm::prior_summary(mod_pois)
+```
+
+## Interpretation
+
+For the prior distributions,
+
+$$e^{\beta_{0}} \in (e^{-5}, e^{5}) \approx (0, 149)$$
+
+* the average number of street sweeping violations per day is in between zero and 149
+
+$$e^{\beta_{1}} \in (e^{-1.56}, e^{1.56}) \approx (0.2101, 4.7588)$$
+
+* moving from one month to the next, the percent change in the number of street sweeping violations per day is in between 21 and 476 percent
+
+$$e^{\beta_{2}} \in (e^{-0.56}, e^{0.56}) \approx (0.5712, 1.7507)$$
+
+* moving from one day to the next, the percent change in the number of street sweeping violations per day is in between -43 and 175 percent
+
+## Full Model
+
+$$\begin{array}{rcl}
+  Y_{i}|\beta_{0},\beta_{1},\beta_{2} & \sim & \text{Pois}(\lambda_{i}) \text{ with }\ln(\lambda_{i}) = \beta_{0} + \beta_{1}X_{i1} + \beta_{2}X_{i2} \\
+  \beta_{0c} & \sim & \text{N}(0, 2.5^{2}) \\
+  \beta_{1} & \sim & \text{N}(0, 0.78^{2}) \\
+  \beta_{2} & \sim & \text{N}(0, 0.28^{2}) \\
+\end{array}$$
+
+:::::
+
+
+
+
+
+## Posterior Prediction Interval
+
+::::: {.panel-tabset}
+
+## Plot
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+these_predictions <- rstanarm::posterior_predict(
+  mod_pois, newdata = data.frame(month = 3, day = 28))
+credible_interval <- round(quantile(these_predictions, c(0.05, 0.95)))
+subtitle_string <- paste0("90 Percent Credible Interval: (",
+                          credible_interval[1], ", ",
+                          credible_interval[2], ")")
+bayesplot::mcmc_areas(these_predictions, prob = 0.9) +
+  labs(title = "Predictions for March 28",
+       subtitle = subtitle_string,
+       caption = "SML 320",
+       x = "number of street sweeping violations")
+```
+
+## Code
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+these_predictions <- rstanarm::posterior_predict(
+  mod_pois, newdata = data.frame(month = 3, day = 28))
+credible_interval <- round(quantile(these_predictions, c(0.05, 0.95)))
+subtitle_string <- paste0("90 Percent Credible Interval: (",
+                          credible_interval[1], ", ",
+                          credible_interval[2], ")")
+bayesplot::mcmc_areas(these_predictions, prob = 0.9) +
+  labs(title = "Predictions for March 28",
+       subtitle = subtitle_string,
+       caption = "SML 320",
+       x = "number of street sweeping violations")
+```
+
+:::::
+
+
+# Extended Model
+
+::::: {.panel-tabset}
+
+## Model
+
+$$\ln(\lambda) = \beta_{0} + \beta_{1}X_{1} + \beta_{2}X_{2} + \beta_{3}X_{3} + \beta_{4}X_{4}X_{5}$$
+
+* $Y$: number of street sweeping violations per day
+* $X_{1}$: month (1, 2, 3, etc.)
+* $X_{2}$: day (of month)
+* $X_{3}$: weekend (boolean)
+* $X_{4}X_{5}$: (possible interaction between) latitude and longitude
+
+## Stan
+
+```{r}
+mod_pois2 <- stan_glm(violations ~ month + day + weekend + lat:lon,
+                      data = tickets_df_for_stan,
+                      family = poisson,
+                      chains = 4, iter = 5000*2, 
+                      refresh = 0, seed = 320)
+```
+
+## Diagnostics
+
+```{r}
+#| message: false
+#| warning: false
+model_diagnostics(mod_pois2)
+```
+
+## PPC
+
+```{r}
+bayesplot::pp_check(mod_pois2, nreps = 50) +
+  labs(title = "Posterior Predictive Check",
+       subtitle = "Extended Poisson Regression Model",
+       caption = "SML 320")
+```
+
+## Dispersion
+
+$$\text{E}(Y) = \text{Var}(Y)??$$
+
+```{r}
+mean(these_predictions)
+```
+
+```{r}
+var(these_predictions)
+```
+
+
+:::::
+
+
+# Negative Binomial Regression
+
+## Motivation and Definition
+
+::: {.callout-note collapse="true"}
+## Overdispersion
+
+A random variable $Y$ is **overdispersed** if the observed variability in $Y$ exceeds the variability *expected* by the assumed probability model of $Y$
+
+:::
+
+If the count data appears to be demonstrating overdispersion, consider using the negative binomial distribution.
+
+::: {.callout-note collapse="true"}
+## Negative Binomial model
+
+Let random variable $Y$ be some count, $Y\in\{0,1,2,…\}$, that can be modeled by the Negative Binomial with **mean parameter** $\mu$ and **reciprocal dispersion parameter** $r$:
+
+$$Y|\mu,r \sim \text{NegBin}(\mu,r)$$
+
+Then $Y$ has conditional pmf
+
+$$f(y|\mu,r) = \binom{y+r-1}{r}\left( \ds\frac{r}{\mu+r} \right)^{r}\left(  \ds\frac{\mu}{\mu+r}\right)^{y} \text{ for } y\in\{0,1,2,...\}$$
+
+with statistics
+
+$$\text{E}(Y|\mu,r) = \mu \quad\text{and}\quad \text{Var}(Y|\mu,r) = \mu + \ds\frac{\mu^{2}}{r}$$
+
+:::
+
+::: {.callout-tip collapse="true"}
+## Commentary
+
+* for large $r$, this distribution behaves like the Poisson distribution
+* for small $r$,  and $Y$ is overdispersed
+* $\text{Var}(Y) \neq \text{E}(Y)$
+
+:::
+
+
+# Negative Binomial Model
+
+::::: {.panel-tabset}
+
+## Model
+
+$$\ln(\mu) = \beta_{0} + \beta_{1}X_{1} + \beta_{2}X_{2} + \beta_{3}X_{3} + \beta_{4}X_{4}X_{5}$$
+
+* $Y$: number of street sweeping violations per day
+* $X_{1}$: month (1, 2, 3, etc.)
+* $X_{2}$: day (of month)
+* $X_{3}$: weekend (boolean)
+* $X_{4}X_{5}$: (possible interaction between) latitude and longitude
+
+## Stan
+
+```{r}
+mod_neg_bin <- stan_glm(violations ~ month + day + weekend + lat:lon,
+                      data = tickets_df_for_stan,
+                      family = neg_binomial_2, #changed here
+                      chains = 4, iter = 5000*2, 
+                      refresh = 0, seed = 320)
+```
+
+## Diagnostics
+
+```{r}
+#| message: false
+#| warning: false
+model_diagnostics(mod_neg_bin)
+```
+
+:::::
+
+## Prior Distributions
+
+::::: {.panel-tabset}
+
+## Code
+
+```{r}
+model_priors <- rstanarm::prior_summary(mod_neg_bin)
+model_priors #print
+# model_priors$prior$adjusted_scale #after autoscaling
+```
+
+## Interpretation
+
+For the prior distributions,
+
+$$e^{\beta_{0}} \in (e^{-5}, e^{5}) \approx (0, 149)$$
+
+* the average number of street sweeping violations per day is in between zero and 149
+
+$$e^{\beta_{1}} \in (e^{-1.56}, e^{1.56}) \approx (0.2101, 4.7588)$$
+
+* moving from one month to the next, the percent change in the number of street sweeping violations per day is in between 21 and 476 percent
+
+$$e^{\beta_{2}} \in (e^{-0.56}, e^{0.56}) \approx (0.5712, 1.7507)$$
+
+* moving from one day to the next, the percent change in the number of street sweeping violations per day is in between -43 and 175 percent
+
+$$e^{\beta_{3}} \in (e^{-39.16}, e^{39.16})$$
+
+* [We have a vague prior for the coefficient of the categorical variable]
+
+
+## Full Model
+
+$$\begin{array}{rcl}
+  Y_{i}|\beta_{0},\beta_{1},\beta_{2} & \sim & \text{NegBin}(\mu_{i},r) \text{ with }\ln(\mu_{i}) = \beta_{0} + \beta_{1}X_{i1} + \beta_{2}X_{i2} + ... \\
+  \beta_{0c} & \sim & \text{N}(0, 2.5^{2}) \\
+  \beta_{1} & \sim & \text{N}(0, 0.78^{2}) \\
+  \beta_{2} & \sim & \text{N}(0, 0.28^{2}) \\
+  \beta_{3} & \sim & \text{N}(0, 19.58^{2}) \\
+  \beta_{4} & \sim & \text{N}(0, 1.09^{2}) \\
+  r & \sim & \text{Exp}(1) \\
+\end{array}$$
+
+:::::
+
+## PPC
+
+```{r}
+bayesplot::pp_check(mod_neg_bin, nreps = 50) +
+  labs(title = "Posterior Predictive Check",
+       subtitle = "Negative Binomial Regression Model",
+       caption = "SML 320")
+```
+
+## Coefficients
+
+Like in the Poisson regression models, the coefficents of negative binomial regression models are also desribed with the logarithmic transformation in mind.
+
+```{r}
+broom.mixed::tidy(mod_neg_bin, effects = c("fixed", "aux"),
+                  conf.int = TRUE, conf.level = 0.90) |>
+  mutate_if(is.numeric, round, digits = 4)
+```
+
+$$e^{\beta_{1}} = e^{0.0220} \approx 1.0222$$
+
+* As we go from one month to the next, the number of street sweeping violations increases by about 2.2 percent.
+
+$$e^{\beta_{2}} = e^{-0.0039} \approx 0.9961$$
+
+* As we go from one day to the next, the number of street sweeping violations decreases by about 0.04 percent.
+
+$$e^{\beta_{3}} = e^{0.8791} \approx 2.4087$$
+
+* Compared to a weekday, the expected amount of street sweeping violations on a weekend day is 241 percent higher (caution: sample size issue).
+
+$$1.0 \notin (e^{0.0262}, e^{0.0536})$$
+
+* We may have some evidence that $\beta_{4} > 1.0$, or the notion that there may be an interaction effect between latitude and longitude
+
+## Posterior Prediction Interval
+
+::::: {.panel-tabset}
+
+## Plot
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| eval: true
+these_predictions <- rstanarm::posterior_predict(
+  mod_neg_bin, newdata = data.frame(month = 3, 
+                                    day = 28,
+                                    weekend = FALSE,
+                                    lat = mean(tickets_df$lat),
+                                    lon = mean(tickets_df$lon)))
+credible_interval <- round(quantile(these_predictions, c(0.05, 0.95)))
+subtitle_string <- paste0("90 Percent Credible Interval: (",
+                          credible_interval[1], ", ",
+                          credible_interval[2], ")")
+bayesplot::mcmc_areas(these_predictions, prob = 0.9) +
+  labs(title = "Predictions for March 28",
+       subtitle = subtitle_string,
+       caption = "SML 320",
+       x = "number of street sweeping violations")
+```
+
+## Code
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| eval: false
+these_predictions <- rstanarm::posterior_predict(
+  mod_neg_bin, newdata = data.frame(month = 3, 
+                                    day = 28,
+                                    weekend = FALSE,
+                                    lat = mean(tickets_df$lat),
+                                    lon = mean(tickets_df$lon)))
+credible_interval <- round(quantile(these_predictions, c(0.05, 0.95)))
+subtitle_string <- paste0("90 Percent Credible Interval: (",
+                          credible_interval[1], ", ",
+                          credible_interval[2], ")")
+bayesplot::mcmc_areas(these_predictions, prob = 0.9) +
+  labs(title = "Predictions for March 28",
+       subtitle = subtitle_string,
+       caption = "SML 320",
+       x = "number of street sweeping violations")
+```
+
+:::::
+
+## Dispersion
+
+$$\text{E}(Y) = \text{Var}(Y)??$$
+
+```{r}
+mean(these_predictions)
+```
+
+```{r}
+var(these_predictions)
+```
+
+
+# Summary
+
+* If response $Y$ is nonnegative count data, consider Poisson regression models
+* If data is overdispersed, consider negative binomial regression models
+* In these cases, carefully describe coefficients after the logarithmic transformation
+
+
+# Footnotes
+
+* [Poisson Regression](https://bookdown.org/roback/bookdown-BeyondMLR/ch-poissonreg.html#introduction-to-poisson-regression) by Professors Roback and Legler at St Olaf College
+
+::: {.callout-note collapse="true"}
+## Session Info
+
+```{r}
+sessionInfo()
+```
+:::
+
+
+:::: {.columns}
+
+::: {.column width="45%"}
+	
+:::
+
+::: {.column width="10%"}
+
+:::
+
+::: {.column width="45%"}
+
+:::
+
+::::
+
+
+::::: {.panel-tabset}
+
+
+
+:::::

@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Derek Sollberger">
+<meta name="dcterms.date" content="2024-03-28">
+
+<title>14: Poisson Regression Models</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="14_poisson_neg_binomial_files/libs/clipboard/clipboard.min.js"></script>
+<script src="14_poisson_neg_binomial_files/libs/quarto-html/quarto.js"></script>
+<script src="14_poisson_neg_binomial_files/libs/quarto-html/popper.min.js"></script>
+<script src="14_poisson_neg_binomial_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="14_poisson_neg_binomial_files/libs/quarto-html/anchor.min.js"></script>
+<link href="14_poisson_neg_binomial_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="14_poisson_neg_binomial_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="14_poisson_neg_binomial_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="14_poisson_neg_binomial_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="14_poisson_neg_binomial_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#poisson-regression-models" id="toc-poisson-regression-models" class="nav-link active" data-scroll-target="#poisson-regression-models">Poisson Regression Models</a>
+  <ul class="collapse">
+  <li><a href="#data" id="toc-data" class="nav-link" data-scroll-target="#data">Data</a></li>
+  <li><a href="#data-wrangling" id="toc-data-wrangling" class="nav-link" data-scroll-target="#data-wrangling">Data Wrangling</a></li>
+  <li><a href="#variables" id="toc-variables" class="nav-link" data-scroll-target="#variables">Variables</a></li>
+  </ul></li>
+  <li><a href="#recap-normal-model" id="toc-recap-normal-model" class="nav-link" data-scroll-target="#recap-normal-model">Recap: Normal Model</a></li>
+  <li><a href="#poisson-model" id="toc-poisson-model" class="nav-link" data-scroll-target="#poisson-model">Poisson Model</a></li>
+  <li><a href="#poisson-regression" id="toc-poisson-regression" class="nav-link" data-scroll-target="#poisson-regression">Poisson Regression</a>
+  <ul class="collapse">
+  <li><a href="#poisson-data-model" id="toc-poisson-data-model" class="nav-link" data-scroll-target="#poisson-data-model">Poisson Data Model</a></li>
+  <li><a href="#expectation" id="toc-expectation" class="nav-link" data-scroll-target="#expectation">Expectation</a></li>
+  <li><a href="#log_link-function" id="toc-log_link-function" class="nav-link" data-scroll-target="#log_link-function">Log_Link Function</a></li>
+  <li><a href="#model-assumptions" id="toc-model-assumptions" class="nav-link" data-scroll-target="#model-assumptions">Model Assumptions</a></li>
+  <li><a href="#interpreting-coefficients" id="toc-interpreting-coefficients" class="nav-link" data-scroll-target="#interpreting-coefficients">Interpreting Coefficients</a>
+  <ul class="collapse">
+  <li><a href="#intercept" id="toc-intercept" class="nav-link" data-scroll-target="#intercept">Intercept</a></li>
+  <li><a href="#rates" id="toc-rates" class="nav-link" data-scroll-target="#rates">Rates</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#poisson-model-usage" id="toc-poisson-model-usage" class="nav-link" data-scroll-target="#poisson-model-usage">Poisson Model Usage</a>
+  <ul class="collapse">
+  <li><a href="#coefficients" id="toc-coefficients" class="nav-link" data-scroll-target="#coefficients">Coefficients</a></li>
+  <li><a href="#prior-distributions" id="toc-prior-distributions" class="nav-link" data-scroll-target="#prior-distributions">Prior Distributions</a></li>
+  <li><a href="#posterior-prediction-interval" id="toc-posterior-prediction-interval" class="nav-link" data-scroll-target="#posterior-prediction-interval">Posterior Prediction Interval</a></li>
+  </ul></li>
+  <li><a href="#extended-model" id="toc-extended-model" class="nav-link" data-scroll-target="#extended-model">Extended Model</a></li>
+  <li><a href="#negative-binomial-regression" id="toc-negative-binomial-regression" class="nav-link" data-scroll-target="#negative-binomial-regression">Negative Binomial Regression</a>
+  <ul class="collapse">
+  <li><a href="#motivation-and-definition" id="toc-motivation-and-definition" class="nav-link" data-scroll-target="#motivation-and-definition">Motivation and Definition</a></li>
+  </ul></li>
+  <li><a href="#negative-binomial-model-1" id="toc-negative-binomial-model-1" class="nav-link" data-scroll-target="#negative-binomial-model-1">Negative Binomial Model</a>
+  <ul class="collapse">
+  <li><a href="#prior-distributions-1" id="toc-prior-distributions-1" class="nav-link" data-scroll-target="#prior-distributions-1">Prior Distributions</a></li>
+  <li><a href="#ppc-3" id="toc-ppc-3" class="nav-link" data-scroll-target="#ppc-3">PPC</a></li>
+  <li><a href="#coefficients-1" id="toc-coefficients-1" class="nav-link" data-scroll-target="#coefficients-1">Coefficients</a></li>
+  <li><a href="#posterior-prediction-interval-1" id="toc-posterior-prediction-interval-1" class="nav-link" data-scroll-target="#posterior-prediction-interval-1">Posterior Prediction Interval</a></li>
+  <li><a href="#dispersion-1" id="toc-dispersion-1" class="nav-link" data-scroll-target="#dispersion-1">Dispersion</a></li>
+  </ul></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
+  <li><a href="#footnotes" id="toc-footnotes" class="nav-link" data-scroll-target="#footnotes">Footnotes</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">14: Poisson Regression Models</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Derek Sollberger </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">March 28, 2024</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="poisson-regression-models" class="level1">
+<h1>Poisson Regression Models</h1>
+<div class="columns">
+<div class="column" style="width:45%;">
+<p><strong>Goal:</strong> Explore Poisson and Negative Binomial Regression Models</p>
+</div><div class="column" style="width:10%;">
+
+</div><div class="column" style="width:45%;">
+
+</div>
+</div>
+<section id="data" class="level2">
+<h2 class="anchored" data-anchor-id="data">Data</h2>
+<div class="columns">
+<div class="column" style="width:45%;">
+<ul>
+<li><p>source: <a href="https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-12-03">TidyTuesday</a></p></li>
+<li><p>2019-12-03 edition</p></li>
+<li><p><a href="https://opendataphilly.org/datasets/parking-violations/">Open Data Philly</a></p>
+<ul>
+<li>filtered to year 2017 data that had latitude/longitude</li>
+</ul></li>
+</ul>
+</div><div class="column" style="width:10%;">
+
+</div><div class="column" style="width:45%;">
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-1_118671f7ae4ada261991f569f30d8adf">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"bayesrules"</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"bayesplot"</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"gt"</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"patchwork"</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"rstan"</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"rstanarm"</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"tidyverse"</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span>opts_chunk<span class="sc">$</span><span class="fu">set</span>(<span class="at">echo =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># tickets_raw &lt;- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-12-03/tickets.csv")</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="data-wrangling" class="level2">
+<h2 class="anchored" data-anchor-id="data-wrangling">Data Wrangling</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true" href="">Ideas</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false" href="">Code</a></li></ul>
+<div class="tab-content">
+<div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
+<ul>
+<li>extract <code>month</code> and <code>day</code> from <code>datetime</code></li>
+<li>compute number of street sweeping violations per day</li>
+<li>make categorical variable <code>weekend</code></li>
+</ul>
+</div>
+<div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-3_26b264edb4501c3309f50225355ec831">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>tickets_df <span class="ot">&lt;-</span> tickets_raw <span class="sc">|&gt;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate</span>(issue_datetime, <span class="at">into =</span> <span class="fu">c</span>(<span class="st">"date"</span>, <span class="st">"time"</span>), <span class="at">sep =</span> <span class="st">" "</span>) <span class="sc">|&gt;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate</span>(date, <span class="at">into =</span> <span class="fu">c</span>(<span class="st">"year"</span>, <span class="st">"month"</span>, <span class="st">"day"</span>), </span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>           <span class="at">sep =</span> <span class="st">"-"</span>, <span class="at">remove =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(date, month, day, lat, lon) <span class="sc">|&gt;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(month, day) <span class="sc">|&gt;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">violations =</span> <span class="fu">n</span>(), <span class="at">.before =</span> date) <span class="sc">|&gt;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>tickets_df<span class="sc">$</span>day_of_week <span class="ot">&lt;-</span> lubridate<span class="sc">::</span><span class="fu">wday</span>(tickets_df<span class="sc">$</span>date, <span class="at">label =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>tickets_df <span class="ot">&lt;-</span> tickets_df <span class="sc">|&gt;</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">weekend =</span> day_of_week <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Sat"</span>, <span class="st">"Sun"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(violations, month, day, weekend, lat, lon)</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>tickets_df<span class="sc">$</span>month <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(tickets_df<span class="sc">$</span>month)</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>tickets_df<span class="sc">$</span>day <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(tickets_df<span class="sc">$</span>day)</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">320</span>)</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>tickets_df_for_stan <span class="ot">&lt;-</span> tickets_df <span class="sc">|&gt;</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_sample</span>(<span class="at">prop =</span> <span class="fl">0.05</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="variables" class="level2">
+<h2 class="anchored" data-anchor-id="variables">Variables</h2>
+<div class="columns">
+<div class="column" style="width:40%;">
+<section id="response-variable" class="level3">
+<h3 class="anchored" data-anchor-id="response-variable">Response Variable</h3>
+<p><span class="math inline">\(Y\)</span>: violations</p>
+<ul>
+<li><em>count variable</em>: number of street sweeping violations per day</li>
+</ul>
+</section>
+<section id="prediction" class="level3">
+<h3 class="anchored" data-anchor-id="prediction">Prediction</h3>
+<p>How many street sweeping violations will there be on March 28?</p>
+</section>
+</div><div class="column" style="width:10%;">
+
+</div><div class="column" style="width:50%;">
+<section id="predictor-variables" class="level3">
+<h3 class="anchored" data-anchor-id="predictor-variables">Predictor Variables</h3>
+<ul>
+<li><span class="math inline">\(X_{1}\)</span>: month (1, 2, 3, etc.)</li>
+<li><span class="math inline">\(X_{2}\)</span>: day (of month)</li>
+<li><span class="math inline">\(X_{3}\)</span>: weekend (boolean)</li>
+<li><span class="math inline">\(X_{4}\)</span>: latitude</li>
+<li><span class="math inline">\(X_{5}\)</span>: longitude</li>
+</ul>
+</section>
+</div>
+</div>
+</section>
+</section>
+<section id="recap-normal-model" class="level1">
+<h1>Recap: Normal Model</h1>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true" href="">Model: Violations versus month and day</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false" href="">Viz</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-3" role="tab" aria-controls="tabset-2-3" aria-selected="false" href="">Stan</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-4" role="tab" aria-controls="tabset-2-4" aria-selected="false" href="">Diagnostics</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-5-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-5" role="tab" aria-controls="tabset-2-5" aria-selected="false" href="">PPC</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-6-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-6" role="tab" aria-controls="tabset-2-6" aria-selected="false" href="">Model Stats</a></li></ul>
+<div class="tab-content">
+<div id="tabset-2-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-2-1-tab">
+<p><span class="math display">\[Y = \beta_{0} + \beta_{1}X_{1} + \beta_{2}X_{2}\]</span></p>
+<ul>
+<li><span class="math inline">\(Y\)</span>: number of street sweeping violations per day</li>
+<li><span class="math inline">\(X_{1}\)</span>: month (1, 2, 3, etc.)</li>
+<li><span class="math inline">\(X_{2}\)</span>: day (of month)</li>
+</ul>
+</div>
+<div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-4_c28dbb6018975cd23b654b8722426a81">
+<div class="cell-output-display">
+<p><img src="14_poisson_neg_binomial_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-2-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-3-tab">
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-5_f387d40ab1356245793bb01ed5d9c98a">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>mod_normal <span class="ot">&lt;-</span> <span class="fu">stan_glm</span>(violations <span class="sc">~</span> month <span class="sc">+</span> day,</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>                       <span class="at">data =</span> tickets_df_for_stan,</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>                       <span class="at">family =</span> gaussian,</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>                       <span class="at">chains =</span> <span class="dv">4</span>, <span class="at">iter =</span> <span class="dv">5000</span><span class="sc">*</span><span class="dv">2</span>, </span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>                       <span class="at">refresh =</span> <span class="dv">0</span>, <span class="at">seed =</span> <span class="dv">320</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="tabset-2-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-4-tab">
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Function
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-6_9d7eaf12da2b5973047d9991d8c5a125">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>model_diagnostics <span class="ot">&lt;-</span> <span class="cf">function</span>(the_stan_model){</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  p1 <span class="ot">&lt;-</span> bayesplot<span class="sc">::</span><span class="fu">mcmc_trace</span>(the_stan_model, <span class="at">size =</span> <span class="fl">0.1</span>) <span class="sc">+</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"MCMC Traces"</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(p1)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  p2 <span class="ot">&lt;-</span> bayesplot<span class="sc">::</span><span class="fu">mcmc_dens_overlay</span>(the_stan_model) <span class="sc">+</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Density Plots"</span>)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(p2)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  p3 <span class="ot">&lt;-</span> bayesplot<span class="sc">::</span><span class="fu">mcmc_acf</span>(the_stan_model) <span class="sc">+</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Autocorrelations"</span>)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(p3)</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  <span class="co"># effective sample size</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="st">"Effective Sample Size:"</span>)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(bayesplot<span class="sc">::</span><span class="fu">neff_ratio</span>(the_stan_model))</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># split-R metric</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="st">"R-Hat"</span>)</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(bayesplot<span class="sc">::</span><span class="fu">rhat</span>(the_stan_model))</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-7_0f1ecb2fb5f683d5e0b470aef1f3c704">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">model_diagnostics</span>(mod_normal)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="14_poisson_neg_binomial_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="14_poisson_neg_binomial_files/figure-html/unnamed-chunk-7-2.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="14_poisson_neg_binomial_files/figure-html/unnamed-chunk-7-3.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Effective Sample Size:"
+(Intercept)     month02     month03     month04     month05     month06 
+    0.06300     0.18470     0.19030     0.21290     0.19210     0.16740 
+    month07     month08     month09     month10     month11     month12 
+    0.17990     0.19480     0.22375     0.21370     0.22205     0.20810 
+      day02       day03       day04       day05       day06       day07 
+    0.07765     0.11980     0.08075     0.06810     0.07450     0.08970 
+      day08       day09       day10       day11       day12       day13 
+    0.09060     0.12655     0.08625     0.08960     0.06970     0.09080 
+      day14       day15       day16       day17       day18       day19 
+    0.07380     0.08285     0.08480     0.07525     0.10665     0.09255 
+      day20       day21       day22       day23       day24       day25 
+    0.08885     0.07235     0.12425     0.08060     0.07280     0.12020 
+      day26       day27       day28       day29       day30       day31 
+    0.07130     0.07865     0.07740     0.16275     0.08015     0.08770 
+      sigma 
+    0.75945 
+[1] "R-Hat"
+(Intercept)     month02     month03     month04     month05     month06 
+  1.0014895   1.0011601   1.0012092   1.0007827   1.0010215   1.0008016 
+    month07     month08     month09     month10     month11     month12 
+  1.0008995   1.0010949   1.0005063   1.0008463   1.0006766   1.0011269 
+      day02       day03       day04       day05       day06       day07 
+  1.0012073   1.0007624   1.0010898   1.0012959   1.0010447   1.0008505 
+      day08       day09       day10       day11       day12       day13 
+  1.0010853   1.0005555   1.0009455   1.0009323   1.0011121   1.0007452 
+      day14       day15       day16       day17       day18       day19 
+  1.0013249   1.0011666   1.0012986   1.0011681   1.0008162   1.0007251 
+      day20       day21       day22       day23       day24       day25 
+  1.0006334   1.0014752   1.0005040   1.0010149   1.0011738   1.0007064 
+      day26       day27       day28       day29       day30       day31 
+  1.0013097   1.0010586   1.0011095   1.0003183   1.0009222   1.0010348 
+      sigma 
+  0.9998761 </code></pre>
+</div>
+</div>
+</div>
+<div id="tabset-2-5" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-5-tab">
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-8_209340b1355fc9a909e1bc89ff575167">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>bayesplot<span class="sc">::</span><span class="fu">pp_check</span>(mod_normal, <span class="at">nreps =</span> <span class="dv">50</span>) <span class="sc">+</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Posterior Predictive Check"</span>,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Normal Regression, but should we allow for negative values?"</span>,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption =</span> <span class="st">"SML 320"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="14_poisson_neg_binomial_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-2-6" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-6-tab">
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-9_1df273b78465c4a0d6b885ca139fa668">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>broom.mixed<span class="sc">::</span><span class="fu">tidy</span>(mod_normal,</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">effects =</span> <span class="fu">c</span>(<span class="st">"fixed"</span>, <span class="st">"aux"</span>),</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>                  <span class="at">conf.int =</span> <span class="cn">TRUE</span>, <span class="at">conf.level =</span> <span class="fl">0.90</span>) <span class="sc">|&gt;</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_if</span>(is.numeric, round, <span class="at">digits =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 44 × 5
+   term        estimate std.error conf.low conf.high
+   &lt;chr&gt;          &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;
+ 1 (Intercept)    26.7       6.54   15.8       37.9 
+ 2 month02        -2.22      4.41   -9.54       5.09
+ 3 month03        -3.64      4.56  -11.1        3.90
+ 4 month04         1.16      4.16   -5.66       8.05
+ 5 month05        -2.86      4.29   -9.90       4.13
+ 6 month06         2.74      4.22   -4.27       9.61
+ 7 month07         7.68      4.06    1.02      14.3 
+ 8 month08         7.01      4.47   -0.320     14.2 
+ 9 month09        -2.62      5.09  -10.8        5.70
+10 month10         1.76      4.58   -5.80       9.29
+# ℹ 34 more rows</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="poisson-model" class="level1">
+<h1>Poisson Model</h1>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-3-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-1" role="tab" aria-controls="tabset-3-1" aria-selected="true" href="">Model: Violations versus month and day</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-2" role="tab" aria-controls="tabset-3-2" aria-selected="false" href="">Viz</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-3" role="tab" aria-controls="tabset-3-3" aria-selected="false" href="">Stan</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-4" role="tab" aria-controls="tabset-3-4" aria-selected="false" href="">Diagnostics</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-5-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-5" role="tab" aria-controls="tabset-3-5" aria-selected="false" href="">PPC</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-6-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-6" role="tab" aria-controls="tabset-3-6" aria-selected="false" href="">Model Stats</a></li></ul>
+<div class="tab-content">
+<div id="tabset-3-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-3-1-tab">
+<p><span class="math display">\[\ln(\lambda) = \beta_{0} + \beta_{1}X_{1} + \beta_{2}X_{2}\]</span></p>
+<ul>
+<li><span class="math inline">\(Y\)</span>: number of street sweeping violations per day</li>
+<li><span class="math inline">\(X_{1}\)</span>: month (1, 2, 3, etc.)</li>
+<li><span class="math inline">\(X_{2}\)</span>: day (of month)</li>
+</ul>
+</div>
+<div id="tabset-3-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-2-tab">
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-10_1229340df8b1deccc976c22dacfbabe0">
+<div class="cell-output-display">
+<p><img src="14_poisson_neg_binomial_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-3-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-3-tab">
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-11_fca189ae8867a7b184891fbb83784590">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>mod_pois <span class="ot">&lt;-</span> <span class="fu">stan_glm</span>(violations <span class="sc">~</span> month <span class="sc">+</span> day,</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>                     <span class="at">data =</span> tickets_df_for_stan,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>                     <span class="at">family =</span> poisson, <span class="co"># changed here</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>                     <span class="at">chains =</span> <span class="dv">4</span>, <span class="at">iter =</span> <span class="dv">5000</span><span class="sc">*</span><span class="dv">2</span>, </span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>                     <span class="at">refresh =</span> <span class="dv">0</span>, <span class="at">seed =</span> <span class="dv">320</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="tabset-3-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-4-tab">
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-12_be7acc580b77efba554574edc07d94fd">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">model_diagnostics</span>(mod_pois)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="14_poisson_neg_binomial_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="14_poisson_neg_binomial_files/figure-html/unnamed-chunk-12-2.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="14_poisson_neg_binomial_files/figure-html/unnamed-chunk-12-3.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Effective Sample Size:"
+(Intercept)       month         day 
+    0.99140     0.99975     0.94765 
+[1] "R-Hat"
+(Intercept)       month         day 
+   1.000038    1.000006    0.999916 </code></pre>
+</div>
+</div>
+</div>
+<div id="tabset-3-5" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-5-tab">
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-13_c5f6159d31927cc1a442f587b77ede22">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>bayesplot<span class="sc">::</span><span class="fu">pp_check</span>(mod_pois, <span class="at">nreps =</span> <span class="dv">50</span>) <span class="sc">+</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Posterior Predictive Check"</span>,</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Poisson Regression, nonnegative values"</span>,</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption =</span> <span class="st">"SML 320"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="14_poisson_neg_binomial_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-3-6" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-6-tab">
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-14_26238c9725e74192e8a06d941e445ef0">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>broom.mixed<span class="sc">::</span><span class="fu">tidy</span>(mod_pois,</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">effects =</span> <span class="fu">c</span>(<span class="st">"fixed"</span>, <span class="st">"aux"</span>),</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>                  <span class="at">conf.int =</span> <span class="cn">TRUE</span>, <span class="at">conf.level =</span> <span class="fl">0.90</span>) <span class="sc">|&gt;</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_if</span>(is.numeric, round, <span class="at">digits =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 4 × 5
+  term        estimate std.error conf.low conf.high
+  &lt;chr&gt;          &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;
+1 (Intercept)   3.58      0.0233   3.54      3.62  
+2 month         0.0357    0.0027   0.0315    0.04  
+3 day          -0.0087    0.0009  -0.0102   -0.0071
+4 mean_PPD     39.4       0.467   38.7      40.2   </code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="poisson-regression" class="level1">
+<h1>Poisson Regression</h1>
+<section id="poisson-data-model" class="level2">
+<h2 class="anchored" data-anchor-id="poisson-data-model">Poisson Data Model</h2>
+<ul>
+<li>count response variable <span class="math inline">\(Y_{i}\)</span> (per unit of time)</li>
+<li>rate parameter <span class="math inline">\(\lambda_{i}\)</span></li>
+<li>likelihood</li>
+</ul>
+<p><span class="math display">\[Y_{i} | \lambda_{i} \sim \text{Pois}(\lambda_{i})\]</span></p>
+</section>
+<section id="expectation" class="level2">
+<h2 class="anchored" data-anchor-id="expectation">Expectation</h2>
+<p>The expected number <span class="math inline">\(Y_{i}\)</span> predicted by values <span class="math inline">\(X_{ij}\)</span> (over <span class="math inline">\(j\)</span> predictor variables) captured by parameter <span class="math inline">\(\lambda_{i}\)</span> is</p>
+<p><span class="math display">\[\text{E}(Y_{i} | \lambda_{i}) = \lambda_{i}\]</span></p>
+</section>
+<section id="log_link-function" class="level2">
+<h2 class="anchored" data-anchor-id="log_link-function">Log_Link Function</h2>
+<p><span class="math display">\[Y_{i} | \beta_{0}, \beta_{1}, \beta_{2} \sim \text{Pois}(\lambda_{i}) \quad\text{with}\quad \ln(\lambda_{i}) = \beta_{0} + \beta_{1}X_{i1} + \beta_{2}X_{i2}\]</span> <span class="math display">\[\text{OR}\]</span> <span class="math display">\[Y_{i} | \beta_{0}, \beta_{1}, \beta_{2} \sim \text{Pois}(\lambda_{i}) \quad\text{with}\quad \lambda_{i} = e^{\beta_{0} + \beta_{1}X_{i1} + \beta_{2}X_{i2}}\]</span></p>
+</section>
+<section id="model-assumptions" class="level2">
+<h2 class="anchored" data-anchor-id="model-assumptions">Model Assumptions</h2>
+<ul>
+<li><strong>Structure of the data</strong>: observed data are independent</li>
+<li><strong>Structure of the response variable</strong>: <span class="math inline">\(Y\)</span> has a Poisson structure that seeks a discrete <em>count</em> of events (per unit time)</li>
+<li><strong>Structure of the relationship</strong>: the <em>logged</em> average <span class="math inline">\(Y\)</span> can be written as a linear combination of the predictors</li>
+</ul>
+<p><span class="math display">\[\lambda_{i} = e^{\beta_{0} + \beta_{1}X_{i1} + \beta_{2}X_{i2}}\]</span></p>
+<ul>
+<li><strong>Structure of the variability in <span class="math inline">\(Y\)</span></strong>:</li>
+</ul>
+<p><span class="math display">\[\text{E}(Y) = \text{Var}(Y) = \lambda\]</span></p>
+<p>editor’s note: <a href="https://bookdown.org/roback/bookdown-BeyondMLR/ch-poissonreg.html#introduction-to-poisson-regression">better visuals</a> by Professors Roback and Legler at St Olaf College</p>
+</section>
+<section id="interpreting-coefficients" class="level2">
+<h2 class="anchored" data-anchor-id="interpreting-coefficients">Interpreting Coefficients</h2>
+<section id="intercept" class="level3">
+<h3 class="anchored" data-anchor-id="intercept">Intercept</h3>
+<p>When <span class="math inline">\(X_{1} = 0, X_{2} = 0, ...\)</span></p>
+<p><span class="math display">\[\text{E}(Y) = \lambda = e^{\beta_{0}} \quad\rightarrow\quad \beta_{0} = \ln(\lambda)\]</span></p>
+<ul>
+<li><span class="math inline">\(\beta_{0}\)</span>: logged average</li>
+<li><span class="math inline">\(e^{\beta_{0}}\)</span>: average value</li>
+</ul>
+</section>
+<section id="rates" class="level3">
+<h3 class="anchored" data-anchor-id="rates">Rates</h3>
+<p>When we control other predictors and increase <span class="math inline">\(X_{i}\)</span> by one unit,</p>
+<p><span class="math display">\[\beta_{i} = \ln(\lambda_{x+1}) - \ln(\lambda_{x}) \quad\rightarrow\quad e^{\beta_{i}} = \displaystyle\frac{\lambda_{x+1}}{\lambda_{x}}\]</span></p>
+<ul>
+<li><span class="math inline">\(\beta_{i}\)</span>: change in logged average</li>
+<li><span class="math inline">\(e^{\beta_{i}}\)</span>: multiplicative change in average value</li>
+</ul>
+</section>
+</section>
+</section>
+<section id="poisson-model-usage" class="level1">
+<h1>Poisson Model Usage</h1>
+<section id="coefficients" class="level2">
+<h2 class="anchored" data-anchor-id="coefficients">Coefficients</h2>
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-15_358ccc7a52b2dcd708b02d1af7acb55b">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>broom.mixed<span class="sc">::</span><span class="fu">tidy</span>(mod_pois, <span class="at">effects =</span> <span class="fu">c</span>(<span class="st">"fixed"</span>, <span class="st">"aux"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_if</span>(is.numeric, round, <span class="at">digits =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 4 × 3
+  term        estimate std.error
+  &lt;chr&gt;          &lt;dbl&gt;     &lt;dbl&gt;
+1 (Intercept)   3.58      0.0233
+2 month         0.0357    0.0027
+3 day          -0.0087    0.0009
+4 mean_PPD     39.4       0.467 </code></pre>
+</div>
+</div>
+<p><span class="math display">\[e^{\beta_{1}} = e^{0.0357} \approx 1.0363\]</span></p>
+<p>As we go from one month to the next, the number of street sweeping violations increases by about 3.6 percent.</p>
+<p><span class="math display">\[e^{\beta_{2}} = e^{-0.0087} \approx 0.9913\]</span></p>
+<p>As we go from one day to the next, the number of street sweeping violations decreases by about 0.9 percent.</p>
+</section>
+<section id="prior-distributions" class="level2">
+<h2 class="anchored" data-anchor-id="prior-distributions">Prior Distributions</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-4-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-1" role="tab" aria-controls="tabset-4-1" aria-selected="true" href="">Code</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-2" role="tab" aria-controls="tabset-4-2" aria-selected="false" href="">Interpretation</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-3" role="tab" aria-controls="tabset-4-3" aria-selected="false" href="">Full Model</a></li></ul>
+<div class="tab-content">
+<div id="tabset-4-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-4-1-tab">
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-16_c45476ede87d07f156348afa71700531">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>rstanarm<span class="sc">::</span><span class="fu">prior_summary</span>(mod_pois)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Priors for model 'mod_pois' 
+------
+Intercept (after predictors centered)
+ ~ normal(location = 0, scale = 2.5)
+
+Coefficients
+  Specified prior:
+    ~ normal(location = [0,0], scale = [2.5,2.5])
+  Adjusted prior:
+    ~ normal(location = [0,0], scale = [0.78,0.28])
+------
+See help('prior_summary.stanreg') for more details</code></pre>
+</div>
+</div>
+</div>
+<div id="tabset-4-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-2-tab">
+<p>For the prior distributions,</p>
+<p><span class="math display">\[e^{\beta_{0}} \in (e^{-5}, e^{5}) \approx (0, 149)\]</span></p>
+<ul>
+<li>the average number of street sweeping violations per day is in between zero and 149</li>
+</ul>
+<p><span class="math display">\[e^{\beta_{1}} \in (e^{-1.56}, e^{1.56}) \approx (0.2101, 4.7588)\]</span></p>
+<ul>
+<li>moving from one month to the next, the percent change in the number of street sweeping violations per day is in between 21 and 476 percent</li>
+</ul>
+<p><span class="math display">\[e^{\beta_{2}} \in (e^{-0.56}, e^{0.56}) \approx (0.5712, 1.7507)\]</span></p>
+<ul>
+<li>moving from one day to the next, the percent change in the number of street sweeping violations per day is in between -43 and 175 percent</li>
+</ul>
+</div>
+<div id="tabset-4-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-3-tab">
+<p><span class="math display">\[\begin{array}{rcl}
+  Y_{i}|\beta_{0},\beta_{1},\beta_{2} &amp; \sim &amp; \text{Pois}(\lambda_{i}) \text{ with }\ln(\lambda_{i}) = \beta_{0} + \beta_{1}X_{i1} + \beta_{2}X_{i2} \\
+  \beta_{0c} &amp; \sim &amp; \text{N}(0, 2.5^{2}) \\
+  \beta_{1} &amp; \sim &amp; \text{N}(0, 0.78^{2}) \\
+  \beta_{2} &amp; \sim &amp; \text{N}(0, 0.28^{2}) \\
+\end{array}\]</span></p>
+</div>
+</div>
+</div>
+</section>
+<section id="posterior-prediction-interval" class="level2">
+<h2 class="anchored" data-anchor-id="posterior-prediction-interval">Posterior Prediction Interval</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-5-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-1" role="tab" aria-controls="tabset-5-1" aria-selected="true" href="">Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-5-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-2" role="tab" aria-controls="tabset-5-2" aria-selected="false" href="">Code</a></li></ul>
+<div class="tab-content">
+<div id="tabset-5-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-5-1-tab">
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-17_2c3d9822bdc4dc4308dc3abe7136cbb6">
+<div class="cell-output-display">
+<p><img src="14_poisson_neg_binomial_files/figure-html/unnamed-chunk-17-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-5-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-5-2-tab">
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-18_30fd80eed7caaf1bd9433d49a88f6842">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>these_predictions <span class="ot">&lt;-</span> rstanarm<span class="sc">::</span><span class="fu">posterior_predict</span>(</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  mod_pois, <span class="at">newdata =</span> <span class="fu">data.frame</span>(<span class="at">month =</span> <span class="dv">3</span>, <span class="at">day =</span> <span class="dv">28</span>))</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>credible_interval <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fu">quantile</span>(these_predictions, <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.95</span>)))</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>subtitle_string <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"90 Percent Credible Interval: ("</span>,</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>                          credible_interval[<span class="dv">1</span>], <span class="st">", "</span>,</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>                          credible_interval[<span class="dv">2</span>], <span class="st">")"</span>)</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>bayesplot<span class="sc">::</span><span class="fu">mcmc_areas</span>(these_predictions, <span class="at">prob =</span> <span class="fl">0.9</span>) <span class="sc">+</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Predictions for March 28"</span>,</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> subtitle_string,</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption =</span> <span class="st">"SML 320"</span>,</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"number of street sweeping violations"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="extended-model" class="level1">
+<h1>Extended Model</h1>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-6-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-1" role="tab" aria-controls="tabset-6-1" aria-selected="true" href="">Model</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-6-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-2" role="tab" aria-controls="tabset-6-2" aria-selected="false" href="">Stan</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-6-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-3" role="tab" aria-controls="tabset-6-3" aria-selected="false" href="">Diagnostics</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-6-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-4" role="tab" aria-controls="tabset-6-4" aria-selected="false" href="">PPC</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-6-5-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-5" role="tab" aria-controls="tabset-6-5" aria-selected="false" href="">Dispersion</a></li></ul>
+<div class="tab-content">
+<div id="tabset-6-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-6-1-tab">
+<p><span class="math display">\[\ln(\lambda) = \beta_{0} + \beta_{1}X_{1} + \beta_{2}X_{2} + \beta_{3}X_{3} + \beta_{4}X_{4}X_{5}\]</span></p>
+<ul>
+<li><span class="math inline">\(Y\)</span>: number of street sweeping violations per day</li>
+<li><span class="math inline">\(X_{1}\)</span>: month (1, 2, 3, etc.)</li>
+<li><span class="math inline">\(X_{2}\)</span>: day (of month)</li>
+<li><span class="math inline">\(X_{3}\)</span>: weekend (boolean)</li>
+<li><span class="math inline">\(X_{4}X_{5}\)</span>: (possible interaction between) latitude and longitude</li>
+</ul>
+</div>
+<div id="tabset-6-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-6-2-tab">
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-19_211b1de297919fca81fb64591ff9e86b">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>mod_pois2 <span class="ot">&lt;-</span> <span class="fu">stan_glm</span>(violations <span class="sc">~</span> month <span class="sc">+</span> day <span class="sc">+</span> weekend <span class="sc">+</span> lat<span class="sc">:</span>lon,</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>                      <span class="at">data =</span> tickets_df_for_stan,</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>                      <span class="at">family =</span> poisson,</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>                      <span class="at">chains =</span> <span class="dv">4</span>, <span class="at">iter =</span> <span class="dv">5000</span><span class="sc">*</span><span class="dv">2</span>, </span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>                      <span class="at">refresh =</span> <span class="dv">0</span>, <span class="at">seed =</span> <span class="dv">320</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="tabset-6-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-6-3-tab">
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-20_f7ffd55b52d5795465b60b396cbf77c6">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">model_diagnostics</span>(mod_pois2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="14_poisson_neg_binomial_files/figure-html/unnamed-chunk-20-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="14_poisson_neg_binomial_files/figure-html/unnamed-chunk-20-2.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="14_poisson_neg_binomial_files/figure-html/unnamed-chunk-20-3.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Effective Sample Size:"
+(Intercept)       month         day weekendTRUE     lat:lon 
+    1.05365     0.95060     0.98565     0.81800     1.05340 
+[1] "R-Hat"
+(Intercept)       month         day weekendTRUE     lat:lon 
+  0.9999961   1.0001868   0.9999822   1.0001260   0.9999959 </code></pre>
+</div>
+</div>
+</div>
+<div id="tabset-6-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-6-4-tab">
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-21_7ac9c95cb2c2f3fe72e1a3f82569e5ea">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>bayesplot<span class="sc">::</span><span class="fu">pp_check</span>(mod_pois2, <span class="at">nreps =</span> <span class="dv">50</span>) <span class="sc">+</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Posterior Predictive Check"</span>,</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Extended Poisson Regression Model"</span>,</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption =</span> <span class="st">"SML 320"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="14_poisson_neg_binomial_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-6-5" class="tab-pane" role="tabpanel" aria-labelledby="tabset-6-5-tab">
+<p><span class="math display">\[\text{E}(Y) = \text{Var}(Y)??\]</span></p>
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-22_730ead954c0f4d0e757f5842a6b56da3">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(these_predictions)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 31.43845</code></pre>
+</div>
+</div>
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-23_a212099738cf1551c3f0f8d776be7ce3">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">var</span>(these_predictions)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>        1
+1 31.7904</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="negative-binomial-regression" class="level1">
+<h1>Negative Binomial Regression</h1>
+<section id="motivation-and-definition" class="level2">
+<h2 class="anchored" data-anchor-id="motivation-and-definition">Motivation and Definition</h2>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Overdispersion
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>A random variable <span class="math inline">\(Y\)</span> is <strong>overdispersed</strong> if the observed variability in <span class="math inline">\(Y\)</span> exceeds the variability <em>expected</em> by the assumed probability model of <span class="math inline">\(Y\)</span></p>
+</div>
+</div>
+</div>
+<p>If the count data appears to be demonstrating overdispersion, consider using the negative binomial distribution.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Negative Binomial model
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Let random variable <span class="math inline">\(Y\)</span> be some count, <span class="math inline">\(Y\in\{0,1,2,…\}\)</span>, that can be modeled by the Negative Binomial with <strong>mean parameter</strong> <span class="math inline">\(\mu\)</span> and <strong>reciprocal dispersion parameter</strong> <span class="math inline">\(r\)</span>:</p>
+<p><span class="math display">\[Y|\mu,r \sim \text{NegBin}(\mu,r)\]</span></p>
+<p>Then <span class="math inline">\(Y\)</span> has conditional pmf</p>
+<p><span class="math display">\[f(y|\mu,r) = \binom{y+r-1}{r}\left( \displaystyle\frac{r}{\mu+r} \right)^{r}\left(  \displaystyle\frac{\mu}{\mu+r}\right)^{y} \text{ for } y\in\{0,1,2,...\}\]</span></p>
+<p>with statistics</p>
+<p><span class="math display">\[\text{E}(Y|\mu,r) = \mu \quad\text{and}\quad \text{Var}(Y|\mu,r) = \mu + \displaystyle\frac{\mu^{2}}{r}\]</span></p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Commentary
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<ul>
+<li>for large <span class="math inline">\(r\)</span>, this distribution behaves like the Poisson distribution</li>
+<li>for small <span class="math inline">\(r\)</span>, and <span class="math inline">\(Y\)</span> is overdispersed</li>
+<li><span class="math inline">\(\text{Var}(Y) \neq \text{E}(Y)\)</span></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="negative-binomial-model-1" class="level1">
+<h1>Negative Binomial Model</h1>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-7-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-1" role="tab" aria-controls="tabset-7-1" aria-selected="true" href="">Model</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-7-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-2" role="tab" aria-controls="tabset-7-2" aria-selected="false" href="">Stan</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-7-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-3" role="tab" aria-controls="tabset-7-3" aria-selected="false" href="">Diagnostics</a></li></ul>
+<div class="tab-content">
+<div id="tabset-7-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-7-1-tab">
+<p><span class="math display">\[\ln(\mu) = \beta_{0} + \beta_{1}X_{1} + \beta_{2}X_{2} + \beta_{3}X_{3} + \beta_{4}X_{4}X_{5}\]</span></p>
+<ul>
+<li><span class="math inline">\(Y\)</span>: number of street sweeping violations per day</li>
+<li><span class="math inline">\(X_{1}\)</span>: month (1, 2, 3, etc.)</li>
+<li><span class="math inline">\(X_{2}\)</span>: day (of month)</li>
+<li><span class="math inline">\(X_{3}\)</span>: weekend (boolean)</li>
+<li><span class="math inline">\(X_{4}X_{5}\)</span>: (possible interaction between) latitude and longitude</li>
+</ul>
+</div>
+<div id="tabset-7-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-7-2-tab">
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-24_518de3cd5f0e056e4843d14a7b528962">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>mod_neg_bin <span class="ot">&lt;-</span> <span class="fu">stan_glm</span>(violations <span class="sc">~</span> month <span class="sc">+</span> day <span class="sc">+</span> weekend <span class="sc">+</span> lat<span class="sc">:</span>lon,</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>                      <span class="at">data =</span> tickets_df_for_stan,</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>                      <span class="at">family =</span> neg_binomial_2, <span class="co">#changed here</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>                      <span class="at">chains =</span> <span class="dv">4</span>, <span class="at">iter =</span> <span class="dv">5000</span><span class="sc">*</span><span class="dv">2</span>, </span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>                      <span class="at">refresh =</span> <span class="dv">0</span>, <span class="at">seed =</span> <span class="dv">320</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="tabset-7-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-7-3-tab">
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-25_d60f90b26fcf42af3bbd575b7b72efcb">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">model_diagnostics</span>(mod_neg_bin)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="14_poisson_neg_binomial_files/figure-html/unnamed-chunk-25-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="14_poisson_neg_binomial_files/figure-html/unnamed-chunk-25-2.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="14_poisson_neg_binomial_files/figure-html/unnamed-chunk-25-3.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Effective Sample Size:"
+          (Intercept)                 month                   day 
+              1.46255               1.27635               1.47720 
+          weekendTRUE               lat:lon reciprocal_dispersion 
+              1.33420               1.46210               1.47700 
+[1] "R-Hat"
+          (Intercept)                 month                   day 
+            0.9998795             0.9999110             0.9998873 
+          weekendTRUE               lat:lon reciprocal_dispersion 
+            0.9999143             0.9998797             0.9998440 </code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<section id="prior-distributions-1" class="level2">
+<h2 class="anchored" data-anchor-id="prior-distributions-1">Prior Distributions</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-8-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-1" role="tab" aria-controls="tabset-8-1" aria-selected="true" href="">Code</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-8-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-2" role="tab" aria-controls="tabset-8-2" aria-selected="false" href="">Interpretation</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-8-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-3" role="tab" aria-controls="tabset-8-3" aria-selected="false" href="">Full Model</a></li></ul>
+<div class="tab-content">
+<div id="tabset-8-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-8-1-tab">
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-26_4fc5eb0150d15a30a4889f752eb619c4">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>model_priors <span class="ot">&lt;-</span> rstanarm<span class="sc">::</span><span class="fu">prior_summary</span>(mod_neg_bin)</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>model_priors <span class="co">#print</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Priors for model 'mod_neg_bin' 
+------
+Intercept (after predictors centered)
+ ~ normal(location = 0, scale = 2.5)
+
+Coefficients
+  Specified prior:
+    ~ normal(location = [0,0,0,...], scale = [2.5,2.5,2.5,...])
+  Adjusted prior:
+    ~ normal(location = [0,0,0,...], scale = [ 0.78, 0.28,19.58,...])
+
+Auxiliary (reciprocal_dispersion)
+ ~ exponential(rate = 1)
+------
+See help('prior_summary.stanreg') for more details</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># model_priors$prior$adjusted_scale #after autoscaling</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div id="tabset-8-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-8-2-tab">
+<p>For the prior distributions,</p>
+<p><span class="math display">\[e^{\beta_{0}} \in (e^{-5}, e^{5}) \approx (0, 149)\]</span></p>
+<ul>
+<li>the average number of street sweeping violations per day is in between zero and 149</li>
+</ul>
+<p><span class="math display">\[e^{\beta_{1}} \in (e^{-1.56}, e^{1.56}) \approx (0.2101, 4.7588)\]</span></p>
+<ul>
+<li>moving from one month to the next, the percent change in the number of street sweeping violations per day is in between 21 and 476 percent</li>
+</ul>
+<p><span class="math display">\[e^{\beta_{2}} \in (e^{-0.56}, e^{0.56}) \approx (0.5712, 1.7507)\]</span></p>
+<ul>
+<li>moving from one day to the next, the percent change in the number of street sweeping violations per day is in between -43 and 175 percent</li>
+</ul>
+<p><span class="math display">\[e^{\beta_{3}} \in (e^{-39.16}, e^{39.16})\]</span></p>
+<ul>
+<li>[We have a vague prior for the coefficient of the categorical variable]</li>
+</ul>
+</div>
+<div id="tabset-8-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-8-3-tab">
+<p><span class="math display">\[\begin{array}{rcl}
+  Y_{i}|\beta_{0},\beta_{1},\beta_{2} &amp; \sim &amp; \text{NegBin}(\mu_{i},r) \text{ with }\ln(\mu_{i}) = \beta_{0} + \beta_{1}X_{i1} + \beta_{2}X_{i2} + ... \\
+  \beta_{0c} &amp; \sim &amp; \text{N}(0, 2.5^{2}) \\
+  \beta_{1} &amp; \sim &amp; \text{N}(0, 0.78^{2}) \\
+  \beta_{2} &amp; \sim &amp; \text{N}(0, 0.28^{2}) \\
+  \beta_{3} &amp; \sim &amp; \text{N}(0, 19.58^{2}) \\
+  \beta_{4} &amp; \sim &amp; \text{N}(0, 1.09^{2}) \\
+  r &amp; \sim &amp; \text{Exp}(1) \\
+\end{array}\]</span></p>
+</div>
+</div>
+</div>
+</section>
+<section id="ppc-3" class="level2">
+<h2 class="anchored" data-anchor-id="ppc-3">PPC</h2>
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-27_bd21d61f2c04283d1c804842f8321a78">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>bayesplot<span class="sc">::</span><span class="fu">pp_check</span>(mod_neg_bin, <span class="at">nreps =</span> <span class="dv">50</span>) <span class="sc">+</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Posterior Predictive Check"</span>,</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Negative Binomial Regression Model"</span>,</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption =</span> <span class="st">"SML 320"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="14_poisson_neg_binomial_files/figure-html/unnamed-chunk-27-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="coefficients-1" class="level2">
+<h2 class="anchored" data-anchor-id="coefficients-1">Coefficients</h2>
+<p>Like in the Poisson regression models, the coefficents of negative binomial regression models are also desribed with the logarithmic transformation in mind.</p>
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-28_af6153999b521203d9c12a9978181b30">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>broom.mixed<span class="sc">::</span><span class="fu">tidy</span>(mod_neg_bin, <span class="at">effects =</span> <span class="fu">c</span>(<span class="st">"fixed"</span>, <span class="st">"aux"</span>),</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">conf.int =</span> <span class="cn">TRUE</span>, <span class="at">conf.level =</span> <span class="fl">0.90</span>) <span class="sc">|&gt;</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_if</span>(is.numeric, round, <span class="at">digits =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 5
+  term        estimate std.error conf.low conf.high
+  &lt;chr&gt;          &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;
+1 (Intercept) 124.       24.9     82.2     165.    
+2 month         0.022     0.0066   0.0112    0.0329
+3 day          -0.0039    0.0023  -0.0077   -0.0002
+4 weekendTRUE   0.879     0.160    0.627     1.15  
+5 lat:lon       0.04      0.0083   0.0262    0.0536
+6 mean_PPD     39.5       1.16    37.6      41.4   </code></pre>
+</div>
+</div>
+<p><span class="math display">\[e^{\beta_{1}} = e^{0.0220} \approx 1.0222\]</span></p>
+<ul>
+<li>As we go from one month to the next, the number of street sweeping violations increases by about 2.2 percent.</li>
+</ul>
+<p><span class="math display">\[e^{\beta_{2}} = e^{-0.0039} \approx 0.9961\]</span></p>
+<ul>
+<li>As we go from one day to the next, the number of street sweeping violations decreases by about 0.04 percent.</li>
+</ul>
+<p><span class="math display">\[e^{\beta_{3}} = e^{0.8791} \approx 2.4087\]</span></p>
+<ul>
+<li>Compared to a weekday, the expected amount of street sweeping violations on a weekend day is 241 percent higher (caution: sample size issue).</li>
+</ul>
+<p><span class="math display">\[1.0 \notin (e^{0.0262}, e^{0.0536})\]</span></p>
+<ul>
+<li>We may have some evidence that <span class="math inline">\(\beta_{4} &gt; 1.0\)</span>, or the notion that there may be an interaction effect between latitude and longitude</li>
+</ul>
+</section>
+<section id="posterior-prediction-interval-1" class="level2">
+<h2 class="anchored" data-anchor-id="posterior-prediction-interval-1">Posterior Prediction Interval</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-9-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-9-1" role="tab" aria-controls="tabset-9-1" aria-selected="true" href="">Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-9-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-9-2" role="tab" aria-controls="tabset-9-2" aria-selected="false" href="">Code</a></li></ul>
+<div class="tab-content">
+<div id="tabset-9-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-9-1-tab">
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-29_d342b3d0f12a4d8357c7ddd94bf2a142">
+<div class="cell-output-display">
+<p><img src="14_poisson_neg_binomial_files/figure-html/unnamed-chunk-29-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-9-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-9-2-tab">
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-30_c3740ffffa74013361ee4af96ce41970">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>these_predictions <span class="ot">&lt;-</span> rstanarm<span class="sc">::</span><span class="fu">posterior_predict</span>(</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>  mod_neg_bin, <span class="at">newdata =</span> <span class="fu">data.frame</span>(<span class="at">month =</span> <span class="dv">3</span>, </span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">day =</span> <span class="dv">28</span>,</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">weekend =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">lat =</span> <span class="fu">mean</span>(tickets_df<span class="sc">$</span>lat),</span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">lon =</span> <span class="fu">mean</span>(tickets_df<span class="sc">$</span>lon)))</span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>credible_interval <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fu">quantile</span>(these_predictions, <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.95</span>)))</span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>subtitle_string <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"90 Percent Credible Interval: ("</span>,</span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>                          credible_interval[<span class="dv">1</span>], <span class="st">", "</span>,</span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>                          credible_interval[<span class="dv">2</span>], <span class="st">")"</span>)</span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>bayesplot<span class="sc">::</span><span class="fu">mcmc_areas</span>(these_predictions, <span class="at">prob =</span> <span class="fl">0.9</span>) <span class="sc">+</span></span>
+<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Predictions for March 28"</span>,</span>
+<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> subtitle_string,</span>
+<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption =</span> <span class="st">"SML 320"</span>,</span>
+<span id="cb38-15"><a href="#cb38-15" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"number of street sweeping violations"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="dispersion-1" class="level2">
+<h2 class="anchored" data-anchor-id="dispersion-1">Dispersion</h2>
+<p><span class="math display">\[\text{E}(Y) = \text{Var}(Y)??\]</span></p>
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-31_61d690e8bdb82c3defdf7be62fe2b6a9">
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(these_predictions)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 33.85635</code></pre>
+</div>
+</div>
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-32_73695efa748c3e100a6758b7cbd926c5">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">var</span>(these_predictions)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         1
+1 175.5899</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="summary" class="level1">
+<h1>Summary</h1>
+<ul>
+<li>If response <span class="math inline">\(Y\)</span> is nonnegative count data, consider Poisson regression models</li>
+<li>If data is overdispersed, consider negative binomial regression models</li>
+<li>In these cases, carefully describe coefficients after the logarithmic transformation</li>
+</ul>
+</section>
+<section id="footnotes" class="level1">
+<h1>Footnotes</h1>
+<ul>
+<li><a href="https://bookdown.org/roback/bookdown-BeyondMLR/ch-poissonreg.html#introduction-to-poisson-regression">Poisson Regression</a> by Professors Roback and Legler at St Olaf College</li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Session Info
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-5" class="callout-5-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<div class="cell" data-hash="14_poisson_neg_binomial_cache/html/unnamed-chunk-33_1a5fe7e933a90a21e48427cd4668bd9d">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>R version 4.3.2 (2023-10-31 ucrt)
+Platform: x86_64-w64-mingw32/x64 (64-bit)
+Running under: Windows 10 x64 (build 19045)
+
+Matrix products: default
+
+
+locale:
+[1] LC_COLLATE=English_United States.utf8 
+[2] LC_CTYPE=English_United States.utf8   
+[3] LC_MONETARY=English_United States.utf8
+[4] LC_NUMERIC=C                          
+[5] LC_TIME=English_United States.utf8    
+
+time zone: America/New_York
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] lubridate_1.9.3    forcats_1.0.0      stringr_1.5.1      dplyr_1.1.4       
+ [5] purrr_1.0.2        readr_2.1.5        tidyr_1.3.1        tibble_3.2.1      
+ [9] ggplot2_3.4.3      tidyverse_2.0.0    rstanarm_2.21.4    Rcpp_1.0.11       
+[13] rstan_2.32.5       StanHeaders_2.32.5 patchwork_1.1.2    gt_0.9.0          
+[17] bayesplot_1.10.0   bayesrules_0.0.2  
+
+loaded via a namespace (and not attached):
+ [1] gridExtra_2.3      inline_0.3.19      rlang_1.1.1        magrittr_2.0.3    
+ [5] snakecase_0.11.0   matrixStats_1.0.0  e1071_1.7-13       compiler_4.3.2    
+ [9] loo_2.6.0          callr_3.7.3        vctrs_0.6.5        reshape2_1.4.4    
+[13] pkgconfig_2.0.3    crayon_1.5.2       fastmap_1.1.1      ellipsis_0.3.2    
+[17] labeling_0.4.3     utf8_1.2.4         threejs_0.3.3      promises_1.2.1    
+[21] rmarkdown_2.24     tzdb_0.4.0         markdown_1.8       ps_1.7.5          
+[25] nloptr_2.0.3       xfun_0.40          jsonlite_1.8.7     later_1.3.1       
+[29] parallel_4.3.2     prettyunits_1.2.0  R6_2.5.1           dygraphs_1.1.1.6  
+[33] stringi_1.8.3      boot_1.3-28.1      knitr_1.43         zoo_1.8-12        
+[37] base64enc_0.1-3    httpuv_1.6.11      Matrix_1.6-1.1     splines_4.3.2     
+[41] igraph_1.4.3       timechange_0.3.0   tidyselect_1.2.0   rstudioapi_0.15.0 
+[45] yaml_2.3.8         codetools_0.2-19   miniUI_0.1.1.1     curl_5.0.2        
+[49] processx_3.8.1     pkgbuild_1.4.0     lattice_0.21-9     plyr_1.8.8        
+[53] withr_3.0.0        shiny_1.7.5        groupdata2_2.0.2   evaluate_0.21     
+[57] survival_3.5-7     proxy_0.4-27       RcppParallel_5.1.7 xts_0.13.1        
+[61] xml2_1.3.6         pillar_1.9.0       DT_0.28            stats4_4.3.2      
+[65] shinyjs_2.1.0      generics_0.1.3     hms_1.1.3          rstantools_2.3.1  
+[69] munsell_0.5.0      scales_1.2.1       minqa_1.2.5        gtools_3.9.4      
+[73] xtable_1.8-4       class_7.3-22       glue_1.6.2         janitor_2.2.0     
+[77] tools_4.3.2        shinystan_2.6.0    lme4_1.1-33        colourpicker_1.2.0
+[81] grid_4.3.2         QuickJSR_1.1.3     crosstalk_1.2.0    colorspace_2.1-0  
+[85] nlme_3.1-163       cli_3.6.1          fansi_1.0.6        V8_4.3.0          
+[89] gtable_0.3.4       digest_0.6.33      farver_2.1.1       htmlwidgets_1.6.2 
+[93] htmltools_0.5.6    lifecycle_1.0.4    mime_0.12          shinythemes_1.2.0 
+[97] MASS_7.3-60       </code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="columns">
+<div class="column" style="width:45%;">
+
+</div><div class="column" style="width:10%;">
+
+</div><div class="column" style="width:45%;">
+
+</div>
+</div>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"></ul>
+<div class="tab-content">
+
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
